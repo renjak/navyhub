@@ -18,7 +18,8 @@ const menu=[
 type Profile={id:string;full_name:string;rank_title:string|null;unit_id:string|null;role:string;is_active:boolean};
 type RowData=Record<string,any>;
 type ImportedPlan={activity_date:string;activity_time:string|null;title:string;description:string;category:string};
-const phstSectionOrder=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","E. LAIN-LAIN"];\nconst monthMap:Record<string,string>={januari:"01",februari:"02",maret:"03",april:"04",mei:"05",juni:"06",juli:"07",agustus:"08",september:"09",oktober:"10",november:"11",desember:"12"};
+const phstSectionOrder=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","E. LAIN-LAIN"];
+const monthMap:Record<string,string>={januari:"01",februari:"02",maret:"03",april:"04",mei:"05",juni:"06",juli:"07",agustus:"08",september:"09",oktober:"10",november:"11",desember:"12"};
 async function readPdfText(file:File):Promise<string[]>{
  const data=new Uint8Array(await file.arrayBuffer());
  const task=pdfjsLib.getDocument({data});
@@ -49,47 +50,47 @@ function parsePhstLines(lines:string[]):ImportedPlan[]{
  const out:ImportedPlan[]=[];let date="";let section="";let inGeneral=false;
  const push=(category:string,title:string,description="",time:string|null=null)=>{if(date&&title.trim())out.push({activity_date:date,activity_time:time,title:title.trim(),description:description.trim(),category})};
  for(const raw of lines){
-  const line=raw.replace(/\\s+/g," ").trim();if(!line)continue;
-  const dm=line.match(/(?:Hari\\s*\\/\\s*tanggal\\s*:?\\s*)?(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)?\\s*,?\\s*(\\d{1,2})\\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\\s+(\\d{4})/i);
+  const line=raw.replace(/\s+/g," ").trim();if(!line)continue;
+  const dm=line.match(/(?:Hari\s*\/\s*tanggal\s*:?\s*)?(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)?\s*,?\s*(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})/i);
   if(dm){date=dm[4]+"-"+monthMap[dm[3].toLowerCase()]+"-"+dm[2].padStart(2,"0");section="";inGeneral=false;continue}
   if(!date)continue;
-  if(/^A\\.\\s*SITUASI/i.test(line)){section="A. SITUASI";inGeneral=false;continue}
-  if(/^B\\.\\s*TUGAS\\s+POKOK/i.test(line)){section="B. TUGAS POKOK";inGeneral=false;continue}
-  if(/^C\\.\\s*UMUM/i.test(line)){section="C. UMUM";inGeneral=true;continue}
-  if(/^D\\.\\s*KHUSUS/i.test(line)){section="D. KHUSUS";inGeneral=false;continue}
-  if(/^E\\.\\s*LAIN/i.test(line)){section="E. LAIN-LAIN";inGeneral=false;continue}
-  if(/^F\\./i.test(line)){section="";inGeneral=false;continue}
+  if(/^A\.\s*SITUASI/i.test(line)){section="A. SITUASI";inGeneral=false;continue}
+  if(/^B\.\s*TUGAS\s+POKOK/i.test(line)){section="B. TUGAS POKOK";inGeneral=false;const val=line.replace(/^B\.\s*TUGAS\s+POKOK\s*:?/i,"").trim();if(val)push(section,"Tugas Pokok",val);continue}
+  if(/^C\.\s*UMUM/i.test(line)){section="C. UMUM";inGeneral=true;continue}
+  if(/^D\.\s*KHUSUS/i.test(line)){section="D. KHUSUS";inGeneral=false;continue}
+  if(/^E\.\s*LAIN/i.test(line)){section="E. LAIN-LAIN";inGeneral=false;continue}
+  if(/^F\./i.test(line)){section="";inGeneral=false;continue}
   if(section==="A. SITUASI"){
-   const m=line.match(/^[a-b]\\.?\\s*([^:|]+?)\\s*:\\s*(.+)$/i);
-   if(m)push(section,m[1].replace(/\\s+/g," ").trim(),m[2]);
-   else if(/\\|/.test(line)){const cells=line.split("|").map(x=>x.trim()).filter(Boolean);if(cells.length>=2)push(section,cells[0],cells.slice(1).join(" "))}
+   const m=line.match(/^[a-b]\.?\s*([^:|]+?)\s*:\s*(.+)$/i);
+   if(m)push(section,m[1].replace(/\s+/g," ").trim(),m[2]);
+   else if(/\|/.test(line)){const cells=line.split("|").map(x=>x.trim()).filter(Boolean);if(cells.length>=2)push(section,cells[0],cells.slice(1).join(" "))}
    continue;
   }
   if(section==="B. TUGAS POKOK"){
-   const val=line.replace(/^B\\.\\s*TUGAS\\s+POKOK\\s*:?/i,"").replace(/^:\\s*/,"").trim();
+   const val=line.replace(/^B\.\s*TUGAS\s+POKOK\s*:?/i,"").replace(/^:\s*/,"").trim();
    if(val)push(section,"Tugas Pokok",val);continue;
   }
   if(section==="C. UMUM"){
-   const clean=line.replace(/^[-•–]\\s*/,"").trim();
-   const tm=clean.match(/^(\\d{1,2})[.:](\\d{2})\\s*:\\s*(.+)$/);
+   const clean=line.replace(/^[-•–]\s*/,"").trim();
+   const tm=clean.match(/^(\d{1,2})[.:](\d{2})\s*:\s*(.+)$/);
    if(tm)push(section,tm[3], "",tm[1].padStart(2,"0")+":"+tm[2]);
    continue;
   }
   if(section==="D. KHUSUS"){
-   if(/^N\\s*O\\s*\\|/i.test(line)||/DEPARTEMEN.*KEGIATAN/i.test(line)||/^NO\\s*\\|/i.test(line))continue;
-   if(/^\\d+\\s*\\|/.test(line)){
+   if(/^N\s*O\s*\|/i.test(line)||/DEPARTEMEN.*KEGIATAN/i.test(line)||/^NO\s*\|/i.test(line))continue;
+   if(/^\d+\s*\|/.test(line)){
     const cells=line.split("|").map(x=>x.trim());
     if(cells.length>=3){
-     const dept=cells[1].replace(/^\\d+\\s*/,"").trim();
-     const activities=(cells[2]||"").split(/\\s+-\\s+/).map(x=>x.replace(/^[-•]\\s*/,"").trim()).filter(Boolean);
+     const dept=cells[1].replace(/^\d+\s*/,"").trim();
+     const activities=(cells[2]||"").split(/\s+-\s+/).map(x=>x.replace(/^[-•]\s*/,"").trim()).filter(Boolean);
      const risk=(cells[3]||"").trim();
-     push(section,dept,["Kegiatan:",...activities.map(x=>"• "+x),risk?"Manajemen risiko: "+risk:""].filter(Boolean).join("\\n"));
+     push(section,dept,["Kegiatan:",...activities.map(x=>"• "+x),risk?"Manajemen risiko: "+risk:""].filter(Boolean).join("\n"));
     }
    }
    continue;
   }
   if(section==="E. LAIN-LAIN"){
-   const m=line.match(/^[a-z]\\.?\\s*(.+)$/i);const val=(m?m[1]:line).replace(/^[-•–]\\s*/,"").trim();
+   const m=line.match(/^[a-z]\.?\s*(.+)$/i);const val=(m?m[1]:line).replace(/^[-•–]\s*/,"").trim();
    if(val)push(section,val);
   }
  }
