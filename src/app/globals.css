@@ -167,3 +167,14 @@ td{color:#f0f1f5}
 .dl-sim-controls{justify-content:flex-start;margin-top:12px}.dl-sim-controls button,.dl-sim-controls select{border:1px solid rgba(125,198,225,.32);border-radius:8px;padding:7px 10px;background:rgba(26,83,115,.45);color:#e8f5fc;font-size:11px}.dl-sim-controls button:first-child{background:linear-gradient(120deg,#087eb7,#16a7bd);font-weight:700}.dl-sim-controls label{font-size:11px;color:#a8c9d9;display:flex;align-items:center;gap:6px}.dl-sim-controls select{padding:6px}.dl-sim-loop input{accent-color:#42c7d8}
 .dl-sim-timeline{display:flex;gap:7px;overflow-x:auto;padding:12px 0 2px}.dl-sim-timeline button{position:relative;min-width:108px;text-align:left;border:1px solid rgba(115,177,203,.18);border-radius:8px;background:rgba(255,255,255,.035);padding:8px;color:#a9c7d6;font-size:10px}.dl-sim-timeline button i{display:block;width:7px;height:7px;border-radius:50%;background:#53758a;margin-bottom:6px}.dl-sim-timeline button.selected{border-color:#4ec8e7;background:rgba(42,151,196,.18);color:white}.dl-sim-timeline button.selected i{background:#72e1f8;box-shadow:0 0 10px #45c5ed}.dl-sim-timeline button.passed i{background:#50d5aa}.dl-sim-timeline button small{display:block;font-size:9px;color:#8eafc1;margin-top:3px}
 @media(max-width:700px){.dl-sim-controls{gap:7px}.dl-sim-controls button{font-size:10px;padding:7px}.dl-sim-timeline button{min-width:96px}}
+
+.dl-vessel-art{position:relative;isolation:isolate;overflow:hidden}
+.dl-vessel-render{display:block;width:100%;height:auto;min-height:210px;object-fit:contain;object-position:center;background:linear-gradient(180deg,#082c49,#061b30)}
+.dl-active-zone{position:absolute;z-index:3;transform:translate(-50%,-50%);pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:5px;transition:left .65s ease,top .65s ease}
+.dl-active-zone b{font-size:10px;letter-spacing:.04em;color:#f2fbff;background:rgba(2,26,46,.9);border:1px solid #5bdcff;border-radius:6px;padding:5px 8px;white-space:nowrap;box-shadow:0 0 18px rgba(43,190,255,.38)}
+.dl-active-ring{width:19px;height:19px;border:2px solid #70e4ff;border-radius:50%;box-shadow:0 0 0 5px rgba(52,190,244,.18),0 0 20px #2ec8ff;animation:dlTargetPulse 1.5s infinite}
+@keyframes dlTargetPulse{0%,100%{transform:scale(.8);opacity:.75}50%{transform:scale(1.18);opacity:1}}
+.dl-ship-scan{position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 35%,rgba(92,218,255,.12) 50%,transparent 65%);background-size:220% 100%;animation:dlShipScan 5s linear infinite;mix-blend-mode:screen}
+@keyframes dlShipScan{from{background-position:120% 0}to{background-position:-120% 0}}
+.dl-zones button{cursor:pointer;border:1px solid rgba(105,190,224,.24);border-radius:7px;background:rgba(8,43,67,.7);color:#a9cddd;padding:6px 9px;font:inherit;font-size:10px}
+.dl-zones button.active{border-color:#5bdcff;background:rgba(25,143,190,.25);color:#fff;box-shadow:0 0 12px rgba(48,186,235,.22)}
