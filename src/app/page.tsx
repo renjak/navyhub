@@ -3,6 +3,7 @@ import {useCallback,useEffect,useMemo,useState} from "react";
 import {createClient,type User} from "@supabase/supabase-js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+pdfjsLib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.mjs",import.meta.url).toString();
 const menu=[
  {id:"Dashboard",desc:"Pusat kendali",icon:"⌂"},
  {id:"NAVYLOG",desc:"Jurnal kegiatan",icon:"▤",table:"activity_logs"},
