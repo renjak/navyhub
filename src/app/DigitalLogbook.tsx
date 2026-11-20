@@ -16,6 +16,10 @@ const pct=(n:number,d:number)=>d?Math.round(n/d*100):0;
 const ZONE:any={jaga:"Geladak Kerja",mesin:"Kamar Mesin",bekal:"Geladak Kerja · Gudang Logistik",masak:"Dapur & Gudang",elektronik:"Anjungan / Navigasi",bilga:"Kamar Mesin",opname:"Gudang Logistik",rekap:"Anjungan / Ruang Komando"};
 export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase:any;unitId:string;userId:string;viewer:boolean}){
  const [clock,setClock]=useState(localTime()),[today,setToday]=useState(localDate()),[checklists,setChecklists]=useState<Checklist[]>([]),[items,setItems]=useState<Item[]>([]),[runs,setRuns]=useState<Run[]>([]),[responses,setResponses]=useState<Response[]>([]),[assignment,setAssignment]=useState<any>(null),[role,setRole]=useState<Role|null>(null),[active,setActive]=useState<string|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[tab,setTab]=useState<"ceklist"|"riwayat"|"pengawasan">("ceklist"),[failItem,setFailItem]=useState<string|null>(null),[failNote,setFailNote]=useState("");
+ const simStops=[{time:"05:30",title:"Persiapan dan apel personel",zone:"Geladak Kerja"},{time:"06:15",title:"Pemeriksaan kamar mesin",zone:"Kamar Mesin"},{time:"07:00",title:"Pemeriksaan anjungan dan navigasi",zone:"Anjungan / Navigasi"},{time:"08:00",title:"Penerimaan bekal logistik",zone:"Gudang Logistik"},{time:"09:00",title:"Penyiapan konsumsi",zone:"Dapur & Konsumsi"},{time:"10:00",title:"Pemeriksaan akomodasi",zone:"Akomodasi"},{time:"11:00",title:"Pemeriksaan tangki dan utilitas",zone:"Tangki Air & BBM"}];
+ const [simIndex,setSimIndex]=useState(0),[simPlaying,setSimPlaying]=useState(false),[simSpeed,setSimSpeed]=useState(1),[simLoop,setSimLoop]=useState(true);
+ const simCurrent=simStops[simIndex];
+ useEffect(()=>{if(!simPlaying)return;const timer=window.setInterval(()=>setSimIndex(i=>{if(i>=simStops.length-1){if(simLoop)return 0;setSimPlaying(false);return i}return i+1}),Math.max(700,2400/simSpeed));return()=>window.clearInterval(timer)},[simPlaying,simSpeed,simLoop]);
  const nowMin=Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
  const handover=checklists.find(c=>c.sequence_no===1);
  const handoverRun=handover?runs.find(r=>r.checklist_id===handover.id&&r.duty_date===today&&r.duty_role==="Perwira Jaga"):undefined;
@@ -90,6 +94,19 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
     <div className="dl-vessel-caption"><span><b>PROFIL SAMPING</b> · KCR-40</span><span>44,00 m LOA · 7,40 m beam</span></div>
    </div>
    <div className="dl-zones"><span>Geladak Kerja</span><span>Anjungan / Navigasi</span><span>Kamar Mesin</span><span>Gudang Logistik</span><span>Dapur & Konsumsi</span><span>Akomodasi</span><span>Tangki Air & BBM</span></div>
+   <div className="dl-simulator">
+    <div className="dl-sim-top"><div><b>SIMULASI ANIMASI KEGIATAN KAPAL</b><small>Mode demonstrasi visual · tidak menulis ke jurnal operasional</small></div><span className={simPlaying?"live":"idle"}>{simPlaying?"● BERJALAN":"Ⅱ SIAP DIPUTAR"}</span></div>
+    <div className="dl-sim-current"><div className="dl-sim-pulse">◉</div><div><small>{simCurrent.time} WIB · {simIndex+1} / {simStops.length}</small><b>{simCurrent.title}</b><span>Lokasi simulasi: {simCurrent.zone}</span></div></div>
+    <div className="dl-sim-progress"><i style={{width:((simIndex+1)/simStops.length*100)+"%"}}/></div>
+    <div className="dl-sim-controls">
+     <button onClick={()=>setSimPlaying(v=>!v)}>{simPlaying?"Ⅱ Jeda":"▶ Putar"}</button>
+     <button onClick={()=>{setSimIndex(0);setSimPlaying(false)}}>↺ Mulai ulang</button>
+     <button onClick={()=>setSimIndex(i=>(i+1)%simStops.length)}>⏭ Berikutnya</button>
+     <label>Kecepatan <select value={simSpeed} onChange={e=>setSimSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label>
+     <label className="dl-sim-loop"><input type="checkbox" checked={simLoop} onChange={e=>setSimLoop(e.target.checked)}/> Ulang otomatis</label>
+    </div>
+    <div className="dl-sim-timeline">{simStops.map((stop,i)=><button key={stop.time} className={i===simIndex?"selected":i<simIndex?"passed":""} onClick={()=>{setSimIndex(i);setSimPlaying(false)}}><i/>{stop.time}<small>{stop.zone}</small></button>)}</div>
+   </div>
   </div>
   <div className="dl-narrative"><b>{current?.title||"Pemeriksaan harian kapal"}</b><p>{current?.instructions||"Pilih petugas jaga setelah serah terima jaga untuk membuka daftar pemeriksaan sesuai tanggung jawab."}</p><small>LOKASI: {current?.location_label||"Seluruh kapal"} · JAM: {current?hh(current.scheduled_time):"07:45"}</small></div>
   <div className="dl-gate">
