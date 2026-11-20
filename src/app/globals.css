@@ -101,3 +101,6 @@ td{color:#f0f1f5}
 .navylog-board .agenda-section.d .agenda-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
 .navylog-board .agenda-section.d .agenda-card{grid-template-columns:1fr}
 @media(max-width:760px){.watch-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.watch-item{border-right:0;border-bottom:1px solid rgba(221,249,255,.22);padding:8px}.navylog-board .agenda-section.d .agenda-cards{grid-template-columns:1fr}}
+
+
+.viewer-notice{display:flex;align-items:center;gap:12px;margin:16px 0;padding:13px 16px;border:1px solid rgba(125,225,255,.45);border-radius:14px;background:linear-gradient(110deg,rgba(0,126,174,.3),rgba(255,255,255,.07));color:#fff}.viewer-notice b{font:800 9px Manrope;letter-spacing:1.2px;white-space:nowrap}.viewer-notice span{font-size:10px;color:#e4f7ff;line-height:1.5}@media(max-width:600px){.viewer-notice{align-items:flex-start;flex-direction:column;gap:5px}}
