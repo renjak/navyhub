@@ -1,6 +1,7 @@
 "use client";
 import {useCallback,useEffect,useMemo,useState} from "react";
 import {createClient,type User} from "@supabase/supabase-js";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 const menu=[
  {id:"Dashboard",desc:"Pusat kendali",icon:"⌂"},
@@ -17,6 +18,21 @@ type Profile={id:string;full_name:string;rank_title:string|null;unit_id:string|n
 type RowData=Record<string,any>;
 type ImportedPlan={activity_date:string;activity_time:string|null;title:string;description:string;category:string};
 const monthMap:Record<string,string>={januari:"01",februari:"02",maret:"03",april:"04",mei:"05",juni:"06",juli:"07",agustus:"08",september:"09",oktober:"10",november:"11",desember:"12"};
+async function readPdfText(file:File):Promise<string[]>{
+ const data=new Uint8Array(await file.arrayBuffer());
+ const task=pdfjsLib.getDocument({data});
+ const pdf=await task.promise;const lines:string[]=[];
+ for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
+  const page=await pdf.getPage(pageNo);const content=await page.getTextContent();
+  const items=content.items.filter((x:any)=>typeof x.str==="string"&&x.str.trim()).map((x:any)=>({text:x.str.trim(),y:Math.round(x.transform?.[5]||0)}));
+  const rows=new Map<number,string[]>();
+  for(const item of items){const arr=rows.get(item.y)||[];arr.push(item.text);rows.set(item.y,arr)}
+  const sorted=[...rows.entries()].sort((a,b)=>b[0]-a[0]);
+  for(const [,parts] of sorted){const line=parts.join(" ").replace(/\\s+/g," ").trim();if(line)lines.push(line)}
+ }
+ if(!lines.length)throw new Error("Teks PDF tidak ditemukan. Jika PDF berupa hasil scan, diperlukan OCR.");
+ return lines;
+}
 async function readDocxText(file:File):Promise<string[]>{
  const bytes=await file.arrayBuffer(),view=new DataView(bytes);let eocd=-1;
  for(let i=bytes.byteLength-22;i>=Math.max(0,bytes.byteLength-65558);i--){if(view.getUint32(i,true)===0x06054b50){eocd=i;break}}
@@ -69,7 +85,7 @@ export default function Home(){
  useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const {data,error}=await sb.from("inventory_items").select("id,item_name,category,capacity_liters,stock_ready,stock_unready,unit_of_measure").eq("unit_id",profile.unit_id!).eq("is_active",true).in("category",["Air Tawar","BBM"]);if(live)setSupplyRows(error?[]:(data||[]) as RowData[])})();return()=>{live=false}},[profile?.unit_id]);
  const loadTomorrowPlans=useCallback(async()=>{if(!profile?.unit_id)return;const d=new Date();d.setDate(d.getDate()+1);const date=d.toLocaleDateString("en-CA");const {data,error}=await sb.from("activity_logs").select("id,activity_date,activity_time,title,description,category,status").eq("unit_id",profile.unit_id).eq("activity_date",date).order("activity_time",{ascending:true});if(!error)setTomorrowPlans((data||[]) as RowData[])},[profile?.unit_id]);
  useEffect(()=>{if(user&&profile?.unit_id)loadTomorrowPlans()},[user,profile?.unit_id,loadTomorrowPlans]);
- async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{if(!file.name.toLowerCase().endsWith(".docx"))throw new Error("Pembacaan PDF belum tersedia pada versi ini. Silakan gunakan Word (.docx) sementara.");const lines=await readDocxText(file);const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Tidak ditemukan jadwal bertanggal pada bagian C. UMUM. Periksa format PHST.");setDocPlans(parsed);setNotice("Dokumen berhasil dibaca. Periksa hasil ekstraksi sebelum menyimpan ke NAVYLOG.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Dokumen gagal diproses.")}finally{setDocBusy(false);e.target.value=""}}
+ async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{const ext=file.name.toLowerCase();const lines=ext.endsWith(".docx")?await readDocxText(file):ext.endsWith(".pdf")?await readPdfText(file):(()=>{throw new Error("Gunakan dokumen Word (.docx) atau PDF (.pdf).")})();const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Tidak ditemukan jadwal bertanggal pada bagian C. UMUM. Periksa format PHST.");setDocPlans(parsed);setNotice("Dokumen berhasil dibaca. Periksa hasil ekstraksi sebelum menyimpan ke NAVYLOG.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Dokumen gagal diproses.")}finally{setDocBusy(false);e.target.value=""}}
  async function importPhstPlans(){if(!profile?.unit_id||!user||!docPlans.length)return;setBusy(true);setNotice("");const payload=docPlans.map(p=>({unit_id:profile.unit_id,created_by:user.id,activity_date:p.activity_date,activity_time:p.activity_time,title:p.title,description:p.description,category:p.category,status:"draft"}));const {error}=await sb.from("activity_logs").insert(payload);if(error)setNotice("Impor gagal: "+error.message);else{setNotice(docPlans.length+" rencana kegiatan berhasil dimasukkan ke NAVYLOG sebagai draft.");setDocPlans([]);setDocName("");await loadModule();await loadTomorrowPlans()}setBusy(false)}
  async function savePlan(e:React.FormEvent){e.preventDefault();if(!profile?.unit_id||!user)return;setBusy(true);setNotice("");const details=["RENCANA KEGIATAN: "+planDescription.trim(),"PERALATAN / BAHAN YANG DIGUNAKAN: "+(planResources.trim()||"Belum ditentukan")].join("\n");const {error}=await sb.from("activity_logs").insert({unit_id:profile.unit_id,created_by:user.id,activity_date:planDate,activity_time:planTime||null,title:planTitle.trim(),description:details,category:planCategory,status:"draft"});if(error)setNotice("Rencana belum tersimpan: "+error.message);else{setNotice("Rencana kegiatan berhasil disimpan sebagai draft.");setPlanTitle("");setPlanDescription("");setPlanResources("");await loadModule();await loadTomorrowPlans()}setBusy(false)}
  const loadModule=useCallback(async()=>{if(!selected?.table||!profile?.unit_id)return;setBusy(true);setNotice("");let q=sb.from(selected.table).select("*").eq("unit_id",profile.unit_id).limit(300);if(selected.table==="personnel")q=q.order("sequence_no",{ascending:true});else if(selected.table==="inventory_items")q=q.order("item_name",{ascending:true});else q=q.order("created_at",{ascending:false});const {data,error}=await q;if(error){setNotice("Data tidak dapat dimuat dengan hak akses akun ini: "+error.message);setRows([])}else setRows((data||[]) as RowData[]);if(module==="NAVYSTOCK"){const {data:m,error:me}=await sb.from("stock_movements").select("*").eq("unit_id",profile.unit_id).order("movement_date",{ascending:false}).limit(100);setMovements((m||[]) as RowData[]);if(me)setNotice("Riwayat transaksi tidak dapat dimuat: "+me.message)}else setMovements([]);setBusy(false)},[selected,profile?.unit_id,module]);
