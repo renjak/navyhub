@@ -151,7 +151,7 @@ export default function Home(){
   const numeric=["minimum_stock","initial_quantity","stock_ready","stock_unready","unit_price","capacity_liters","manufacture_year"];
   const payload:any={};
   for(const k of ["item_code","item_name","category","unit_of_measure","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","country_of_origin"])payload[k]=String(stockDraft[k]??"").trim()||null;
-  for(const k of numeric)payload[k]=stockDraft[k]===""||stockDraft[k]===null||stockDraft[k]===undefined?null:Number(stockDraft[k]);
+  for(const k of numeric){const required=["minimum_stock","initial_quantity","stock_ready","stock_unready"].includes(k);payload[k]=stockDraft[k]===""||stockDraft[k]===null||stockDraft[k]===undefined?(required?0:null):Number(stockDraft[k])}
   payload.is_active=stockDraft.is_active!==false;
   payload.updated_at=new Date().toISOString();
   let result;
