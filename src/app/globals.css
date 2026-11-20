@@ -33,3 +33,29 @@ button:disabled{opacity:.55;cursor:wait}.loginbox footer{font-size:10px;color:#9
 @media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.module-grid{grid-template-columns:repeat(2,1fr)}.shell aside{width:225px}.main{margin-left:255px;padding:0 22px}}
 @media(max-width:680px){.shell aside{position:relative;inset:auto;width:auto;margin:9px 9px 0;padding:12px 14px;border-radius:18px}.shell aside nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:10px}.shell aside nav label{display:none}.shell nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:8px 3px;font-size:8px}.shell nav button small,.shell nav button i{display:none}.navicon{width:22px;height:22px}.asidefoot{display:none}.shell aside .ship{display:none}.brand{padding:0 0 9px}.main{margin:0;padding:0 12px 18px}.main header{height:70px}.user{gap:7px}.user span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.logout{padding:7px 9px;font-size:9px}.hero{padding:22px 19px;margin:17px 0}.hero h1{font-size:20px}.hero-orb{width:65px;height:65px;font-size:22px}.stats{gap:8px}.stats article{padding:13px;min-height:103px}.stats article b{font-size:24px}.panel{padding:15px;border-radius:17px}.panelhead{align-items:flex-start}.module-grid{gap:8px}.module-grid button{min-height:118px;padding:12px}.module-hero{padding:18px}.coming{padding:40px 18px}.toolbar{align-items:stretch;flex-direction:column}.toolbar input{max-width:none}.section-title{font-size:8px}}
 @media(max-width:380px){.stats{grid-template-columns:1fr 1fr}.module-grid{grid-template-columns:1fr 1fr}.panelhead{flex-direction:column;align-items:flex-start}}
+
+
+/* Accessibility pass: stronger text contrast while preserving Black Smoke glass */
+:root{--ink:#fff;--muted:#d0d2da}
+.shell nav button{color:#f0f1f5}
+.shell nav button small,.brand small,.ship small,.shell nav label,.asidefoot small{color:#c1c4ce}
+.main header small,.hero small,.module-hero small,.section-title small,.stats article small,.stats article span,.panel p,.module-grid small,.module-grid i,.record-count small,.toolbar span,.empty,.coming>small,.coming p,.main-footer{color:#d0d2da}
+.hero p,.module-hero p,.user,.table-wrap td,.loginbox p,.loginbox label,.modal label{color:#f0f1f5}
+.glass-chip{color:#fff;border-color:rgba(255,255,255,.38);background:rgba(255,255,255,.12)}
+th{color:#fff;background:rgba(255,255,255,.16)}
+td{color:#f0f1f5}
+.loginbox footer{color:#c7c9d1}
+.ship span{color:#e0e2e8}
+.supply-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:0}
+.supply-card{position:relative;overflow:hidden;padding:19px 21px;border:1px solid rgba(255,255,255,.38);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(160,164,176,.1) 48%,rgba(20,21,26,.68));box-shadow:0 16px 38px rgba(0,0,0,.34),inset 0 1px 1px rgba(255,255,255,.42);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%)}
+.supply-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.supply-top small{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#e2e4eb}
+.supply-top span{font-size:8px;letter-spacing:1px;color:#d4f5df;border:1px solid rgba(180,240,200,.35);border-radius:30px;padding:5px 8px}
+.supply-card h3{font:700 17px Manrope;color:#fff;margin:16px 0 5px}
+.supply-amount{font:800 30px Manrope;color:#fff;letter-spacing:.2px}
+.supply-amount small{font:600 10px 'DM Sans';color:#e0e2e8}
+.supply-track{height:9px;border-radius:20px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.2);overflow:hidden;margin:16px 0 10px}
+.supply-track i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#c5cbd6,#fff);box-shadow:0 0 12px rgba(255,255,255,.4)}
+.supply-meta{display:flex;justify-content:space-between;gap:8px;color:#e0e2e8;font-size:10px}
+.supply-meta b{color:#fff}
+@media(max-width:680px){.supply-grid{grid-template-columns:1fr}.supply-card{padding:16px}.supply-amount{font-size:26px}}
