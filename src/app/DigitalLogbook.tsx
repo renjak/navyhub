@@ -81,91 +81,12 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
  const totalChecks=handoverItems.length+allItems.length;
  const selectedLabel=role?role:"Belum ditetapkan";
  const current=visible.find(c=>c.id===active)||visible.find(c=>c.scheduled_time<=clock+":00"&&!runFor(c)?.completed_at)||visible[0];
- const svgZone=active?checklists.find(c=>c.id===active)?.animation_key:current?.animation_key;
  return <section className="dl-shell">
   <header className="dl-head"><div><span className="dl-kicker">NAVYLOG / KRI ALAMANG-644</span><h2>Digital Logbook</h2><p>Panduan lokasi dan waktu pemeriksaan harian kapal.</p></div><div className="dl-clock"><b>{clock}</b><small>WAKTU KAPAL · WIB</small><small>{fmtDate(today)}</small></div></header>
   <div className="dl-shipmap">
    <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
    <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <svg viewBox="0 0 1440 430" preserveAspectRatio="xMidYMid meet">
-     <defs>
-      <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#0c5278" stopOpacity=".12"/><stop offset="1" stopColor="#0877a6" stopOpacity=".55"/></linearGradient>
-      <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#e6edf0"/><stop offset=".38" stopColor="#9eafb9"/><stop offset=".78" stopColor="#536b7c"/><stop offset="1" stopColor="#263f51"/></linearGradient>
-      <linearGradient id="super" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#f3f6f7"/><stop offset=".6" stopColor="#b7c5cc"/><stop offset="1" stopColor="#748b99"/></linearGradient>
-      <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#6ad7f8"/><stop offset="1" stopColor="#102f4a"/></linearGradient>
-      <linearGradient id="redStripe" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#d6534b"/><stop offset="1" stopColor="#651f2c"/></linearGradient>
-      <filter id="glow"><feGaussianBlur stdDeviation="5"/></filter>
-      <filter id="shadow"><feGaussianBlur stdDeviation="8"/></filter>
-     </defs>
-     <path d="M0 342 Q180 323 360 344 T720 344 T1080 344 T1440 342V430H0Z" fill="url(#sea)"/>
-     <path d="M0 366 Q170 347 340 366 T680 366 T1020 366 T1360 366" stroke="#54c9ef" strokeWidth="2" fill="none" opacity=".4"/>
-     <ellipse cx="720" cy="358" rx="590" ry="22" fill="#061a29" opacity=".55" filter="url(#shadow)"/>
-
-     <path d="M118 270 L1118 270 Q1232 267 1322 225 L1390 201 Q1364 249 1318 298 Q1275 342 1194 356 Q1080 376 910 377 L270 377 Q174 373 142 342 Q123 320 118 270Z" fill="url(#hull)" stroke="#e7f3f8" strokeWidth="3"/>
-     <path d="M126 322 Q340 339 620 342 L1045 342 Q1224 337 1340 265 Q1311 317 1269 345 Q1218 371 1113 376 L280 377 Q177 374 142 344Z" fill="url(#redStripe)" opacity=".95"/>
-     <path d="M145 270 H1117 Q1235 267 1322 225" stroke="#f7fbfc" strokeWidth="4" fill="none"/>
-     <path d="M158 286 H1124" stroke="#314e62" strokeWidth="4" opacity=".85"/>
-     <path d="M182 301 H1120" stroke="#d7e5eb" strokeWidth="1.5" opacity=".75"/>
-
-     <path d="M150 260 L155 222 L188 210 H368 L393 226 L403 268Z" fill="url(#super)" stroke="#506c7e" strokeWidth="3"/>
-     <path d="M174 218 H373" stroke="#f8fbfc" strokeWidth="5"/>
-     <path d="M183 210 V197 H355 V210" fill="none" stroke="#eaf3f6" strokeWidth="4"/>
-     <path d="M196 195 H337" stroke="#1d3b51" strokeWidth="5"/>
-     <g fill="#dce8ed" stroke="#4b6576" strokeWidth="2"><path d="M216 181Q245 165 275 181L290 196H205Z"/><path d="M300 181Q326 165 350 181L362 197H291Z"/></g>
-     <path d="M223 182 Q249 171 274 182 L285 190 H214Z" fill="#536f82"/>
-
-     <path d="M410 268 L425 218 L488 204 L518 162 L590 157 L606 128 L771 128 L803 153 L882 156 L917 180 L982 188 L1025 222 L1092 240 L1118 270Z" fill="url(#super)" stroke="#526d7d" strokeWidth="3"/>
-     <path d="M518 162 L590 157 L606 128 L771 128 L803 153 L882 156 L917 180 L982 188" stroke="#f4f8fa" strokeWidth="4" fill="none"/>
-     <path d="M607 133 H771 L798 156 H601Z" fill="#cbd6dc" stroke="#6e8492" strokeWidth="2"/>
-
-     <path d="M806 158 L876 161 L908 184 L974 192 L992 215 L859 210 L821 187Z" fill="#425f73" stroke="#dcebf1" strokeWidth="3"/>
-     <g fill="url(#glass)" stroke="#1e4059" strokeWidth="2">
-      <path d="M824 164 L844 165 L858 183 L833 182Z"/><path d="M850 166 L873 168 L890 186 L866 184Z"/><path d="M879 170 L899 174 L915 190 L895 187Z"/><path d="M910 180 L936 184 L949 198 L925 195Z"/><path d="M941 187 L965 193 L976 205 L954 201Z"/>
-     </g>
-     <path d="M808 157 L976 190" stroke="#f7fbfc" strokeWidth="3"/>
-
-     <g fill="#263f53" stroke="#e0eaf0" strokeWidth="2">
-      <rect x="457" y="222" width="40" height="30" rx="2"/><rect x="505" y="218" width="40" height="31" rx="2"/><rect x="552" y="213" width="43" height="36" rx="2"/>
-      <rect x="624" y="178" width="34" height="42" rx="2"/><rect x="666" y="177" width="34" height="43" rx="2"/><rect x="708" y="177" width="34" height="43" rx="2"/><rect x="750" y="178" width="34" height="42" rx="2"/>
-      <rect x="806" y="225" width="37" height="34" rx="2"/><rect x="850" y="225" width="37" height="34" rx="2"/><rect x="895" y="226" width="37" height="33" rx="2"/>
-     </g>
-     <g fill="url(#glass)" stroke="#c7e8f2" strokeWidth="1.5">
-      <rect x="461" y="226" width="32" height="21"/><rect x="509" y="222" width="32" height="22"/><rect x="556" y="217" width="35" height="26"/>
-      <rect x="629" y="182" width="24" height="28"/><rect x="671" y="181" width="24" height="29"/><rect x="713" y="181" width="24" height="29"/><rect x="755" y="182" width="24" height="28"/>
-      <rect x="810" y="229" width="29" height="24"/><rect x="854" y="229" width="29" height="24"/><rect x="899" y="230" width="29" height="23"/>
-     </g>
-
-     <path d="M687 128 L697 44 L707 128" stroke="#dfe9ed" strokeWidth="5" fill="#7b909d"/>
-     <path d="M691 81 H758 M695 91 H750 M699 103 H741" stroke="#344f64" strokeWidth="4"/>
-     <path d="M693 52 L720 35 L742 52 L720 58Z" fill="#dce7eb" stroke="#526b7b" strokeWidth="2"/>
-     <path d="M700 44 V20 M700 21 H735 M707 31 L724 12" stroke="#eaf4f7" strokeWidth="3" fill="none"/>
-     <path d="M720 15 L736 21 L720 27Z" fill="#c84b4d"/>
-     <path d="M755 128 L755 91 L780 76" stroke="#d9e8ed" strokeWidth="3" fill="none"/>
-     <path d="M772 76 Q795 66 815 76" stroke="#9eb5c1" strokeWidth="5" fill="none"/>
-
-     <g fill="#526c7d" stroke="#dce8ed" strokeWidth="2">
-      <path d="M575 157 V110 H601 V157Z"/><path d="M608 157 V105 H633 V157Z"/><path d="M582 109 H594 M615 104 H627" stroke="#263f53" strokeWidth="4"/>
-      <path d="M1024 222 V202 H1054 V222Z"/><path d="M1060 235 V218 H1080 V235Z"/>
-     </g>
-
-     <ellipse cx="1149" cy="248" rx="24" ry="8" fill="#718795" stroke="#e4eef2" strokeWidth="2"/>
-     <path d="M1138 245 V222 H1147 L1160 226" stroke="#eaf1f4" strokeWidth="5" fill="none"/>
-
-     <g stroke="#e7f2f6" strokeWidth="2" fill="none">
-      <path d="M154 213 H393 M164 200 H366 M183 213 V227 M218 213 V226 M254 213 V226 M290 213 V226 M326 213 V226 M362 213 V226"/>
-      <path d="M409 205 H498 M424 192 H511 M435 191 V205 M467 191 V205 M490 191 V205"/>
-      <path d="M984 218 H1090 M1004 207 H1083 M1004 207 V218 M1040 207 V218 M1075 207 V218"/>
-     </g>
-
-     <text x="1208" y="310" fill="#f2f7f9" stroke="#314d60" strokeWidth="1" paintOrder="stroke" fontSize="43" fontWeight="800" fontStyle="italic" letterSpacing="2">644</text>
-     <text x="111" y="404" fill="#b7d4e2" fontSize="14" fontWeight="700" letterSpacing="2">BURITAN</text>
-     <text x="1390" y="404" textAnchor="end" fill="#b7d4e2" fontSize="14" fontWeight="700" letterSpacing="2">HALUAN</text>
-
-     <g fill="none" stroke="#55d9fa" strokeWidth="2.5" opacity=".95">
-      <path d={svgZone==="mesin"||svgZone==="bilga"?"M535 268L535 305L455 305":svgZone==="elektronik"||svgZone==="rekap"?"M848 195L920 116L1030 116":svgZone==="bekal"||svgZone==="opname"?"M470 265L420 305L338 305":"M680 268L680 305L760 305"}/>
-     </g>
-     <circle cx={svgZone==="mesin"||svgZone==="bilga"?535:svgZone==="elektronik"||svgZone==="rekap"?848:svgZone==="bekal"||svgZone==="opname"?470:680} cy={svgZone==="elektronik"||svgZone==="rekap"?195:268} r="8" fill="#63e6ff" stroke="#e8fbff" strokeWidth="3"/>
-    </svg>
+    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Render cutaway tampak samping KRI Alamang-644 dengan lambung, anjungan, geladak dan kompartemen internal" loading="eager" />
     <div className="dl-vessel-caption"><span><b>PROFIL SAMPING</b> · KCR-40</span><span>44,00 m LOA · 7,40 m beam</span></div>
    </div>
    <div className="dl-zones"><span>Geladak Kerja</span><span>Anjungan / Navigasi</span><span>Kamar Mesin</span><span>Gudang Logistik</span><span>Dapur & Konsumsi</span><span>Akomodasi</span><span>Tangki Air & BBM</span></div>
