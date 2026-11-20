@@ -145,3 +145,40 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
  box-shadow:inset 0 2px 5px rgba(36,78,105,.06)!important;
 }
 .loginbox input:focus,.stock-search:focus{background:rgba(255,255,255,.96)!important}
+
+
+/* ULTRA-CLEAR GLASS — maximum transparency, crisp readable content */
+.login,.shell{
+ background:
+ radial-gradient(ellipse at 10% 12%,rgba(75,193,213,.24),transparent 34%),
+ radial-gradient(ellipse at 88% 18%,rgba(87,156,210,.20),transparent 36%),
+ linear-gradient(135deg,#d9edf4 0%,#edf5f8 50%,#dcebf2 100%)!important;
+}
+.loginbox,.panel,.stats article,.tank-card,.hero,.modal,.shell aside,.main header{
+ background:rgba(255,255,255,.16)!important;
+ background-image:linear-gradient(135deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.09) 100%)!important;
+ backdrop-filter:blur(38px) saturate(210%)!important;
+ -webkit-backdrop-filter:blur(38px) saturate(210%)!important;
+ border:1px solid rgba(255,255,255,.72)!important;
+ box-shadow:0 14px 42px rgba(35,78,106,.12),inset 0 1px 0 rgba(255,255,255,.86),inset 0 -1px 0 rgba(255,255,255,.18)!important;
+}
+.loginbox{background:rgba(255,255,255,.22)!important;background-image:linear-gradient(140deg,rgba(255,255,255,.38),rgba(255,255,255,.10))!important}
+.hero{background:linear-gradient(120deg,rgba(255,255,255,.26),rgba(198,234,244,.16),rgba(211,244,237,.16))!important}
+.shell aside{background:rgba(255,255,255,.20)!important}
+.main header{background:rgba(255,255,255,.13)!important}
+.panel,.stats article,.tank-card{background:rgba(255,255,255,.18)!important}
+.modal{background:rgba(255,255,255,.78)!important}
+.loginbox input,.stock-search,.access-edit select,.modal input,.modal select,.modal textarea{
+ background:rgba(255,255,255,.58)!important;
+ border:1px solid rgba(92,139,166,.48)!important;
+ color:#123b55!important;
+}
+.stock-table th{background:rgba(222,239,247,.42)!important;color:#254c67!important}
+.stock-table td{background:rgba(255,255,255,.08)!important;color:#294d66!important}
+.log{background:rgba(255,255,255,.06)!important}
+.loginbox label,.main header h2,.main>h3,.panel h3,.stats article b,.stock-intro h2,.tank-top b,.log b,.access-person b{color:#123b55!important}
+.loginbox footer,.main header small,.stats article small,.stats article span,.panel p,.log small,.stock-intro p,.tank-bottom span,.stock-note,.access-person small{color:#355b73!important}
+.shell nav button{color:#214d68!important}
+.shell nav button small,.shell nav label{color:#456c83!important}
+.shell nav button.selected,.shell nav button:hover{background:rgba(255,255,255,.40)!important;border-color:rgba(255,255,255,.8)!important}
+@supports not ((backdrop-filter:blur(2px))){.loginbox,.panel,.stats article,.tank-card,.hero,.shell aside,.main header{background:rgba(255,255,255,.86)!important}}
