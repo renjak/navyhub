@@ -90,10 +90,14 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   <div className="dl-shipmap">
    <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
    <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Render cutaway tampak samping KRI Alamang-644 dengan lambung, anjungan, geladak dan kompartemen internal" loading="eager" />
+    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Ilustrasi cutaway KRI Alamang-644" loading="eager" />
+    <div className="dl-active-zone" style={{left:({ "Geladak Kerja":"17%","Anjungan / Navigasi":"67%","Kamar Mesin":"22%","Gudang Logistik":"38%","Dapur & Konsumsi":"53%","Akomodasi":"68%","Tangki Air & BBM":"82%" } as Record<string,string>)[simCurrent.zone]||"50%",top:simCurrent.zone==="Geladak Kerja"||simCurrent.zone==="Anjungan / Navigasi"?"45%":"72%"}}>
+     <span className="dl-active-ring"/><b>{simCurrent.zone}</b>
+    </div>
+    <div className="dl-ship-scan" aria-hidden="true"/>
     <div className="dl-vessel-caption"><span><b>PROFIL SAMPING</b> · KCR-40</span><span>44,00 m LOA · 7,40 m beam</span></div>
    </div>
-   <div className="dl-zones"><span>Geladak Kerja</span><span>Anjungan / Navigasi</span><span>Kamar Mesin</span><span>Gudang Logistik</span><span>Dapur & Konsumsi</span><span>Akomodasi</span><span>Tangki Air & BBM</span></div>
+   <div className="dl-zones">{["Geladak Kerja","Anjungan / Navigasi","Kamar Mesin","Gudang Logistik","Dapur & Konsumsi","Akomodasi","Tangki Air & BBM"].map(z=><button key={z} className={simCurrent.zone===z?"active":""} onClick={()=>{const idx=simStops.findIndex(x=>x.zone===z);if(idx>=0){setSimIndex(idx);setSimPlaying(false)}}}>{z}</button>)}</div>
    <div className="dl-simulator">
     <div className="dl-sim-top"><div><b>SIMULASI ANIMASI KEGIATAN KAPAL</b><small>Mode demonstrasi visual · tidak menulis ke jurnal operasional</small></div><span className={simPlaying?"live":"idle"}>{simPlaying?"● BERJALAN":"Ⅱ SIAP DIPUTAR"}</span></div>
     <div className="dl-sim-current"><div className="dl-sim-pulse">◉</div><div><small>{simCurrent.time} WIB · {simIndex+1} / {simStops.length}</small><b>{simCurrent.title}</b><span>Lokasi simulasi: {simCurrent.zone}</span></div></div>
