@@ -12,6 +12,7 @@ export default function VesselStatus({supabase,unitId}:Props){
   if(gError){setError("Data GPS tidak dapat dibaca: "+gError.message);setGps(null);setWeather(null);setMarine(null);setBusy(false);return}
   setGps(data||null);
   if(!data){setWeather(null);setMarine(null);setBusy(false);return}
+  if(Date.now()-new Date(data.position_at).getTime()>15*60*1000){setWeather(null);setMarine(null);setError("Koordinat GPS terakhir lebih dari 15 menit. Cuaca dan pasang surut tidak ditampilkan agar tidak menyesatkan.");setBusy(false);return}
   try{
    const lat=Number(data.latitude),lon=Number(data.longitude);
    if(!Number.isFinite(lat)||!Number.isFinite(lon))throw new Error("Koordinat GPS tidak valid.");
@@ -24,7 +25,7 @@ export default function VesselStatus({supabase,unitId}:Props){
   }catch(e:any){setError(e?.message||"Data cuaca maritim tidak dapat dimuat.");setWeather(null);setMarine(null)}
   setBusy(false);
  },[supabase,unitId]);
- useEffect(()=>{load()},[load]);
+ useEffect(()=>{load();const timer=window.setInterval(load,60000);return()=>window.clearInterval(timer)},[load]);
  const stale=gps?Date.now()-new Date(gps.position_at).getTime()>15*60*1000:false;
  const hourly=marine?.hourly?.sea_level_height_msl||[];
  const usable=hourly.filter((x:any)=>typeof x==="number"&&Number.isFinite(x));
