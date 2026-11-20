@@ -90,67 +90,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   <div className="dl-shipmap">
    <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
    <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <svg className="dl-vessel-render" viewBox="0 0 1440 430" role="img" aria-label="Gambar teknik KRI Alamang-644 tampak samping, mengikuti blueprint kapal">
-      <defs>
-       <linearGradient id="sea" x2="0" y2="1"><stop stopColor="#0c5476" stopOpacity=".08"/><stop offset="1" stopColor="#04182b" stopOpacity=".85"/></linearGradient>
-       <linearGradient id="steel" x2="0" y2="1"><stop stopColor="#dbe8ee"/><stop offset=".55" stopColor="#8ea6b4"/><stop offset="1" stopColor="#526d7e"/></linearGradient>
-       <filter id="softGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <path d="M0 350 Q150 338 300 350 T600 350 T900 350 T1200 350 T1440 350 V430 H0Z" fill="url(#sea)"/>
-      <g stroke="#4fc8ed" strokeOpacity=".28" fill="none"><path d="M20 364 Q100 354 180 364 T340 364 T500 364 T660 364 T820 364 T980 364 T1140 364 T1300 364 T1440 364"/><path d="M70 380 Q160 374 250 380 T430 380 T610 380 T790 380 T970 380 T1150 380 T1330 380"/></g>
-      
-      <path d="M68 286 L205 286 L235 290 L360 290 L405 287 L420 258 L448 222 L665 222 L705 204 L865 204 L895 224 L970 249 L1042 252 L1080 270 L1170 270 L1225 275 L1352 278 L1410 279 L1372 308 L1322 341 Q1295 358 1248 362 L185 362 Q116 359 82 340 L62 319Z" fill="url(#steel)" stroke="#e8f2f6" strokeWidth="2.5"/>
-      <path d="M80 319 Q310 327 550 322 T1020 321 T1350 307 L1318 342 Q1288 358 1248 362 L185 362 Q112 358 82 339Z" fill="#7f2637" stroke="#c98b94" strokeWidth="1.5"/>
-      <path d="M68 286 L205 286 L235 290 L360 290 L405 287 L420 258 L448 222 L665 222 L705 204 L865 204 L895 224 L970 249 L1042 252 L1080 270 L1170 270 L1225 275 L1410 279" fill="none" stroke="#f4f8fa" strokeWidth="4"/>
-      
-      <path d="M70 282 L400 282 L415 259 L430 254 L430 288" fill="none" stroke="#354f61" strokeWidth="2"/>
-      <rect x="92" y="252" width="26" height="33" fill="#9eb2bd" stroke="#405c70" strokeWidth="2"/>
-      <path d="M115 251 L130 270 L145 270 L145 282 M165 251h23v31h-23z" fill="#aabdc7" stroke="#435f70" strokeWidth="2"/>
-      <rect x="246" y="242" width="30" height="44" fill="#718b9a" stroke="#e4eef2" strokeWidth="2"/>
-      <path d="M250 247h22m-22 8h22m-22 8h22m-22 8h22m-22 8h22" stroke="#243f53" strokeWidth="2"/>
-      <rect x="291" y="244" width="25" height="42" fill="#829ba9" stroke="#e4eef2" strokeWidth="2"/>
-      <path d="M294 251h19m-19 7h19m-19 7h19m-19 7h19" stroke="#2d4a5d" strokeWidth="2"/>
-      
-      <path d="M420 258 L447 220 L665 220 L700 201 L870 201 L900 223 L970 249 L1042 251 L1075 270" fill="#8299a8" fillOpacity=".8" stroke="#e7f1f5" strokeWidth="2"/>
-      <path d="M625 220 L625 165 L648 148 L653 104 L673 91 L743 91 L763 117 L785 151 L815 160 L844 200" fill="#9fb2bd" stroke="#e8f1f5" strokeWidth="2.5"/>
-      <path d="M650 151 L645 92 L661 63 L687 57 L718 68 L739 96 L748 147" fill="#aebfc8" stroke="#edf5f8" strokeWidth="2"/>
-      <path d="M665 62 L667 10 L673 62 M668 35 L643 29 M670 44 L701 39 M669 20 L688 18" fill="none" stroke="#dceaf0" strokeWidth="3"/>
-      <path d="M650 94 L624 84 L616 72 M645 110 L618 105 L610 91" fill="none" stroke="#c7dbe4" strokeWidth="2"/>
-      <path d="M740 146 L765 158 L805 158 L820 178 L846 201" fill="#849ca9" stroke="#e8f1f5" strokeWidth="2"/>
-      <path d="M705 202 L705 185 L860 185 L880 201" fill="none" stroke="#eaf3f7" strokeWidth="4"/>
-      
-      <path d="M865 205 L873 182 L1004 182 L1035 205 L1030 231 L895 229Z" fill="#233f54" stroke="#dceaf0" strokeWidth="2"/>
-      <g fill="#9bd4e8" fillOpacity=".72" stroke="#d9eaf1" strokeWidth="1.5"><path d="M885 190h29v29h-29z"/><path d="M920 190h29v29h-29z"/><path d="M955 190h29v29h-29z"/><path d="M990 190h27l-3 29h-24z"/></g>
-      <path d="M870 181 L1007 181 L1038 205 M890 178h116" fill="none" stroke="#f2f7f9" strokeWidth="3"/>
-      
-      <path d="M660 60 L660 22 L670 10 L678 22 L678 59 M656 39h28 M660 48h22" fill="none" stroke="#f3f7f9" strokeWidth="2.5"/>
-      <path d="M652 65 L628 58 L621 50 M674 74 L697 70 M687 91 L712 86" fill="none" stroke="#d7e6ec" strokeWidth="2"/>
-      <path d="M795 177v-22h38v22 M802 155h24l-4-9h-16z M935 180v-20h38v20 M942 160h24l-4-8h-16z" fill="#8198a6" stroke="#e7f1f5" strokeWidth="2"/>
-      <path d="M1000 181v-16h12v16 M1010 165h20 M1020 170l22 -10" stroke="#dceaf0" strokeWidth="2" fill="none"/>
-      
-      <path d="M1070 270 L1070 254 L1380 258 L1400 277" fill="none" stroke="#dce8ed" strokeWidth="3"/>
-      <path d="M1090 256h280 M1100 250v12m28-12v12m28-12v12m28-12v12m28-12v12m28-12v12m28-12v12m28-12v12m28-12v12m28-12v12" stroke="#506a7b" strokeWidth="1.5"/>
-      <path d="M1185 254 L1194 234 L1223 232 L1240 254Z" fill="#a9bbc4" stroke="#435f70" strokeWidth="2"/>
-      <path d="M1195 234v-10h28v10" stroke="#e5eef2" strokeWidth="2" fill="none"/>
-      <path d="M1245 274h25m-18-7v13m10-13v13" stroke="#4a6577" strokeWidth="2"/>
-      
-      <path d="M70 322 L65 337 L82 348 L112 352 M78 340 L105 340 L150 351 L260 354 L310 354" fill="none" stroke="#314d61" strokeWidth="2"/>
-      <path d="M72 340 L85 350 L90 369 L105 369 L111 351 M104 351 L130 358 L250 358" fill="none" stroke="#cbdde5" strokeWidth="2"/>
-      <path d="M82 365h42m-30 -8v14m20-14v14" stroke="#9bb8c8" strokeWidth="2"/>
-      
-      <ellipse cx="570" cy="278" rx="13" ry="7" fill="#25445b" stroke="#d8e7ee" strokeWidth="2"/>
-      <ellipse cx="1040" cy="264" rx="11" ry="7" fill="#25445b" stroke="#d8e7ee" strokeWidth="2"/>
-      <path d="M90 300 Q500 309 900 303 T1365 294" stroke="#d8e4ea" strokeWidth="1.5" fill="none"/>
-      <g transform="translate(1310 293)"><rect width="55" height="24" rx="3" fill="#e5edf1" stroke="#476174" strokeWidth="1.5"/><text x="27.5" y="17" textAnchor="middle" fontSize="18" fontWeight="700" fill="#1b3549">644</text></g>
-      
-      <g stroke="#35566b" strokeWidth="1.5" fill="#d5b987" fillOpacity=".92">
-       <rect x="105" y="294" width="155" height="31"/><rect x="262" y="294" width="150" height="31"/><rect x="414" y="294" width="128" height="31"/><rect x="544" y="294" width="125" height="31"/><rect x="671" y="294" width="140" height="31"/><rect x="813" y="294" width="145" height="31"/><rect x="960" y="294" width="145" height="31"/><rect x="1107" y="294" width="178" height="31"/>
-      </g>
-      <g stroke="#45677c" strokeWidth="2" fill="none"><path d="M260 294v31m152-31v31m130-31v31m127-31v31m142-31v31m147-31v31m147-31v31"/></g>
-      <g fill="#102f46" opacity=".88" fontSize="12" fontWeight="700"><text x="182" y="314" textAnchor="middle">BURITAN</text><text x="337" y="314" textAnchor="middle">BEKAL</text><text x="478" y="314" textAnchor="middle">MESIN</text><text x="606" y="314" textAnchor="middle">UTILITAS</text><text x="741" y="314" textAnchor="middle">AKOMODASI</text><text x="885" y="314" textAnchor="middle">DAPUR</text><text x="1032" y="314" textAnchor="middle">KOMANDO</text><text x="1196" y="314" textAnchor="middle">HALUAN</text></g>
-      <path d="M45 371H1410" stroke="#8fb8ca" strokeOpacity=".55" strokeWidth="1"/>
-      <g className="dl-svg-crew" fill="#18394f" stroke="#e5f1f6" strokeWidth="1.2"><circle cx="320" cy="235" r="5"/><path d="M315 241h10l4 18h-18z"/><circle cx="465" cy="212" r="5"/><path d="M460 218h10l4 18h-18z"/></g>
-     </svg>
+    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Ilustrasi cutaway tampak samping KRI Alamang-644" loading="eager" fetchPriority="high" />
     <div className="dl-active-zone" style={{left:({ "Geladak Kerja":"88%","Anjungan / Navigasi":"66%","Kamar Mesin":"34%","Gudang Logistik":"24%","Dapur & Konsumsi":"59%","Akomodasi":"51%","Tangki Air & BBM":"76%" } as Record<string,string>)[simCurrent.zone]||"50%",top:simCurrent.zone==="Anjungan / Navigasi"?"48%":simCurrent.zone==="Geladak Kerja"?"67%":"79%"}}>
      <span className="dl-active-ring"/><b>{simCurrent.zone}</b>
     </div>
