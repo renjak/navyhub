@@ -150,3 +150,9 @@ td{color:#f0f1f5}
 .dl-vessel-caption{display:flex;justify-content:space-between;gap:12px;padding:2px 8px 10px;color:#9fc5d8;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
 .dl-vessel-caption b{color:#dff7ff;letter-spacing:.13em}
 @media(max-width:760px){.dl-vessel-art{min-width:760px}.dl-vessel-caption{font-size:8px}}
+
+/* Realistic KRI Alamang cutaway render asset */
+.dl-vessel-art{position:relative;padding:0;background:linear-gradient(180deg,#062441,#03192c)}
+.dl-vessel-render{display:block;width:100%;height:auto;max-height:380px;object-fit:contain;object-position:center;filter:drop-shadow(0 12px 18px rgba(0,0,0,.28))}
+.dl-vessel-caption{padding:7px 14px 10px;background:rgba(2,19,34,.62);border-top:1px solid rgba(126,215,240,.16)}
+@media(max-width:760px){.dl-vessel-render{min-width:0;width:100%;max-height:none}.dl-vessel-art{min-width:0}}
