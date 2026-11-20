@@ -6,7 +6,7 @@ type Checklist={id:string;title:string;description:string|null;category:string;a
 type Item={id:string;checklist_id:string;item_order:number;item_label:string;is_required:boolean};
 type Run={id:string;checklist_id:string;duty_date:string;duty_role:Role;performed_by:string;performed_at:string;completed_at:string|null};
 type Response={id:string;run_id:string;checklist_item_id:string;result:"pass"|"fail"|"not_applicable";notes:string|null;created_at:string};
-const ROLES:Role[]=["Perwira Jaga","KKM","Komandan"];
+const ROLES:Role[]=["Perwira Jaga"];
 const WIB="Asia/Jakarta";
 const localDate=()=>new Intl.DateTimeFormat("en-CA",{timeZone:WIB,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const localTime=()=>new Intl.DateTimeFormat("en-GB",{timeZone:WIB,hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date());
@@ -15,7 +15,7 @@ const hh=(t:string)=>String(t||"").slice(0,5);
 const pct=(n:number,d:number)=>d?Math.round(n/d*100):0;
 const ZONE:any={jaga:"Geladak Kerja",mesin:"Kamar Mesin",bekal:"Geladak Kerja · Gudang Logistik",masak:"Dapur & Gudang",elektronik:"Anjungan / Navigasi",bilga:"Kamar Mesin",opname:"Gudang Logistik",rekap:"Anjungan / Ruang Komando"};
 export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase:any;unitId:string;userId:string;viewer:boolean}){
- const [clock,setClock]=useState(localTime()),[today,setToday]=useState(localDate()),[checklists,setChecklists]=useState<Checklist[]>([]),[items,setItems]=useState<Item[]>([]),[runs,setRuns]=useState<Run[]>([]),[responses,setResponses]=useState<Response[]>([]),[assignment,setAssignment]=useState<any>(null),[role,setRole]=useState<Role|null>(null),[active,setActive]=useState<string|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[tab,setTab]=useState<"ceklist"|"riwayat"|"pengawasan">("ceklist"),[failItem,setFailItem]=useState<string|null>(null),[failNote,setFailNote]=useState("");
+ const [clock,setClock]=useState(localTime()),[today,setToday]=useState(localDate()),[checklists,setChecklists]=useState<Checklist[]>([]),[items,setItems]=useState<Item[]>([]),[runs,setRuns]=useState<Run[]>([]),[responses,setResponses]=useState<Response[]>([]),[assignment,setAssignment]=useState<any>(null),[personnel,setPersonnel]=useState<any[]>([]),[watchType,setWatchType]=useState("Jaga Laut"),[oldWatchId,setOldWatchId]=useState(""),[newWatchId,setNewWatchId]=useState(""),[handoverNotes,setHandoverNotes]=useState(""),[role,setRole]=useState<Role|null>(null),[active,setActive]=useState<string|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[tab,setTab]=useState<"ceklist"|"riwayat"|"pengawasan">("ceklist"),[failItem,setFailItem]=useState<string|null>(null),[failNote,setFailNote]=useState("");
  const simStops=[{time:"05:30",title:"Persiapan dan apel personel",zone:"Geladak Kerja",icon:"♟"},{time:"06:15",title:"Pemeriksaan kamar mesin",zone:"Kamar Mesin",icon:"⚙"},{time:"07:00",title:"Pemeriksaan anjungan dan navigasi",zone:"Anjungan / Navigasi",icon:"⌁"},{time:"08:00",title:"Penerimaan bekal logistik",zone:"Gudang Logistik",icon:"▦"},{time:"09:00",title:"Penyiapan konsumsi",zone:"Dapur & Konsumsi",icon:"♨"},{time:"10:00",title:"Pemeriksaan akomodasi",zone:"Akomodasi",icon:"▤"},{time:"11:00",title:"Pemeriksaan tangki dan utilitas",zone:"Tangki Air & BBM",icon:"◉"}];
  const [simIndex,setSimIndex]=useState(0),[simPlaying,setSimPlaying]=useState(false),[simSpeed,setSimSpeed]=useState(1),[simLoop,setSimLoop]=useState(true),[vesselImageFailed,setVesselImageFailed]=useState(false);
  const simCurrent=simStops[simIndex];
@@ -27,7 +27,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
  const handoverRun=handover?runs.find(r=>r.checklist_id===handover.id&&r.duty_date===today&&r.duty_role==="Perwira Jaga"):undefined;
  const handoverItems=handover?items.filter(i=>i.checklist_id===handover.id):[];
  const handoverDone=handoverItems.length>0&&handoverItems.every(i=>responses.some(r=>r.run_id===handoverRun?.id&&r.checklist_item_id===i.id&&r.result==="pass"));
- const roleReady=!!assignment&&ROLES.includes(assignment.duty_role);
+ const roleReady=!!assignment&&assignment.duty_role==="Perwira Jaga";
  const visible=useMemo(()=>checklists.filter(c=>c.assigned_role===role&&c.sequence_no!==1).sort((a,b)=>a.sequence_no-b.sequence_no),[checklists,role]);
  const allItems=useMemo(()=>items.filter(i=>visible.some(c=>c.id===i.checklist_id)),[items,visible]);
  const completed=useMemo(()=>allItems.filter(i=>responses.some(r=>r.checklist_item_id===i.id&&r.result==="pass"&&runs.some(run=>run.id===r.run_id&&run.duty_date===today&&run.duty_role===role))).length,[allItems,responses,runs,today,role]);
@@ -35,15 +35,16 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
  const reload=useCallback(async()=>{
   if(!unitId)return;
   setLoading(true);
-  const [c,i,a,r]=await Promise.all([
+  const [c,i,a,r,p]=await Promise.all([
    supabase.from("checklists").select("id,title,description,category,assigned_role,scheduled_time,location_label,instructions,animation_key,sequence_no").eq("unit_id",unitId).eq("is_active",true).order("sequence_no"),
    supabase.from("checklist_items").select("id,checklist_id,item_order,item_label,is_required").order("item_order"),
-   supabase.from("daily_watch_assignments").select("id,duty_date,duty_role,selected_by,created_at").eq("unit_id",unitId).eq("duty_date",today).maybeSingle(),
-   supabase.from("checklist_runs").select("id,checklist_id,duty_date,duty_role,performed_by,performed_at,completed_at").eq("unit_id",unitId).eq("duty_date",today)
+   supabase.from("daily_watch_assignments").select("*").eq("unit_id",unitId).eq("duty_date",today).maybeSingle(),
+   supabase.from("checklist_runs").select("id,checklist_id,duty_date,duty_role,performed_by,performed_at,completed_at").eq("unit_id",unitId).eq("duty_date",today),
+   supabase.from("personnel").select("id,full_name,rank_title,nrp,position").eq("unit_id",unitId).order("sequence_no",{ascending:true})
   ]);
-  if(c.error||i.error||a.error||r.error){setNotice("Data checklist belum dapat dimuat: "+(c.error||i.error||a.error||r.error)?.message);setLoading(false);return}
+  if(c.error||i.error||a.error||r.error||p.error){setNotice("Data checklist/personel belum dapat dimuat: "+(c.error||i.error||a.error||r.error||p.error)?.message);setLoading(false);return}
   const cs=(c.data||[]) as Checklist[],its=(i.data||[]) as Item[],rs=(r.data||[]) as Run[];
-  setChecklists(cs);setItems(its);setAssignment(a.data||null);setRole((a.data?.duty_role as Role)||null);setRuns(rs);
+  setChecklists(cs);setItems(its);setAssignment(a.data||null);setRole((a.data?.duty_role==="Perwira Jaga"?"Perwira Jaga":null));setPersonnel((p.data||[]) as any[]);setWatchType(a.data?.watch_type||"Jaga Laut");setOldWatchId(a.data?.old_watch_personnel_id||"");setNewWatchId(a.data?.new_watch_personnel_id||"");setHandoverNotes(a.data?.handover_notes||"");setRuns(rs);
   if(rs.length){const ids=rs.map(x=>x.id);const {data:resp,error}=await supabase.from("checklist_responses").select("id,run_id,checklist_item_id,result,notes,created_at").in("run_id",ids);if(error)setNotice("Riwayat checklist belum dapat dimuat: "+error.message);else setResponses((resp||[]) as Response[])}else setResponses([]);
   setLoading(false);
  },[supabase,unitId,today]);
@@ -73,12 +74,16 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   setFailItem(null);setFailNote("");setNotice(result==="pass"?"Pemeriksaan berhasil dicatat.":"Temuan berhasil dicatat dan masuk pengawasan.");
   setBusy(false);
  };
- const selectRole=async(r:Role)=>{
-  if(viewer||!handoverDone||nowMin<465||busy)return;
+ const saveWatchAssignment=async()=>{
+  if(viewer||busy||!handoverDone||nowMin<465)return;
+  const oldPerson=personnel.find(p=>p.id===oldWatchId),newPerson=personnel.find(p=>p.id===newWatchId);
+  if(!oldPerson||!newPerson){setNotice("Pilih Perwira Jaga lama dan Perwira Jaga baru dari daftar personel.");return}
+  if(oldPerson.id===newPerson.id){setNotice("Perwira Jaga lama dan baru harus merupakan personel yang berbeda.");return}
   setBusy(true);setNotice("");
-  const {data,error}=await supabase.from("daily_watch_assignments").insert({unit_id:unitId,duty_date:today,duty_role:r,selected_by:userId}).select("id,duty_date,duty_role,selected_by,created_at").single();
-  if(error){const {data:existing}=await supabase.from("daily_watch_assignments").select("id,duty_date,duty_role,selected_by,created_at").eq("unit_id",unitId).eq("duty_date",today).maybeSingle();if(existing){setAssignment(existing);setRole(existing.duty_role as Role);setNotice("Petugas jaga hari ini sudah ditetapkan: "+existing.duty_role)}else setNotice("Penetapan petugas gagal: "+error.message)}
-  else{setAssignment(data);setRole(r);setNotice("Petugas jaga hari ini ditetapkan: "+r+". Checklist harian telah dibuka.")}
+  const payload={unit_id:unitId,duty_date:today,duty_role:"Perwira Jaga",selected_by:userId,watch_type:watchType,old_watch_personnel_id:oldPerson.id,new_watch_personnel_id:newPerson.id,old_watch_name:oldPerson.full_name,old_watch_rank:oldPerson.rank_title,old_watch_nrp:oldPerson.nrp,new_watch_name:newPerson.full_name,new_watch_rank:newPerson.rank_title,new_watch_nrp:newPerson.nrp,handover_notes:handoverNotes.trim()};
+  const {data,error}=await supabase.from("daily_watch_assignments").insert(payload).select("*").single();
+  if(error){const {data:existing}=await supabase.from("daily_watch_assignments").select("*").eq("unit_id",unitId).eq("duty_date",today).maybeSingle();if(existing){setAssignment(existing);setRole("Perwira Jaga");setNotice("Penetapan jaga hari ini sudah tersimpan sebelumnya.")}else setNotice("Penetapan jaga gagal: "+error.message)}
+  else{setAssignment(data);setRole("Perwira Jaga");setNotice("Serah terima "+watchType+" tersimpan. Checklist Perwira Jaga telah dibuka.")}
   setBusy(false);
  };
  const runFor=(c:Checklist)=>runs.find(r=>r.checklist_id===c.id&&r.duty_date===today&&r.duty_role===role);
@@ -92,7 +97,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   <div className="dl-shipmap">
    <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
    <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Ilustrasi cutaway tampak samping KRI Alamang-644" loading="eager" fetchPriority="high" onError={()=>setVesselImageFailed(true)} />
+    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-644.webp" alt="Ilustrasi NAVYLOG KRI Alamang-644 sesuai gambar referensi yang diunggah" loading="eager" fetchPriority="high" onError={()=>setVesselImageFailed(true)} />
     {vesselImageFailed&&<div className="dl-image-error" role="status">Ilustrasi kapal belum dapat dimuat. Periksa aset /images/navylog-kri-alamang-cutaway.webp pada deployment.</div>}
     <div className="dl-active-zone" style={simPosition} key={simCurrent.zone}>
      <span className="dl-active-ring"/><span className="dl-active-tag"><i>{simCurrent.icon}</i><b>{simCurrent.zone}</b></span>
@@ -120,7 +125,14 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
    <div className="dl-gate-step"><span>07:30</span><div><b>Serah terima jaga</b><small>Konfirmasi pengecekan tali tambat, tangga kapal, cuaca, dan kejadian menonjol.</small></div><strong>{handoverDone?"SELESAI":handoverRun?"BERLANGSUNG":"MENUNGGU"}</strong></div>
    {handover&&<div className="dl-handover-items">{handoverItems.map(i=>{const res=responses.find(r=>r.run_id===handoverRun?.id&&r.checklist_item_id===i.id);return <div className="dl-checkrow" key={i.id}><span>{i.item_label}</span><button disabled={viewer||busy||!!res} onClick={()=>mark(handover,i,"pass")}>{res?"✓ Dilaksanakan":"Tandai selesai"}</button></div>})}</div>}
    <div className="dl-gate-step role-gate"><span>07:45</span><div><b>Penetapan petugas jaga hari ini</b><small>Pilih pejabat yang bertugas sebelum checklist harian dibuka.</small></div><strong>{roleReady?assignment.duty_role:"PILIH PETUGAS"}</strong></div>
-   {!roleReady?<div className="dl-role-select">{ROLES.map(r=><button key={r} className={role===r?"on":""} disabled={viewer||busy||!handoverDone||nowMin<465} onClick={()=>selectRole(r)}>{r}</button>)}{!handoverDone?<small>Selesaikan serah terima jaga terlebih dahulu.</small>:nowMin<465?<small>Pemilihan petugas dibuka pukul 07.45 WIB.</small>:null}</div>:<div className="dl-assigned"><b>Petugas terpilih: {assignment.duty_role}</b><small>Penetapan tersimpan untuk {fmtDate(today)}. Checklist sesuai peran telah dibuka.</small></div>}
+   {!roleReady?<div className="dl-role-select dl-watch-form">
+    <label>Jenis penugasan<select value={watchType} onChange={e=>setWatchType(e.target.value)} disabled={viewer||busy}><option>Jaga Laut</option><option>Jaga Darat</option></select></label>
+    <label>Perwira Jaga lama · yang menyerahkan<select value={oldWatchId} onChange={e=>setOldWatchId(e.target.value)} disabled={viewer||busy}><option value="">Pilih personel lama</option>{personnel.map(p=><option key={p.id} value={p.id}>{p.rank_title||"Tanpa pangkat"} · {p.full_name} · NRP {p.nrp||"—"}</option>)}</select></label>
+    <label>Perwira Jaga baru · yang menerima<select value={newWatchId} onChange={e=>setNewWatchId(e.target.value)} disabled={viewer||busy}><option value="">Pilih personel baru</option>{personnel.map(p=><option key={p.id} value={p.id}>{p.rank_title||"Tanpa pangkat"} · {p.full_name} · NRP {p.nrp||"—"}</option>)}</select></label>
+    <label>Catatan serah terima<textarea value={handoverNotes} onChange={e=>setHandoverNotes(e.target.value)} placeholder="Catatan kondisi, kejadian menonjol, atau hal yang perlu diteruskan..." disabled={viewer||busy}/></label>
+    <button className="dl-watch-save" disabled={viewer||busy||!handoverDone||nowMin<465||!oldWatchId||!newWatchId||oldWatchId===newWatchId} onClick={saveWatchAssignment}>{busy?"Menyimpan...":"Simpan Penetapan Jaga"}</button>
+    {!handoverDone?<small>Selesaikan serah terima jaga terlebih dahulu.</small>:nowMin<465?<small>Pemilihan petugas dibuka pukul 07.45 WIB.</small>:personnel.length===0?<small>Daftar personel NAVYCREW belum tersedia.</small>:null}
+   </div>:<div className="dl-assigned"><b>{assignment.watch_type||"Jaga"} · Perwira Jaga</b><small>Menyerahkan: {assignment.old_watch_rank||"—"} {assignment.old_watch_name||"—"} · NRP {assignment.old_watch_nrp||"—"}</small><small>Menerima: {assignment.new_watch_rank||"—"} {assignment.new_watch_name||"—"} · NRP {assignment.new_watch_nrp||"—"}</small>{assignment.handover_notes&&<small>Catatan: {assignment.handover_notes}</small>}<small>Penetapan tersimpan untuk {fmtDate(today)}. Checklist Perwira Jaga telah dibuka.</small></div>}
   </div>
   <div className="dl-summary"><div><b>{checklists.length}</b><small>Agenda ceklis</small></div><div><b>{completedChecks}</b><small>Item selesai</small></div><div><b>{openFindings.length}</b><small>Temuan</small></div><div><b>{pct(completedChecks,totalChecks)}%</b><small>Progres hari ini</small></div></div>
   <div className="dl-tabs"><button className={tab==="ceklist"?"on":""} onClick={()=>setTab("ceklist")}>Checklist Harian</button><button className={tab==="riwayat"?"on":""} onClick={()=>setTab("riwayat")}>Riwayat Pelaksanaan</button><button className={tab==="pengawasan"?"on":""} onClick={()=>setTab("pengawasan")}>Pengawasan</button></div>
