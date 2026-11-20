@@ -78,7 +78,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
  const runFor=(c:Checklist)=>runs.find(r=>r.checklist_id===c.id&&r.duty_date===today&&r.duty_role===role);
  const itemState=(c:Checklist,i:Item)=>{const run=runFor(c);return responses.find(r=>r.run_id===run?.id&&r.checklist_item_id===i.id)};
  const completedChecks=responses.filter(r=>r.result==="pass"&&runs.some(run=>run.duty_date===today&&run.id===r.run_id)).length;
- const totalChecks=items.filter(i=>checklists.some(c=>c.id===i.checklist_id)).length;
+ const totalChecks=handoverItems.length+allItems.length;
  const selectedLabel=role?role:"Belum ditetapkan";
  const current=visible.find(c=>c.id===active)||visible.find(c=>c.scheduled_time<=clock+":00"&&!runFor(c)?.completed_at)||visible[0];
  const svgZone=active?checklists.find(c=>c.id===active)?.animation_key:current?.animation_key;
