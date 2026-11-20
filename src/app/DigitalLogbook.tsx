@@ -90,7 +90,44 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   <div className="dl-shipmap">
    <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
    <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Ilustrasi cutaway KRI Alamang-644" loading="eager" />
+    <svg className="dl-vessel-render" viewBox="0 0 1440 430" role="img" aria-label="Ilustrasi kapal KRI Alamang-644 tampak samping dengan kompartemen internal">
+      <defs>
+       <linearGradient id="hull" x2="0" y2="1"><stop stopColor="#d9e2e8"/><stop offset=".48" stopColor="#8299a8"/><stop offset=".72" stopColor="#344f63"/><stop offset="1" stopColor="#142d43"/></linearGradient>
+       <linearGradient id="deck" x2="0" y2="1"><stop stopColor="#eaf3f7"/><stop offset="1" stopColor="#8fa8b8"/></linearGradient>
+       <linearGradient id="room" x2="0" y2="1"><stop stopColor="#f4c77a"/><stop offset="1" stopColor="#704a2b"/></linearGradient>
+       <linearGradient id="sea" x2="0" y2="1"><stop stopColor="#1677a2" stopOpacity=".05"/><stop offset="1" stopColor="#061d35" stopOpacity=".9"/></linearGradient>
+       <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <path d="M0 365 Q180 344 360 365 T720 365 T1080 365 T1440 365 V430 H0Z" fill="url(#sea)"/>
+      <path d="M20 366 Q90 354 160 366 T300 366 T440 366 T580 366 T720 366 T860 366 T1000 366 T1140 366 T1280 366 T1420 366" fill="none" stroke="#4cc9ef" strokeOpacity=".55" strokeWidth="3"/>
+      <path d="M40 306 L480 306 L525 282 L990 282 L1060 294 L1405 294 L1370 340 Q1342 365 1284 370 L170 370 Q100 366 62 344Z" fill="url(#hull)" stroke="#d9e8ef" strokeWidth="3"/>
+      <path d="M55 345 Q330 356 620 351 T1370 337 L1355 356 Q1320 372 1270 375 L170 375 Q95 370 62 351Z" fill="#8c2634" stroke="#d9a6a6" strokeWidth="2"/>
+      <path d="M60 306 L1400 294" stroke="#f2f7fa" strokeWidth="7"/>
+      <path d="M80 285 L485 285 L510 265 L985 265 L1030 280 L1390 280" fill="none" stroke="url(#deck)" strokeWidth="18"/>
+      <path d="M490 265 L510 206 L560 196 L630 196 L650 172 L780 172 L820 198 L1005 198 L1035 260" fill="#9eb2bf" stroke="#e5eef3" strokeWidth="3"/>
+      <path d="M610 195 L625 145 L665 126 L770 126 L804 167 L808 198" fill="#aebfc9" stroke="#edf5f8" strokeWidth="3"/>
+      <path d="M645 145 L660 75 L690 61 L720 76 L745 130" fill="#829baa" stroke="#e7f1f5" strokeWidth="3"/>
+      <path d="M677 63 L685 12 L691 63 M678 34 L651 30 M686 48 L725 43 M683 22 L705 19" stroke="#eaf3f8" strokeWidth="4" fill="none"/>
+      <path d="M520 200 L520 180 L540 180 L540 200 M560 196 L560 177 L579 177 L579 196" fill="#dce7ed" stroke="#526d7d" strokeWidth="2"/>
+      <g fill="#142f47" stroke="#cfe3ee" strokeWidth="2"><rect x="818" y="205" width="42" height="28" rx="5"/><rect x="866" y="205" width="42" height="28" rx="5"/><rect x="914" y="205" width="42" height="28" rx="5"/><rect x="962" y="205" width="35" height="28" rx="5"/></g>
+      <g stroke="#4c6576" strokeWidth="2" fill="url(#room)">
+       <rect x="88" y="294" width="170" height="49" rx="3"/><rect x="265" y="294" width="190" height="49" rx="3"/><rect x="463" y="294" width="145" height="49" rx="3"/><rect x="616" y="294" width="150" height="49" rx="3"/><rect x="774" y="294" width="160" height="49" rx="3"/><rect x="942" y="294" width="205" height="49" rx="3"/><rect x="1155" y="294" width="140" height="49" rx="3"/>
+      </g>
+      <g fill="#f6dba5" opacity=".95"><rect x="98" y="302" width="150" height="34"/><rect x="276" y="302" width="168" height="34"/><rect x="473" y="302" width="125" height="34"/><rect x="626" y="302" width="130" height="34"/><rect x="784" y="302" width="140" height="34"/><rect x="952" y="302" width="185" height="34"/><rect x="1165" y="302" width="120" height="34"/></g>
+      <g fill="#244e68" stroke="#d5e8ef" strokeWidth="2">
+       <rect x="130" y="312" width="84" height="18" rx="4"/><circle cx="170" cy="321" r="12" fill="#4c879a"/>
+       <rect x="292" y="308" width="38" height="25" rx="3"/><rect x="340" y="308" width="38" height="25" rx="3"/><rect x="388" y="308" width="38" height="25" rx="3"/>
+       <rect x="492" y="307" width="95" height="27" rx="4"/><circle cx="520" cy="320" r="9" fill="#57b3b2"/><circle cx="560" cy="320" r="9" fill="#57b3b2"/>
+       <rect x="650" y="309" width="80" height="23" rx="4"/><rect x="800" y="308" width="45" height="26" rx="5"/><rect x="852" y="308" width="45" height="26" rx="5"/>
+       <rect x="975" y="310" width="130" height="20" rx="8"/><circle cx="1010" cy="320" r="12" fill="#9cc4d1"/><circle cx="1065" cy="320" r="12" fill="#9cc4d1"/>
+      </g>
+      <g fill="none" stroke="#e7f4fa" strokeWidth="3"><path d="M85 285 V260 H480 V285 M1040 280 V256 H1380 V280"/><path d="M90 260h385m560 -4h365"/><path d="M100 260v-18m45 18v-18m45 18v-18m45 18v-18m45 18v-18m45 18v-18m45 18v-18m45 18v-18m45 18v-18"/></g>
+      <g fill="#e4f0f6" stroke="#547084" strokeWidth="2"><rect x="1300" y="304" width="78" height="30" rx="4"/><text x="1339" y="328" textAnchor="middle" fontSize="25" fontWeight="700" fill="#17344b" stroke="none">644</text></g>
+      <g fill="#0c263e" stroke="#a8d9ec" strokeWidth="2"><rect x="110" y="220" width="14" height="38" rx="3"/><rect x="150" y="220" width="14" height="38" rx="3"/><rect x="180" y="220" width="14" height="38" rx="3"/></g>
+      <g stroke="#c5eaf8" strokeWidth="2" fill="none" opacity=".8"><path d="M55 381 Q150 370 245 381 T435 381 T625 381 T815 381 T1005 381 T1195 381 T1385 381"/></g>
+      <g className="dl-svg-crew" fill="#102c40" stroke="#d7e7ed" strokeWidth="1.4"><circle cx="185" cy="248" r="5"/><path d="M180 254h10l4 25h-18z"/><circle cx="305" cy="248" r="5"/><path d="M300 254h10l4 25h-18z"/></g>
+      <g fill="#9eeaff" opacity=".9"><circle cx="320" cy="318" r="4"/><circle cx="540" cy="318" r="4"/><circle cx="700" cy="318" r="4"/><circle cx="875" cy="318" r="4"/><circle cx="1040" cy="318" r="4"/></g>
+     </svg>
     <div className="dl-active-zone" style={{left:({ "Geladak Kerja":"17%","Anjungan / Navigasi":"67%","Kamar Mesin":"22%","Gudang Logistik":"38%","Dapur & Konsumsi":"53%","Akomodasi":"68%","Tangki Air & BBM":"82%" } as Record<string,string>)[simCurrent.zone]||"50%",top:simCurrent.zone==="Geladak Kerja"||simCurrent.zone==="Anjungan / Navigasi"?"45%":"72%"}}>
      <span className="dl-active-ring"/><b>{simCurrent.zone}</b>
     </div>
