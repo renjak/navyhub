@@ -63,3 +63,51 @@ body{background:radial-gradient(ellipse at 12% 8%,rgba(183,229,244,.52),transpar
 .outline,.logout{color:#244e69;font-weight:700}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(23,145,177,.28);outline-offset:2px}
 @supports not ((backdrop-filter:blur(2px))){.stats article,.panel,.tank-card,.shell aside,.hero{background:#fff}}
+
+
+/* STRONG GLASS UI — visible translucent glass on dashboard and login */
+.login{
+ position:relative;isolation:isolate;overflow:hidden;
+ background:
+ radial-gradient(ellipse at 16% 18%,rgba(108,207,224,.34),transparent 36%),
+ radial-gradient(ellipse at 85% 78%,rgba(88,160,220,.25),transparent 38%),
+ linear-gradient(135deg,#dceef5 0%,#f4f8fb 48%,#dce9f2 100%);
+}
+.login:before,.login:after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(2px);pointer-events:none}
+.login:before{width:440px;height:440px;left:-130px;top:-150px;background:linear-gradient(145deg,rgba(255,255,255,.7),rgba(99,190,211,.18));border:1px solid rgba(255,255,255,.8)}
+.login:after{width:520px;height:520px;right:-180px;bottom:-230px;background:linear-gradient(145deg,rgba(255,255,255,.65),rgba(85,153,204,.16));border:1px solid rgba(255,255,255,.8)}
+.loginbox{
+ position:relative;overflow:hidden;
+ width:min(100%,460px);padding:42px;
+ background:linear-gradient(135deg,rgba(255,255,255,.68),rgba(255,255,255,.38))!important;
+ border:1px solid rgba(255,255,255,.92)!important;
+ border-top:1px solid rgba(255,255,255,1)!important;
+ border-left:1px solid rgba(255,255,255,.96)!important;
+ border-radius:26px!important;
+ backdrop-filter:blur(28px) saturate(165%)!important;
+ -webkit-backdrop-filter:blur(28px) saturate(165%)!important;
+ box-shadow:0 28px 80px rgba(37,83,112,.2),inset 0 1px 0 rgba(255,255,255,.95)!important;
+}
+.loginbox:before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#20a9c2,#4e9ed0,#8bd8dc);opacity:.95}
+.loginbox .crest{box-shadow:0 8px 20px rgba(22,115,145,.2)}
+.loginbox input{background:rgba(255,255,255,.82)!important;border:1px solid rgba(133,169,192,.55)!important;border-radius:11px!important;color:#123b55!important;box-shadow:inset 0 1px 3px rgba(25,70,100,.05)}
+.loginbox input:focus{background:#fff!important;border-color:#1599b5!important;box-shadow:0 0 0 4px rgba(24,157,184,.13)}
+.loginbox label{color:#234b65!important;font-size:12px!important;font-weight:800!important}
+.loginbox button{border-radius:11px!important;padding:14px!important;font-size:13px!important;box-shadow:0 9px 20px rgba(20,119,151,.2)!important}
+.loginbox footer{color:#46677e!important}
+.loginbox .ship{background:rgba(225,243,250,.72)!important;border:1px solid rgba(255,255,255,.9)!important;backdrop-filter:blur(12px);color:#1c5975!important;border-radius:11px!important}
+.shell aside{background:rgba(255,255,255,.58)!important;backdrop-filter:blur(26px) saturate(160%)!important;-webkit-backdrop-filter:blur(26px) saturate(160%)!important;border-right:1px solid rgba(255,255,255,.9)!important;box-shadow:8px 0 35px rgba(34,76,104,.09)!important}
+.main{position:relative}
+.main header{background:rgba(255,255,255,.42)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border-bottom:1px solid rgba(255,255,255,.8)!important}
+.hero,.stats article,.panel,.tank-card{
+ background:linear-gradient(135deg,rgba(255,255,255,.76),rgba(255,255,255,.48))!important;
+ backdrop-filter:blur(24px) saturate(155%)!important;
+ -webkit-backdrop-filter:blur(24px) saturate(155%)!important;
+ border:1px solid rgba(255,255,255,.92)!important;
+ box-shadow:0 14px 38px rgba(43,83,111,.12),inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+.hero{background:linear-gradient(120deg,rgba(255,255,255,.72),rgba(212,241,248,.56),rgba(226,247,244,.62))!important}
+.stock-table th{background:rgba(220,237,246,.82)!important}
+.stock-search,.access-edit select{background:rgba(255,255,255,.82)!important}
+.modal{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(241,248,252,.9))!important;backdrop-filter:blur(26px)!important;-webkit-backdrop-filter:blur(26px)!important;border:1px solid rgba(255,255,255,.98)!important;box-shadow:0 28px 85px rgba(36,75,103,.22)!important}
+@media(max-width:650px){.loginbox{padding:30px 24px!important;border-radius:22px!important}.login{padding:18px}}
