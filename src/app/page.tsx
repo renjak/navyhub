@@ -26,20 +26,20 @@ async function readDocxText(file:File):Promise<string[]>{
  if(!xml)throw new Error("Isi dokumen Word tidak ditemukan.");
  const doc=new DOMParser().parseFromString(xml,"application/xml");const body=doc.getElementsByTagName("w:body")[0];if(!body)throw new Error("Struktur dokumen Word tidak terbaca.");
  const out:string[]=[];for(const node of Array.from(body.children)){if(node.localName==="p")out.push(Array.from(node.getElementsByTagName("w:t")).map(x=>x.textContent||"").join(""));else if(node.localName==="tbl"){for(const tr of Array.from(node.getElementsByTagName("w:tr"))){out.push(Array.from(tr.getElementsByTagName("w:tc")).map(tc=>Array.from(tc.getElementsByTagName("w:t")).map(x=>x.textContent||"").join(" ")).join(" | "))}}}
- return out.map(s=>s.replace(/\\s+/g," ").trim()).filter(Boolean)
+ return out.map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean)
 }
 function parsePhstLines(lines:string[]):ImportedPlan[]{
  const out:ImportedPlan[]=[];let date="";let inGeneral=false;let section="Umum";
  for(const line of lines){
-  const dm=line.match(/(?:Hari\\s*\\/\\s*tanggal\\s*:?\\s*)?(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)?\\s*,?\\s*(\\d{1,2})\\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\\s+(\\d{4})/i);
+  const dm=line.match(/(?:Hari\s*\/\s*tanggal\s*:?\s*)?(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)?\s*,?\s*(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})/i);
   if(dm){date=dm[4]+"-"+monthMap[dm[3].toLowerCase()]+"-"+dm[2].padStart(2,"0");inGeneral=false;section="Umum";continue}
-  if(/^C\\.\\s*UMUM/i.test(line)){inGeneral=true;section="Umum";continue}
-  if(/^D\\.\\s*KHUSUS/i.test(line)){inGeneral=false;section="Khusus";continue}
-  if(/^[EF]\\./i.test(line)){inGeneral=false;continue}
+  if(/^C\.\s*UMUM/i.test(line)){inGeneral=true;section="Umum";continue}
+  if(/^D\.\s*KHUSUS/i.test(line)){inGeneral=false;section="Khusus";continue}
+  if(/^[EF]\./i.test(line)){inGeneral=false;continue}
   if(!date)continue;
-  const tm=line.match(/^(\\d{1,2})[.:](\\d{2})\\s*:\\s*(.+)$/);
-  if(tm&&inGeneral){const time=tm[1].padStart(2,"0")+":"+tm[2],title=tm[3].trim();out.push({activity_date:date,activity_time:time,title,description:"Rencana kegiatan sesuai PHST. Rincian sumber: "+title+"\\nPeralatan/bahan: Tidak disebutkan dalam dokumen; perlu dikonfirmasi.",category:"Umum"})}
-  else if(section==="Khusus"&&/^\\d+\\s*\\|/.test(line)){const cells=line.split("|").map(x=>x.trim()).filter(Boolean);if(cells.length>=2){const dept=cells[0].replace(/^\\d+\\s*/,"");const activity=cells.slice(1).join(" — ");out.push({activity_date:date,activity_time:null,title:dept+" — "+activity.slice(0,100),description:"Kegiatan khusus departemen berdasarkan PHST: "+activity+"\\nPeralatan/bahan: Tidak disebutkan secara spesifik dalam dokumen.",category:dept})}}
+  const tm=line.match(/^(\d{1,2})[.:](\d{2})\s*:\s*(.+)$/);
+  if(tm&&inGeneral){const time=tm[1].padStart(2,"0")+":"+tm[2],title=tm[3].trim();out.push({activity_date:date,activity_time:time,title,description:"Rencana kegiatan sesuai PHST. Rincian sumber: "+title+"\nPeralatan/bahan: Tidak disebutkan dalam dokumen; perlu dikonfirmasi.",category:"Umum"})}
+  else if(section==="Khusus"&&/^\d+\s*\|/.test(line)){const cells=line.split("|").map(x=>x.trim()).filter(Boolean);if(cells.length>=2){const dept=cells[0].replace(/^\d+\s*/,"");const activity=cells.slice(1).join(" — ");out.push({activity_date:date,activity_time:null,title:dept+" — "+activity.slice(0,100),description:"Kegiatan khusus departemen berdasarkan PHST: "+activity+"\nPeralatan/bahan: Tidak disebutkan secara spesifik dalam dokumen.",category:dept})}}
  }
  return out
 }
