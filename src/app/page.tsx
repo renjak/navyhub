@@ -154,7 +154,7 @@ export default function Home(){
   for(const k of numeric){const required=["minimum_stock","initial_quantity","stock_ready","stock_unready"].includes(k);payload[k]=stockDraft[k]===""||stockDraft[k]===null||stockDraft[k]===undefined?(required?0:null):Number(stockDraft[k])}
   payload.is_active=stockDraft.is_active!==false;
   payload.updated_at=new Date().toISOString();
-  let result;
+  let result:any;
   if(stockDraft.id)result=await sb.from("inventory_items").update(payload).eq("id",stockDraft.id).eq("unit_id",profile.unit_id);
   else result=await sb.from("inventory_items").insert({...payload,unit_id:profile.unit_id});
   if(result.error)setNotice("Perubahan NAVYSTOCK gagal disimpan: "+result.error.message);
