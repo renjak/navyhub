@@ -98,7 +98,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   <div className="dl-shipmap">
    <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
    <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-644.jpeg" alt="Ilustrasi NAVYLOG KRI Alamang-644 sesuai gambar referensi yang diunggah" loading="eager" fetchPriority="high" onError={()=>setVesselImageFailed(true)} />
+    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Gambar NAVYLOG KRI Alamang-644 sesuai ilustrasi yang diunggah" loading="eager" fetchPriority="high" onError={()=>setVesselImageFailed(true)} />
     {vesselImageFailed&&<div className="dl-image-error" role="status">Ilustrasi kapal belum dapat dimuat. Unggah file navylog-kri-alamang-644.jpeg ke src/public/images pada branch perbaikan.</div>}
     <div className="dl-active-zone" style={simPosition} key={simCurrent.zone}>
      <span className="dl-active-ring"/><span className="dl-active-tag"><i>{simCurrent.icon}</i><b>{simCurrent.zone}</b></span>
