@@ -178,3 +178,19 @@ td{color:#f0f1f5}
 @keyframes dlShipScan{from{background-position:120% 0}to{background-position:-120% 0}}
 .dl-zones button{cursor:pointer;border:1px solid rgba(105,190,224,.24);border-radius:7px;background:rgba(8,43,67,.7);color:#a9cddd;padding:6px 9px;font:inherit;font-size:10px}
 .dl-zones button.active{border-color:#5bdcff;background:rgba(25,143,190,.25);color:#fff;box-shadow:0 0 12px rgba(48,186,235,.22)}
+
+
+/* NAVYLOG vessel visualization: clear active-step synchronization */
+.dl-vessel-art{isolation:isolate;position:relative;overflow:hidden;min-height:230px;background:linear-gradient(180deg,#082a47,#041a2e)}
+.dl-vessel-render{position:relative;z-index:1;display:block;width:100%;height:auto;min-height:230px;max-height:420px;object-fit:contain;object-position:center;background:transparent}
+.dl-active-zone{z-index:4;display:flex;align-items:center;gap:8px;transition:left .8s cubic-bezier(.2,.75,.25,1),top .8s cubic-bezier(.2,.75,.25,1);animation:dlMarkerEnter .45s ease both}
+.dl-active-ring{width:22px;height:22px;flex:0 0 22px;border:2px solid #83f0ff;border-radius:50%;background:rgba(26,193,238,.2);box-shadow:0 0 0 6px rgba(65,203,255,.16),0 0 24px #2ec8ff;animation:dlTargetPulse 1.8s ease-in-out infinite}
+.dl-active-tag{display:flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid rgba(113,226,255,.75);border-radius:8px;background:rgba(3,25,44,.94);box-shadow:0 8px 22px rgba(0,0,0,.32),0 0 20px rgba(38,188,240,.2);white-space:nowrap}
+.dl-active-tag i{font-style:normal;font-size:13px;color:#9cf2ff}.dl-active-tag b{font-size:9px;letter-spacing:.04em;color:#f3fcff}
+.dl-image-error{position:absolute;z-index:5;inset:12px;display:grid;place-items:center;padding:16px;text-align:center;border:1px dashed rgba(255,190,130,.65);border-radius:10px;background:rgba(44,20,10,.8);color:#ffd6b4;font-size:11px}
+.dl-sim-current{position:relative;min-height:64px;animation:dlStageReveal .45s ease both}.dl-sim-current>div:nth-child(2){flex:1;min-width:180px}.dl-sim-live-indicator{padding:5px 8px;border:1px solid rgba(111,220,255,.3);border-radius:20px;color:#a9e9f8;font-size:8px;letter-spacing:.12em}
+.dl-sim-timeline button{transition:background .25s,border-color .25s,transform .25s}.dl-sim-timeline button.selected{transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,174,225,.15)}
+@keyframes dlMarkerEnter{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:blur(0)}}
+@keyframes dlStageReveal{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:760px){.dl-vessel-render{max-height:none;min-height:190px}.dl-active-tag b{font-size:8px}.dl-active-tag{padding:5px 7px}}
+@media(prefers-reduced-motion:reduce){.dl-active-zone,.dl-active-ring,.dl-sim-current,.dl-sim-pulse,.dl-ship-scan{animation:none!important;transition:none!important}}
