@@ -37,9 +37,10 @@ function parsePhstLines(lines:string[]):ImportedPlan[]{
   if(/^D\.\s*KHUSUS/i.test(line)){inGeneral=false;section="Khusus";continue}
   if(/^[EF]\./i.test(line)){inGeneral=false;continue}
   if(!date)continue;
-  const tm=line.match(/^(\d{1,2})[.:](\d{2})\s*:\s*(.+)$/);
+  const clean=line.replace(/^[-•–]\s*/,"").trim();
+  const tm=clean.match(/^(\d{1,2})[.:](\d{2})\s*:\s*(.+)$/);
   if(tm&&inGeneral){const time=tm[1].padStart(2,"0")+":"+tm[2],title=tm[3].trim();out.push({activity_date:date,activity_time:time,title,description:"Rencana kegiatan sesuai PHST. Rincian sumber: "+title+"\nPeralatan/bahan: Tidak disebutkan dalam dokumen; perlu dikonfirmasi.",category:"Umum"})}
-  else if(section==="Khusus"&&/^\d+\s*\|/.test(line)){const cells=line.split("|").map(x=>x.trim()).filter(Boolean);if(cells.length>=2){const dept=cells[0].replace(/^\d+\s*/,"");const activity=cells.slice(1).join(" — ");out.push({activity_date:date,activity_time:null,title:dept+" — "+activity.slice(0,100),description:"Kegiatan khusus departemen berdasarkan PHST: "+activity+"\nPeralatan/bahan: Tidak disebutkan secara spesifik dalam dokumen.",category:dept})}}
+  else if(section==="Khusus"&&/^\d+\s*\|/.test(line)){const cells=line.split("|").map(x=>x.trim());if(cells.length>=3){const dept=cells[1].replace(/^\d+\s*/,"");const activity=cells.slice(2).filter(Boolean).join(" — ");if(activity){out.push({activity_date:date,activity_time:null,title:dept+" — "+activity.slice(0,100),description:"Kegiatan khusus departemen berdasarkan PHST: "+activity+"\nPeralatan/bahan: Tidak disebutkan secara spesifik dalam dokumen.",category:dept})}}}
  }
  return out
 }
