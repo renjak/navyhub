@@ -6,7 +6,6 @@ import { createClient, type User } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 const sb = createClient(supabaseUrl, supabaseKey);
-const previewReadOnly = process.env.NEXT_PUBLIC_NAVYHUB_PREVIEW === "true";
 
 type Profile = { id: string; full_name: string; rank_title: string | null; unit_id: string | null; role: string; is_active: boolean };
 type Unit = { id: string; code: string; name: string };
@@ -112,7 +111,7 @@ export default function Home() {
   const [assetCode, setAssetCode] = useState("");
   const [assetName, setAssetName] = useState("");
   const [assetCategory, setAssetCategory] = useState<"SEWACO" | "PLATFORM">("SEWACO");
-  const [gpsEnabled, setGpsEnabled] = useState(false);
+  const [gpsEnabled, setGpsEnabled] = useState(true);
   const [gpsError, setGpsError] = useState("");
   const [manualLat, setManualLat] = useState("");
   const [manualLon, setManualLon] = useState("");
@@ -120,7 +119,7 @@ export default function Home() {
 
   const isAdmin = profile?.role === "admin";
   const canManage = profile?.role === "admin" || profile?.role === "commander";
-  const canWrite = !previewReadOnly && canManage;
+  const canWrite = canManage;
   const gpsFresh = !!gps && Date.now() - new Date(gps.received_at).getTime() <= 120000;
 
   const loadData = useCallback(async (u: User, p: Profile) => {
@@ -182,7 +181,7 @@ export default function Home() {
   }, [user, profile?.unit_id]);
 
   const writeGps = useCallback(async (latitude: number, longitude: number, source: string) => {
-    if (!user || !profile?.unit_id || !isAdmin || previewReadOnly) return;
+    if (!user || !profile?.unit_id || !isAdmin) return;
     const { data: sessionData } = await sb.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) { setGpsError("Sesi admin berakhir. Silakan masuk kembali."); return; }
@@ -200,7 +199,7 @@ export default function Home() {
   }, [user, profile?.unit_id, isAdmin]);
 
   useEffect(() => {
-    if (!gpsEnabled || !isAdmin || module !== "GPS") return;
+    if (!gpsEnabled || !isAdmin || !user || !profile?.unit_id) return;
     if (!navigator.geolocation) { setGpsError("Perangkat ini tidak mendukung geolocation."); return; }
     const update = () => navigator.geolocation.getCurrentPosition(
       pos => writeGps(pos.coords.latitude, pos.coords.longitude, "admin_device_gps"),
@@ -210,7 +209,7 @@ export default function Home() {
     update();
     const timer = window.setInterval(update, 60000);
     return () => window.clearInterval(timer);
-  }, [gpsEnabled, isAdmin, module, writeGps]);
+  }, [gpsEnabled, isAdmin, user, profile?.unit_id, writeGps]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError("");
@@ -220,7 +219,7 @@ export default function Home() {
   }
 
   async function saveLog(e: React.FormEvent) {
-    e.preventDefault(); if (!user || !profile?.unit_id || previewReadOnly) return;
+    e.preventDefault(); if (!user || !profile?.unit_id) return;
     setBusy(true);
     const { error: saveError } = await sb.from("activity_logs").insert({ unit_id: profile.unit_id, created_by: user.id, title: title.trim(), description: desc.trim(), category, status: "draft" });
     if (saveError) setError("Gagal menyimpan jurnal: " + saveError.message);
@@ -259,17 +258,16 @@ export default function Home() {
       </nav><div className="asidefoot">● KONEKSI TERLINDUNGI<small>{profile.role.toUpperCase()} · Versi 0.4</small></div>
     </aside>
     <main className="main"><header><div><small>NAVYHUB / {module.toUpperCase()}</small><h2>{module}</h2></div><div className="user"><span>{profile.full_name || user.email} · {profile.role}</span><button className="logout" onClick={() => sb.auth.signOut()}>Keluar</button></div></header>
-      {previewReadOnly && <div className="preview-banner">PREVIEW MODE — data hanya dapat dilihat, perubahan dinonaktifkan.</div>}
       {error && <div className="error global-error">{error}<button onClick={() => setError("")}>Tutup</button></div>}
       {module === "Dashboard" && <>
         <section className="map-panel"><div className="panelhead"><div><h3>INDONESIA · LIVE VESSEL POSITION</h3><p>Posisi terakhir yang dikirim oleh master GPS admin</p></div><button className="outline" onClick={() => setModule("GPS")}>Buka GPS ↗</button></div><IndonesiaMap position={gps}/><div className="gps-summary">{gps ? <><b>{gps.latitude.toFixed(5)}, {gps.longitude.toFixed(5)}</b><span>{gpsFresh ? "Live · " : "Terakhir terlihat · "}{new Date(gps.position_at).toLocaleString("id-ID")}</span></> : <span>Belum ada posisi GPS yang diterima.</span>}</div></section>
         <section className="hero"><small>PUSAT KENDALI ADMINISTRASI</small><h1>Welcome aboard, {(profile.full_name || "Pengguna").split(" ")[0]}.</h1><p>Seluruh pencatatan kegiatan dan administrasi satuan dalam satu sistem terintegrasi.</p></section>
         <h3>Ringkasan sistem</h3><div className="stats"><article><small>JURNAL KEGIATAN</small><b>{logs.length}</b><span>Catatan terbaru</span></article><article><small>PEMELIHARAAN</small><b>{assets.length}</b><span>Aset terdaftar</span></article><article><small>PERSEDIAAN</small><b>{stock.length}</b><span>Jenis inventaris</span></article><article><small>PERSONEL</small><b>{crew.length}</b><span>Data personel</span></article></div>
-        <section className="panel"><div className="panelhead"><div><h3>Aktivitas terbaru</h3><p>Catatan yang tersimpan di database</p></div><button className="add" disabled={previewReadOnly} onClick={() => setModal("log")}>＋ Catat kegiatan</button></div>
+        <section className="panel"><div className="panelhead"><div><h3>Aktivitas terbaru</h3><p>Catatan yang tersimpan di database</p></div><button className="add" disabled={false} onClick={() => setModal("log")}>＋ Catat kegiatan</button></div>
           {logs.length ? logs.map(x => <div className="log" key={x.id}><div><b>{x.title}</b><small>{x.category} · {new Date(x.activity_date + "T00:00:00").toLocaleDateString("id-ID")}</small></div><span>{x.status === "draft" ? "Draft" : x.status}</span></div>) : <div className="empty">Belum ada catatan kegiatan.</div>}
         </section>
       </>}
-      {module === "NAVYLOG" && <section className="panel ship-layout"><div className="ship-layout-head"><div><h3>Digital Logbook · {unit?.code || "KRI ALAMANG-644"}</h3><p>Visualisasi tata letak kapal dan area kegiatan</p></div><span className="ship-layout-tag">SHIP OVERVIEW</span></div><div className="ship-image-frame"><img src="/images/navylog-kri-alamang-cutaway.webp" alt="Ilustrasi potongan samping KRI Alamang-644 dengan penanda area kapal"/></div><p className="ship-image-caption">Ilustrasi tata letak KRI Alamang-644</p><button className="add" disabled={previewReadOnly} onClick={() => setModal("log")}>＋ Catat kegiatan</button></section>}
+      {module === "NAVYLOG" && <section className="panel ship-layout"><div className="ship-layout-head"><div><h3>Digital Logbook · {unit?.code || "KRI ALAMANG-644"}</h3><p>Visualisasi tata letak kapal dan area kegiatan</p></div><span className="ship-layout-tag">SHIP OVERVIEW</span></div><div className="ship-image-frame"><img src="/images/navylog-kri-alamang-cutaway.webp" alt="Ilustrasi potongan samping KRI Alamang-644 dengan penanda area kapal"/></div><p className="ship-image-caption">Ilustrasi tata letak KRI Alamang-644</p><button className="add" disabled={false} onClick={() => setModal("log")}>＋ Catat kegiatan</button></section>}
       {module === "NAVYMAINT" && <section className="panel"><div className="panelhead"><div><h3>Daftar aset pemeliharaan</h3><p>Kategori NAVYMAINT dibatasi menjadi SEWACO dan PLATFORM</p></div><button className="add" disabled={!canWrite} onClick={() => setModal("asset")}>＋ Tambah aset</button></div>
         <div className="category-cards"><div><b>SEWACO</b><span>Sensor, senjata, komunikasi, navigasi, dan sistem kendali</span><strong>{assets.filter(a => a.category === "SEWACO").length} aset</strong></div><div><b>PLATFORM</b><span>Mesin, kelistrikan, lambung, dan sistem pendukung kapal</span><strong>{assets.filter(a => a.category === "PLATFORM").length} aset</strong></div></div>
         <div className="table-wrap"><table><thead><tr><th>Kode</th><th>Nama aset</th><th>Kategori</th><th>Lokasi</th><th>Kondisi</th></tr></thead><tbody>{assets.map(a => <tr key={a.id}><td>{a.asset_code}</td><td>{a.asset_name}</td><td><span className="pill">{a.category === "SEWACO" ? "SEWACO" : "PLATFORM"}</span></td><td>{a.location_label || "—"}</td><td>{a.condition_label}</td></tr>)}</tbody></table>{!assets.length && <div className="empty">Belum ada aset. Tambahkan aset pertama untuk memulai pendataan.</div>}</div>
@@ -279,7 +277,7 @@ export default function Home() {
       {module === "NAVYCREW" && <section className="panel"><div className="panelhead"><div><h3>Daftar personel kapal</h3><p>Klik kolom yang ingin diedit. Hak edit mengikuti peran administrator/komandan.</p></div><span className="pill">{crew.length} personel</span></div><div className="table-wrap"><table><thead><tr><th>No.</th><th>Nama lengkap</th><th>Pangkat</th><th>NRP</th><th>Jabatan</th><th>Keterangan</th></tr></thead><tbody>{crew.map((c, i) => <tr key={c.id}><td>{i + 1}</td><td><EditableCell value={c.full_name} editable={canWrite} onSave={v => editRow("personnel", c.id, "full_name", v)}/></td><td><EditableCell value={c.rank_title} editable={canWrite} onSave={v => editRow("personnel", c.id, "rank_title", v)}/></td><td><EditableCell value={c.nrp} editable={canWrite} onSave={v => editRow("personnel", c.id, "nrp", v)}/></td><td><EditableCell value={c.position} editable={canWrite} onSave={v => editRow("personnel", c.id, "position", v)}/></td><td><EditableCell value={c.remarks} editable={canWrite} onSave={v => editRow("personnel", c.id, "remarks", v)}/></td></tr>)}</tbody></table>{!crew.length && <div className="empty">Belum ada data personel.</div>}</div><p className="hint">Klik sel untuk mengedit · Enter menyimpan · Esc membatalkan.</p></section>}
       {module === "GPS" && <section className="panel gps-panel"><div className="panelhead"><div><h3>MASTER GPS KAPAL</h3><p>Admin mengendalikan sumber posisi. Seluruh pengguna unit melihat posisi yang sama.</p></div><span className={gpsFresh ? "status-online" : "status-offline"}>{gpsFresh ? "● POSISI LIVE" : gps ? "● POSISI TIDAK MUTAKHIR" : "● MENUNGGU GPS"}</span></div>
         <IndonesiaMap position={gps}/><div className="gps-details">{gps ? <><div><small>LATITUDE</small><b>{gps.latitude.toFixed(6)}</b></div><div><small>LONGITUDE</small><b>{gps.longitude.toFixed(6)}</b></div><div><small>SUMBER</small><b>{gps.source}</b></div><div><small>UPDATE TERAKHIR</small><b>{new Date(gps.position_at).toLocaleString("id-ID")}</b></div></> : <p>Belum ada koordinat. Admin dapat mengaktifkan GPS perangkat atau mengisi koordinat secara manual.</p>}</div>
-        {isAdmin ? <div className="gps-admin"><h3>Kontrol MASTER GPS · ADMIN</h3>{previewReadOnly ? <div className="notice">Kontrol GPS dinonaktifkan di preview agar tidak mengubah data operasional.</div> : <><p>GPS perangkat admin dikirim otomatis setiap 60 detik selama halaman ini aktif dan izin lokasi diberikan.</p><label className="toggle"><input type="checkbox" checked={gpsEnabled} onChange={e => setGpsEnabled(e.target.checked)}/> Aktifkan pengiriman GPS otomatis</label><div className="gps-actions"><input type="number" step="any" placeholder="Latitude" value={manualLat} onChange={e => setManualLat(e.target.value)}/><input type="number" step="any" placeholder="Longitude" value={manualLon} onChange={e => setManualLon(e.target.value)}/><button className="add" onClick={() => { const lat = Number(manualLat), lon = Number(manualLon); if (!manualLat || !manualLon || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) { setGpsError("Masukkan koordinat yang valid."); return; } writeGps(lat, lon, "admin_manual"); }}>Kirim posisi manual</button></div><small className="hint">Pastikan GPS perangkat admin berada di kapal atau gunakan koordinat dari perangkat GPS kapal yang benar. Jangan gunakan lokasi perkiraan.</small></>}{gpsError && <div className="error">{gpsError}</div>}{lastGpsUpdate && <p className="success-note">Pengiriman terakhir: {new Date(lastGpsUpdate).toLocaleTimeString("id-ID")}</p>}</div> : <div className="notice">Mode pemantauan. Hanya ADMIN yang dapat mengendalikan master GPS.</div>}
+        {isAdmin ? <div className="gps-admin"><h3>Kontrol MASTER GPS · ADMIN</h3>{false ? <div className="notice">Kontrol GPS dinonaktifkan di preview agar tidak mengubah data operasional.</div> : <><p>GPS perangkat admin dikirim otomatis setiap 60 detik selama halaman ini aktif dan izin lokasi diberikan.</p><label className="toggle"><input type="checkbox" checked={gpsEnabled} onChange={e => setGpsEnabled(e.target.checked)}/> Aktifkan pengiriman GPS otomatis</label><div className="gps-actions"><input type="number" step="any" placeholder="Latitude" value={manualLat} onChange={e => setManualLat(e.target.value)}/><input type="number" step="any" placeholder="Longitude" value={manualLon} onChange={e => setManualLon(e.target.value)}/><button className="add" onClick={() => { const lat = Number(manualLat), lon = Number(manualLon); if (!manualLat || !manualLon || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) { setGpsError("Masukkan koordinat yang valid."); return; } writeGps(lat, lon, "admin_manual"); }}>Kirim posisi manual</button></div><small className="hint">Pastikan GPS perangkat admin berada di kapal atau gunakan koordinat dari perangkat GPS kapal yang benar. Jangan gunakan lokasi perkiraan.</small></>}{gpsError && <div className="error">{gpsError}</div>}{lastGpsUpdate && <p className="success-note">Pengiriman terakhir: {new Date(lastGpsUpdate).toLocaleTimeString("id-ID")}</p>}</div> : <div className="notice">Mode pemantauan. Hanya ADMIN yang dapat mengendalikan master GPS.</div>}
         <p className="hint">Satu kapal = satu posisi aktif. Setiap update menggantikan koordinat sebelumnya; tidak ada histori track yang disimpan. Jika tidak ada update baru selama 2 menit, posisi ditandai tidak mutakhir.</p>
       </section>}
       {["NAVYCHECK", "NAVYROSTER", "NAVYMEAL", "NAVYDOCS", "NAVYFIT"].includes(module) && <section className="panel placeholder"><h3>{module}</h3><p>Modul ini tetap tersedia dalam navigasi dan menunggu implementasi alur kerja khusus. Modul yang sudah aktif: NAVYLOG, NAVYMAINT, NAVYSTOCK, NAVYCREW, dan GPS.</p><button className="outline" onClick={() => setModule("Dashboard")}>Kembali ke dashboard</button></section>}
