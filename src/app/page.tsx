@@ -294,8 +294,7 @@ export default function Home(){
 <p>Operational records, maintenance, logistics and personnel in one command environment.</p>
 </div>
 
-<div className="hero-orb">N<span>644</span>
-</div>
+<div className="hero-orb"><img src="/alamang-emblem.jpg" alt="Emblem KRI Alamang-644"/></div>
 
 </section>
 
