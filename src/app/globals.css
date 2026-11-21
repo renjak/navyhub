@@ -606,3 +606,6 @@ body:before,.shell aside,.logout,.toolbar button{display:none!important}
 /* NAVYSTOCK: make live percentage the primary visual metric */
 .supply-meta>b{font-size:44px!important;line-height:.98;min-width:84px;letter-spacing:-.055em;font-weight:850}
 @media(max-width:650px){.supply-meta>b{font-size:36px!important;min-width:72px}}
+
+/* Persentase persediaan ditempatkan tepat di atas progress bar. */
+.supply-progress-label{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:14px 0 8px}.supply-progress-label>b{font-size:44px;line-height:.95;font-weight:850;letter-spacing:-.055em;color:#fff}.supply-progress-label>span{font-size:9px;font-weight:800;letter-spacing:.12em;color:#b9c7d8;padding-bottom:5px}.supply-meta{margin-top:10px}.supply-meta>b{display:none!important}@media(max-width:650px){.supply-progress-label>b{font-size:36px}}
