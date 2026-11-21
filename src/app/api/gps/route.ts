@@ -18,8 +18,9 @@ export async function POST(request: NextRequest) {
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const ingestToken = process.env.VESSEL_GPS_INGEST_TOKEN;
-  if (!supabaseUrl || !anonKey || !ingestToken) {
+  if (!supabaseUrl || !anonKey || !serviceRoleKey || !ingestToken) {
     return NextResponse.json({ error: "GPS ingest is not configured on the server." }, { status: 503 });
   }
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
   if (satellites !== null && (!Number.isInteger(satellites) || satellites < 0)) return NextResponse.json({ error: "Invalid satellites." }, { status: 400 });
   if (positionAt && Number.isNaN(Date.parse(positionAt))) return NextResponse.json({ error: "Invalid position_at timestamp." }, { status: 400 });
 
-  const rpcClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const rpcClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data, error } = await rpcClient.rpc("ingest_vessel_gps", {
     p_token: ingestToken,
     p_latitude: latitude,
