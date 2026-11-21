@@ -449,28 +449,7 @@ export default function Home(){
 </div>
 {notice&&<div className="notice">{notice}</div>
 }
-{busy?<div className="empty">Loading secured records…</div>
-:filtered.length?<div className="table-wrap">
-<table>
-<thead>
-<tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=>
-<th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}
-{module==="NAVYSTOCK"&&isAdmin&&<th>Aksi</th>}</tr>
-</thead>
-<tbody>{filtered.map((r,i)=>
-<tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=>
-<td key={k} className={isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)?"inline-edit-cell":""} title={isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)?"Klik untuk mengedit kolom ini":undefined} onClick={()=>{if(isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)){setEditingCell({id:r.id,field:k});setCellDraft(r[k]===null||r[k]===undefined?"":String(r[k]))}}}>{editingCell?.id===r.id&&editingCell.field===k?<input className="inline-cell-input" autoFocus value={cellDraft} disabled={cellSaving} onChange={e=>setCellDraft(e.target.value)} onBlur={()=>saveInlineCell(r,k)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur();if(e.key==="Escape")setEditingCell(null)}} onClick={e=>e.stopPropagation()}/>:<>{fmt(r[k])}
-{isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)&&<span className="inline-edit-hint"> ✎</span>}</>
-}</td>)}
-{module==="NAVYSTOCK"&&isAdmin&&<td>
-<button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit lengkap</button>
-</td>
-</tr>)}</tbody>
-</table>
-</div>
-:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>
-}
-{module==="NAVYSTOCK"&&isAdmin&&stockDraft&&<section className="stock-editor">
+{busy?<div className="empty">Loading secured records…</div>:filtered.length>0?<div className="table-wrap"><table><thead><tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=><th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}{module==="NAVYSTOCK"&&isAdmin&&<th>Aksi</th>}</tr></thead><tbody>{filtered.map((r,i)=><tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=><td key={k}>{fmt(r[k])}</td>)}{module==="NAVYSTOCK"&&isAdmin&&<td><button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit lengkap</button></td>}</tr>)}</tbody></table></div>:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>}{module==="NAVYSTOCK"&&isAdmin&&stockDraft&&<section className="stock-editor">
 <div>
 <small>ADMIN CONTROL · NAVYSTOCK</small>
 <h3>{stockDraft.id?"Edit data persediaan":"Tambah data persediaan"}</h3>
