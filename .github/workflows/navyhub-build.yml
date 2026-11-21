@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/navylog-ship-visual-sync
+      - fix/navyhub-ready-no-ship-gps
   workflow_dispatch:
 
 jobs:
