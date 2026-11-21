@@ -1,11 +1,11 @@
 "use client";
 import {useCallback,useEffect,useMemo,useState} from "react";
 
-type Props={supabase:any;unitId:string;userId:string;canManage:boolean;isPreview:boolean};
+type Props={supabase:any;unitId:string;userId:string;canManage:boolean};
 const wx=(n:number)=>({0:"Cerah",1:"Cerah berawan",2:"Berawan sebagian",3:"Berawan",45:"Kabut",48:"Kabut beku",51:"Gerimis ringan",53:"Gerimis",55:"Gerimis lebat",61:"Hujan ringan",63:"Hujan",65:"Hujan lebat",80:"Hujan lokal",81:"Hujan lokal sedang",82:"Hujan lokal lebat",95:"Badai petir",96:"Badai petir dan hujan es",99:"Badai petir kuat"} as Record<number,string>)[n]||"Kondisi tidak diketahui";
 const fmt=(v:any,d=1)=>v==null?"—":Number(v).toFixed(d);
 const stamp=(v:string)=>new Date(v).toLocaleString("id-ID",{timeZone:"Asia/Jakarta",dateStyle:"medium",timeStyle:"short"});
-export default function VesselStatus({supabase,unitId,userId,canManage,isPreview}:Props){
+export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  const [gps,setGps]=useState<any>(null),[weather,setWeather]=useState<any>(null),[marine,setMarine]=useState<any>(null);
  const [loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [lat,setLat]=useState(""),[lon,setLon]=useState(""),[speed,setSpeed]=useState(""),[course,setCourse]=useState(""),[satellites,setSatellites]=useState(""),[positionAt,setPositionAt]=useState(()=>new Date().toISOString().slice(0,16));
