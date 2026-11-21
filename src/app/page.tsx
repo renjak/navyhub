@@ -4,6 +4,7 @@ import {createClient,type User} from "@supabase/supabase-js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import DigitalLogbook from "./DigitalLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
+import VesselStatus from "./VesselStatus";
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 pdfjsLib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.mjs",import.meta.url).toString();
 const menu=[
@@ -232,6 +233,7 @@ export default function Home(){
 <span>{isPreview?"PREVIEW AMAN · READ ONLY. Lingkungan ini terhubung ke Supabase produksi; seluruh operasi tulis dinonaktifkan.":"Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data."}</span>
 </div>
 }
+ <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} isPreview={isPreview}/>
  <section className="hero">
 <div>
 <small>INTEGRATED SHIP MANAGEMENT</small>
