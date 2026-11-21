@@ -42,7 +42,8 @@ jobs:
           git add android ios
           if ! git diff --cached --quiet; then
             git commit -m "Generate NAVYHUB Capacitor Android and iOS projects"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push origin HEAD:"${GITHUB_REF_NAME}"
           fi
       - name: Package native projects
         run: |
