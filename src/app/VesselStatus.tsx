@@ -63,7 +63,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
   if(sat!==null&&(!Number.isInteger(sat)||sat<0)){setError("Jumlah satelit harus bilangan bulat nol atau lebih.");return}
   setSaving(true);
   const payload={unit_id:unitId,position_at:new Date(positionAt).toISOString(),latitude:a,longitude:o,speed_knots:s,course_degrees:c,satellites:sat,fix_quality:"ADMIN REPORTED",source:"NAVYHUB ADMIN MASTER",received_at:new Date().toISOString(),reporter_user_id:userId};
-  const {error}=await supabase.from("vessel_gps_positions").insert(payload);
+  const {error}=await supabase.from("vessel_gps_positions").upsert(payload,{onConflict:"unit_id"});
   if(error)setError("Posisi GPS tidak tersimpan: "+error.message);
   else{setNotice("Master GPS unit berhasil diperbarui. Seluruh pengguna pada unit ini akan melihat posisi terbaru.");await load()}
   setSaving(false);
