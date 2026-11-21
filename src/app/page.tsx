@@ -157,10 +157,10 @@ export default function Home(){
   if(!isAdmin||!profile?.unit_id||!stockDraft)return;
   if(!String(stockDraft.item_code||"").trim()||!String(stockDraft.item_name||"").trim()){setNotice("Kode dan nama barang wajib diisi.");return}
   setStockSaving(true);setNotice("");
-  const numeric=["minimum_stock","initial_quantity","stock_ready","stock_unready","unit_price","capacity_liters","manufacture_year"];
+  const numeric=["minimum_stock","unit_price","capacity_liters","manufacture_year"];
   const payload:any={};
   for(const k of ["item_code","item_name","category","unit_of_measure","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","country_of_origin"]){const value=String(stockDraft[k]??"").trim();payload[k]=value||(k==="category"?"Logistik":k==="unit_of_measure"?"unit":null)}
-  for(const k of numeric){const required=["minimum_stock","initial_quantity","stock_ready","stock_unready"].includes(k);payload[k]=stockDraft[k]===""||stockDraft[k]===null||stockDraft[k]===undefined?(required?0:null):Number(stockDraft[k])}
+  for(const k of numeric){payload[k]=stockDraft[k]===""||stockDraft[k]===null||stockDraft[k]===undefined?(k==="minimum_stock"?0:null):Number(stockDraft[k])}if(!stockDraft.id){payload.initial_quantity=0;payload.stock_ready=0;payload.stock_unready=0}
   payload.is_active=stockDraft.is_active!==false;
   payload.updated_at=new Date().toISOString();
   let result:any;
@@ -464,13 +464,13 @@ export default function Home(){
 {module==="NAVYCREW"&&crewDraft&&<section className="editor-panel"><h3>{crewDraft.id?"Edit personel":"Tambah personel"}</h3><div className="editor-grid">{[["sequence_no","Nomor urut"],["full_name","Nama lengkap"],["rank_title","Pangkat"],["nrp","NRP"],["position","Jabatan"],["roster_period","Periode roster"],["remarks","Keterangan"]].map(([k,l])=><label key={k}>{l}<input value={crewDraft[k]??""} onChange={e=>setCrewDraft((v:any)=>({...v,[k]:e.target.value}))}/></label>)}</div><div className="editor-actions"><button className="outline" onClick={()=>setCrewDraft(null)}>Batal</button><button disabled={crewSaving} onClick={saveCrew}>{crewSaving?"Menyimpan…":"Simpan personel"}</button></div></section>}
 {notice&&<div className="notice">{notice}</div>
 }
-{busy?<div className="empty">Loading secured records…</div>:filtered.length>0?<div className="table-wrap"><table><thead><tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=><th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}{module==="NAVYSTOCK"&&isAdmin&&<th>Aksi</th>}</tr></thead><tbody>{filtered.map((r,i)=><tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=><td key={k}>{fmt(r[k])}</td>)}{module==="NAVYSTOCK"&&isAdmin&&<td><button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit lengkap</button></td>}</tr>)}</tbody></table></div>:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>}{module==="NAVYSTOCK"&&isAdmin&&stockDraft&&<section className="stock-editor">
+{busy?<div className="empty">Loading secured records…</div>:filtered.length>0?<div className="table-wrap"><table><thead><tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=><th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}{(module==="NAVYSTOCK"&&canManage||module==="NAVYCREW"&&canManage||module==="NAVYMAINT"&&canManage)&&<th>Aksi</th>}</tr></thead><tbody>{filtered.map((r,i)=><tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=><td key={k}>{fmt(r[k])}</td>)}{module==="NAVYSTOCK"&&canManage&&<td><button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit data</button></td>}{module==="NAVYCREW"&&canManage&&<td><button className="outline stock-edit-button" onClick={()=>setCrewDraft({...r})}>Edit</button></td>}{module==="NAVYMAINT"&&canManage&&<td><button className="outline stock-edit-button" onClick={()=>setAssetDraft({...r})}>Edit</button></td>}</tr>)}</tbody></table></div>:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>}{module==="NAVYSTOCK"&&isAdmin&&stockDraft&&<section className="stock-editor">
 <div>
 <small>ADMIN CONTROL · NAVYSTOCK</small>
 <h3>{stockDraft.id?"Edit data persediaan":"Tambah data persediaan"}</h3>
 </div>
 
-<div className="stock-editor-grid">{["item_code","item_name","category","unit_of_measure","initial_quantity","stock_ready","stock_unready","minimum_stock","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","manufacture_year","country_of_origin","unit_price","capacity_liters"].map(k=>
+<div className="stock-editor-grid"><p className="wide">Saldo awal dan saldo berjalan hanya dapat berubah melalui transaksi barang masuk/keluar agar riwayat dan perhitungan stok tetap konsisten.</p>{["item_code","item_name","category","unit_of_measure","minimum_stock","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","manufacture_year","country_of_origin","unit_price","capacity_liters"].map(k=>
 <label key={k}>{labels[k]||k.replaceAll("_"," ")}<input type={["initial_quantity","stock_ready","stock_unready","minimum_stock","unit_price","capacity_liters","manufacture_year"].includes(k)?"number":"text"} step={["unit_price","capacity_liters","initial_quantity","stock_ready","stock_unready","minimum_stock"].includes(k)?"any":"1"} value={stockDraft[k]??""} onChange={e=>setStockDraft((v:any)=>({...v,[k]:e.target.value}))}/>
 </label>)}<label>Status<select value={stockDraft.is_active?"true":"false"} onChange={e=>setStockDraft((v:any)=>({...v,is_active:e.target.value==="true"}))}>
 <option value="true">Aktif</option>
@@ -487,6 +487,7 @@ export default function Home(){
 </section>
 }</section>
 }
+{module==="NAVYMAINT"&&<section className="panel data-panel"><div className="panelhead"><div><h3>Riwayat pemeliharaan</h3><p>Laporan kerusakan, tindak lanjut dan status pekerjaan</p></div><span className="glass-chip">{maintenanceRows.length} LAPORAN</span></div>{maintenanceRows.length?<div className="table-wrap"><table><thead><tr>{["report_date","issue_description","action_taken","status"].map(k=><th key={k}>{labels[k]||k}</th>)}{canManage&&<th>Perbarui status</th>}</tr></thead><tbody>{maintenanceRows.map(r=><tr key={r.id}><td>{fmt(r.report_date)}</td><td>{fmt(r.issue_description)}</td><td>{fmt(r.action_taken)}</td><td>{fmt(r.status)}</td>{canManage&&<td><select value={r.status} onChange={e=>updateMaintenanceStatus(r,e.target.value)}><option value="reported">Dilaporkan</option><option value="in_progress">Dalam proses</option><option value="completed">Selesai</option><option value="deferred">Ditunda</option></select></td>}</tr>)}</tbody></table></div>:<div className="empty">Belum ada laporan pemeliharaan.</div>}</section>}
 {module==="NAVYSTOCK"&&<section className="panel data-panel">
 <div className="panelhead">
 <div>
