@@ -220,11 +220,11 @@ export default function Home(){
 
 </div>
 
-<div className="ship">KRI ALAMANG-644<small>SATUAN KAPAL CEPAT · KOARMADA I</small>
-</div>
+<button type="button" className="ship ship-dashboard" aria-label="Buka Dashboard KRI Alamang-644" onClick={()=>{setModule("Dashboard");setSearch("");setNotice("")}}>KRI ALAMANG-644<small>SATUAN KAPAL CEPAT · KOARMADA I</small>
+</button>
 
 <nav>
-<label>COMMAND CENTER</label>{visibleMenu.map(m=>
+<label>COMMAND CENTER</label>{visibleMenu.filter(m=>m.id!=="Dashboard").map(m=>
 <button key={m.id} className={module===m.id?"selected":""} onClick={()=>{setModule(m.id);setSearch("");setNotice("")}}>
 <span className="navicon">{m.icon}</span>
 <span>{m.id}<small>{m.desc}</small>
