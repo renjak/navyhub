@@ -440,3 +440,53 @@ button:focus-visible,[role="button"]:focus-visible{outline:2px solid #75d7f3;out
 @media(max-width:650px){.supply-modal{align-items:end;padding:0}.supply-modal-dialog{width:100%;padding:19px 16px calc(18px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0;animation:supplySheetIn .36s cubic-bezier(.16,1,.3,1) both}.supply-modal-grid{grid-template-columns:1fr;gap:11px;margin:17px 0}.supply-modal-dialog>footer button{flex:1}.table-wrap{border-radius:11px}.table-wrap table{font-size:11px}.table-wrap th,.table-wrap td{padding:10px 11px}}
 @keyframes supplySheetIn{from{opacity:.65;transform:translateY(45px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* NAVYCREW: fit every personnel field to its full content; scroll horizontally rather than clipping text */
+.navycrew-table-wrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:rgba(129,207,235,.55) rgba(255,255,255,.06)}
+.navycrew-table-wrap .navycrew-fit-table{width:max-content;min-width:100%;table-layout:auto;border-collapse:separate;border-spacing:0;font-size:11px;line-height:1.55}
+.navycrew-table-wrap .navycrew-fit-table th,.navycrew-table-wrap .navycrew-fit-table td{white-space:nowrap;min-width:max-content;max-width:none;padding:12px 15px;overflow:visible;text-overflow:clip;overflow-wrap:normal;word-break:normal}
+.navycrew-table-wrap .navycrew-fit-table th{background:#173b52;color:#f0f8fc;font-size:10px}
+.navycrew-table-wrap .navycrew-fit-table td{color:#e5eef4}
+.navycrew-table-wrap .navycrew-fit-table td:last-child{position:sticky;right:0;background:#10283a;z-index:1}
+.navycrew-table-wrap .navycrew-fit-table th:last-child{position:sticky;right:0;z-index:3;background:#173b52}
+.agenda-duty-strip{margin:12px 0 14px;padding:12px 14px;border:1px solid rgba(113,198,228,.25);border-radius:13px;background:linear-gradient(120deg,rgba(19,79,111,.42),rgba(5,26,43,.68));box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.agenda-duty-heading,.agenda-departments-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.agenda-duty-heading small,.agenda-departments-head small{font-size:8px;font-weight:900;letter-spacing:1.2px;color:#9de4f6}
+.agenda-duty-heading span,.agenda-departments-head>span{font-size:8px;letter-spacing:.8px;color:#b6cfdd}
+.agenda-duty-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:9px}
+.agenda-duty-item{min-width:0;padding:8px 10px;border:1px solid rgba(152,201,224,.14);border-radius:9px;background:rgba(255,255,255,.045)}
+.agenda-duty-item small,.agenda-duty-item b{display:block}
+.agenda-duty-item small{font-size:8px;color:#a9c4d3;letter-spacing:.35px}
+.agenda-duty-item b{margin-top:4px;color:#f3f8fb;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.agenda-list{display:grid;gap:7px;margin-top:10px}
+.agenda-card.agenda-card-compact{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:10px 12px;border-radius:11px;background:linear-gradient(120deg,rgba(20,70,96,.26),rgba(0,0,0,.2));}
+.agenda-card-compact .agenda-time{font-size:14px;line-height:1.4;padding-top:1px;color:#aeeeff}
+.agenda-card-compact .agenda-content h4{margin:0;font-size:11px;line-height:1.45}
+.agenda-card-compact .agenda-content p{margin:4px 0 0;font-size:9px;line-height:1.45;color:#d3e2eb;white-space:pre-wrap}
+.agenda-card-compact .agenda-status{display:inline-block;margin-top:5px;font-size:7px;letter-spacing:.7px;color:#9ebdce}
+.agenda-departments{margin-top:15px;padding:12px 13px;border:1px solid rgba(131,193,220,.2);border-radius:13px;background:rgba(5,28,46,.45)}
+.agenda-departments-head{margin-bottom:9px}
+.agenda-departments-head h4{margin:4px 0 0;color:#f1f7fb;font-size:12px}
+.agenda-department-list{display:grid;gap:7px}
+.agenda-department-card{padding:9px 11px;border:1px solid rgba(140,192,217,.16);border-radius:10px;background:rgba(255,255,255,.035)}
+.agenda-department-open{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0;border:0;background:transparent;text-align:left;color:#f3f8fb}
+.agenda-department-open:disabled{cursor:default}
+.agenda-department-open span{min-width:0}
+.agenda-department-open small,.agenda-department-open b{display:block}
+.agenda-department-open small{font-size:7px;letter-spacing:1px;color:#9db9c9}
+.agenda-department-open b{margin-top:3px;font-size:10px;line-height:1.4}
+.agenda-department-open i{flex:0 0 auto;font-style:normal;font-size:7px;font-weight:900;letter-spacing:.8px;color:#9fe5f5}
+.agenda-department-card p{margin:7px 0 0;color:#d5e3eb;font-size:9px;line-height:1.5;white-space:pre-wrap}
+.agenda-dept-editor{margin-top:10px;padding:13px;border:1px solid rgba(114,203,235,.3);border-radius:12px;background:rgba(8,39,60,.8)}
+.agenda-dept-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.agenda-dept-editor-head small{font-size:8px;letter-spacing:1px;color:#9de4f6}
+.agenda-dept-editor-head h4{margin:4px 0 0;color:#fff;font-size:12px}
+.agenda-dept-editor>label{display:grid;gap:6px;margin:9px 0;color:#c9dce7;font-size:9px;font-weight:700}
+.agenda-dept-editor input,.agenda-dept-editor textarea{width:100%;padding:10px 11px;border:1px solid rgba(147,196,221,.27);border-radius:9px;background:#061a2b;color:#f5fbff;font:inherit;font-size:10px;line-height:1.5}
+.agenda-dept-editor textarea{resize:vertical;white-space:pre-wrap}
+.agenda-dept-editor-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.agenda-dept-editor-actions button{padding:9px 13px;border:1px solid rgba(113,196,228,.34);border-radius:9px;background:linear-gradient(135deg,#1479a4,#155a7e);color:#fff;font-size:9px;font-weight:800}
+.agenda-dept-editor-actions button.outline{background:rgba(255,255,255,.05);color:#d4e4ed}
+@media(max-width:650px){.navycrew-table-wrap .navycrew-fit-table th,.navycrew-table-wrap .navycrew-fit-table td{padding:10px 12px}.agenda-duty-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.agenda-card.agenda-card-compact{grid-template-columns:49px minmax(0,1fr);gap:8px;padding:9px}.agenda-dept-editor-actions button{flex:1}}
+@media(prefers-reduced-motion:reduce){.agenda-department-card,.agenda-card-compact{transition:none}}
