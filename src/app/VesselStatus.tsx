@@ -10,7 +10,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage,isPreview
  const [loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [lat,setLat]=useState(""),[lon,setLon]=useState(""),[speed,setSpeed]=useState(""),[course,setCourse]=useState(""),[satellites,setSatellites]=useState(""),[positionAt,setPositionAt]=useState(()=>new Date().toISOString().slice(0,16));
  const load=useCallback(async()=>{
-  if(!unitId)return;setLoading(true);setError("");
+  if(!unitId||isPreview){setLoading(false);return}setLoading(true);setError("");
   const {data,error}=await supabase.from("vessel_gps_positions").select("id,unit_id,position_at,latitude,longitude,speed_knots,course_degrees,satellites,fix_quality,source,received_at,accuracy_m,reporter_user_id").eq("unit_id",unitId).order("position_at",{ascending:false}).limit(1).maybeSingle();
   if(error){setError("Data GPS gagal dibaca: "+error.message);setLoading(false);return}
   setGps(data||null);
