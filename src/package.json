@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm audit --json || true",
+    "postinstall": "npm audit --json || true",
     "build": "next build",
     "start": "next start"
   },
