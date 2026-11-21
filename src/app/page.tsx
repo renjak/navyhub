@@ -397,7 +397,6 @@ export default function Home(){
 
 </section>
 
- <footer>NAVYHUB · KRI ALAMANG-644 · KOARMADA I</footer>
 </div>
 }
 {module!=="Dashboard" && <div className="module-view">{isViewer&&<div className="viewer-notice">
@@ -578,7 +577,6 @@ export default function Home(){
 </section>
 }</div>
 }
- <footer className="main-footer">© 2026 NAVYHUB · BLACK SMOKE / SILVER CRYSTAL INTERFACE</footer>
 </main>
 </div>
 
