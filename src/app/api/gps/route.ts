@@ -12,10 +12,6 @@ function sameSecret(a: string, b: string) {
 }
 
 export async function POST(request: NextRequest) {
-  if (process.env.NEXT_PUBLIC_NAVYHUB_PREVIEW === "true") {
-    return NextResponse.json({ error: "GPS ingest is disabled in preview." }, { status: 403 });
-  }
-
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
