@@ -1,0 +1,56 @@
+name: NAVYHUB Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".github/workflows/navyhub-quality.yml"
+  push:
+    branches:
+      - main
+      - feat/navyhub-operational-modules
+    paths:
+      - "src/**"
+      - ".github/workflows/navyhub-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: navyhub-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: TypeScript, dependency audit and production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://build-check.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_build_check_only
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript validation
+        run: npm run typecheck
+
+      - name: Production dependency security audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Next.js production build
+        run: npm run build
