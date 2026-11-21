@@ -7,22 +7,34 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run build"
+    "check": "npm run typecheck && npm run build",
+    "cap:sync": "cap sync",
+    "cap:add:android": "cap add android",
+    "cap:add:ios": "cap add ios",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",
     "next": "15.5.29",
     "pdfjs-dist": "^4.10.38",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/ios": "^8.6.2"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "@capacitor/cli": "^8.6.2"
   },
   "overrides": {
     "postcss": "8.5.23"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
