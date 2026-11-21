@@ -602,3 +602,7 @@ body:before,.shell aside,.logout,.toolbar button{display:none!important}
 .panel,.hero,.stats article{background:#fff!important;color:#111!important;box-shadow:none!important;border:1px solid #999!important;backdrop-filter:none!important}
 .panel h3,.panel p,.table-wrap td,.hero h1,.hero p{color:#111!important}
 }
+
+/* NAVYSTOCK: make live percentage the primary visual metric */
+.supply-meta>b{font-size:44px!important;line-height:.98;min-width:84px;letter-spacing:-.055em;font-weight:850}
+@media(max-width:650px){.supply-meta>b{font-size:36px!important;min-width:72px}}
