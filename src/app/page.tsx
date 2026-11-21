@@ -232,7 +232,7 @@ export default function Home(){
 <span>{ "Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data."}</span>
 </div>
 }
- <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage}/>
+ <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={isAdmin}/>
  <section className="hero">
 <div>
 <small>INTEGRATED SHIP MANAGEMENT</small>
