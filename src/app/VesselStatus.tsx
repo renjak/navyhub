@@ -38,7 +38,7 @@ export default function VesselStatus(){
      updatedAt:new Date(result.timestamp)
     });
     setActive(true);
-    setMessage("Lokasi perangkat berhasil dibaca. Data hanya ditampilkan di perangkat ini.");
+    setMessage("Lokasi perangkat berhasil dibaca. Koordinat ini menjadi posisi kapal pada perangkat ini.");
    },
    (error)=>{
     const messages:Record<number,string>={
@@ -63,16 +63,16 @@ export default function VesselStatus(){
  return <section className="vessel-status">
   <div className="vessel-status-head">
    <div>
-    <small>DEVICE SERVICES · LOCATION</small>
-    <h3>GPS Perangkat</h3>
-    <p>Membaca lokasi perangkat yang sedang membuka NAVYHUB setelah pengguna memberikan izin.</p>
+    <small>COMMAND CENTER · SHIP POSITION</small>
+    <h3>Posisi KRI Alamang-644</h3>
+    <p>Posisi kapal diwakili oleh GPS perangkat pelapor yang berada di atas KRI Alamang-644.</p>
    </div>
    <button onClick={active?stop:start}>{active?"Hentikan GPS":"Aktifkan GPS perangkat"}</button>
   </div>
   <div className="vessel-status-grid">
    <article className="vessel-status-card gps">
     <div className="vessel-status-card-head">
-     <span>⌖</span><small>LOKASI PERANGKAT</small>
+     <span>⌖</span><small>POSISI KAPAL · SUMBER GPS PERANGKAT</small>
      <i className={active?"live":"offline"}>{active?"GPS AKTIF":"NONAKTIF"}</i>
     </div>
     {position?<>
@@ -90,8 +90,8 @@ export default function VesselStatus(){
    </article>
    <article className="vessel-status-card">
     <div className="vessel-status-card-head"><span>ⓘ</span><small>PRIVASI & SUMBER DATA</small><i className="live">LOKAL</i></div>
-    <b>Lokasi perangkat, bukan posisi kapal</b>
-    <p>Koordinat berasal dari sensor lokasi perangkat/browser. NAVYHUB tidak mengirim koordinat ini ke database, tidak menganggapnya sebagai posisi KRI, dan tidak menggunakan data AIS.</p>
+    <b>GPS perangkat sebagai posisi kapal</b>
+    <p>Koordinat GPS perangkat pelapor ditampilkan sebagai posisi KRI Alamang-644. Pastikan perangkat tetap berada di kapal dan izin lokasi aktif. NAVYHUB tidak menggunakan integrasi AIS atau sensor GPS kapal eksternal.</p>
     <small>Ketepatan lokasi bergantung pada perangkat, izin browser, sinyal satelit, dan pengaturan layanan lokasi.</small>
    </article>
   </div>
