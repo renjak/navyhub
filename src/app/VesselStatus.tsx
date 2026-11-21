@@ -10,7 +10,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage,isPreview
  const [loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const [lat,setLat]=useState(""),[lon,setLon]=useState(""),[speed,setSpeed]=useState(""),[course,setCourse]=useState(""),[satellites,setSatellites]=useState(""),[positionAt,setPositionAt]=useState(()=>new Date().toISOString().slice(0,16));
  const load=useCallback(async()=>{
-  if(!unitId||isPreview){setLoading(false);return}setLoading(true);setError("");
+  if(!unitId){setLoading(false);return}setLoading(true);setError("");
   const {data,error}=await supabase.from("vessel_gps_positions").select("id,unit_id,position_at,latitude,longitude,speed_knots,course_degrees,satellites,fix_quality,source,received_at,accuracy_m,reporter_user_id").eq("unit_id",unitId).order("position_at",{ascending:false}).limit(1).maybeSingle();
   if(error){setError("Data GPS gagal dibaca: "+error.message);setLoading(false);return}
   setGps(data||null);
@@ -29,14 +29,19 @@ export default function VesselStatus({supabase,unitId,userId,canManage,isPreview
   setLoading(false);
  },[supabase,unitId]);
  useEffect(()=>{load();const t=window.setInterval(load,60000);return()=>window.clearInterval(t)},[load]);
- const marker=useMemo(()=>gps?{x:((Number(gps.longitude)-94)/(142-94))*100,y:((7-Number(gps.latitude))/(7+12))*100}:null,[gps]);
  const current=weather?.current,mc=marine?.current;
  const hourly=(marine?.hourly?.sea_level_height_msl||[]).filter((v:any)=>typeof v==="number"&&Number.isFinite(v));
  const low=hourly.length?Math.min(...hourly):null,high=hourly.length?Math.max(...hourly):null;
  const stale=gps?Date.now()-new Date(gps.position_at).getTime()>15*60*1000:false;
+ const mapSrc=useMemo(()=>{
+  const bbox="94.5%2C-11.5%2C141.5%2C6.5";
+  const marker=gps?"&marker="+encodeURIComponent(Number(gps.latitude)+","+Number(gps.longitude)):"";
+  return "https://www.openstreetmap.org/export/embed.html?bbox="+bbox+"&layer=mapnik"+marker;
+ },[gps?.latitude,gps?.longitude]);
  async function saveGps(e:React.FormEvent){
   e.preventDefault();setNotice("");setError("");
-  if(!canManage||isPreview||!unitId||!userId)return;
+  if(!canManage||!unitId||!userId)return;
+  if(isPreview){setError("Akun Admin tetap aktif. Penyimpanan master GPS di preview menunggu database staging agar tidak mengubah data GPS production.");return}
   const a=Number(lat),o=Number(lon),s=speed===""?null:Number(speed),c=course===""?null:Number(course),sat=satellites===""?null:Number(satellites);
   if(!Number.isFinite(a)||a< -90||a>90||!Number.isFinite(o)||o< -180||o>180){setError("Koordinat lintang/bujur tidak valid.");return}
   if(s!==null&&(!Number.isFinite(s)||s<0)){setError("Kecepatan harus bernilai nol atau lebih.");return}
@@ -46,44 +51,27 @@ export default function VesselStatus({supabase,unitId,userId,canManage,isPreview
   const payload={unit_id:unitId,position_at:new Date(positionAt).toISOString(),latitude:a,longitude:o,speed_knots:s,course_degrees:c,satellites:sat,fix_quality:"ADMIN REPORTED",source:"NAVYHUB ADMIN MASTER",received_at:new Date().toISOString(),reporter_user_id:userId};
   const {error}=await supabase.from("vessel_gps_positions").insert(payload);
   if(error)setError("Posisi GPS tidak tersimpan: "+error.message);
-  else{setNotice("Data posisi kapal berhasil disimpan sebagai master GPS. Peta, cuaca, dan data laut diperbarui.");await load()}
+  else{setNotice("Master GPS unit berhasil diperbarui. Seluruh pengguna pada unit ini akan melihat posisi terbaru.");await load()}
   setSaving(false);
  }
  return <section className="navy-maritime">
   <div className="navy-map-shell">
-   <div className="navy-map-top"><div><small>FLEET TRACKING · INDONESIAN ARCHIPELAGO</small><h2>Indonesia Maritime Map</h2><p>Posisi kapal berdasarkan master GPS NAVYHUB</p></div><div className={"navy-gps-state "+(gps?(stale?"stale":"live"):"offline")}><i/>{gps?(stale?"GPS DATA AGED":"GPS POSITION AVAILABLE"):"AWAITING GPS DATA"}</div></div>
-   <div className="navy-map-canvas">
-    <div className="navy-map-grid"/>
-    <svg viewBox="0 0 960 430" role="img" aria-label="Peta skematis Kepulauan Indonesia">
-     <defs><linearGradient id="seaGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#163c56"/><stop offset="1" stopColor="#071725"/></linearGradient><filter id="islandGlow"><feGaussianBlur stdDeviation="5"/></filter></defs>
-     <rect width="960" height="430" fill="url(#seaGlow)"/>
-     <g fill="#6d9b91" stroke="#b4d5c8" strokeWidth="1.5" opacity=".9">
-      <path d="M70 120 l35 -22 42 8 22 20 -8 19 -34 4 -28 21 -29 -8 -15 -20z M85 183 l24 -12 21 10 -8 22 -29 7z"/>
-      <path d="M250 78 l35 -15 48 9 36 23 -9 24 -42 3 -21 18 -42 -8 -24 -25z M279 150 l22 -12 28 11 4 25 -26 10 -24 -13z"/>
-      <path d="M350 190 l20 -13 26 12 17 28 -14 15 -33 -12z M390 240 l27 -10 24 14 -7 22 -33 8z"/>
-      <path d="M470 130 l35 -16 38 10 22 25 -19 19 -45 -5 -26 -16z M520 183 l18 -12 21 15 -3 26 -21 9 -17 -19z"/>
-      <path d="M615 95 l40 -16 48 14 22 26 -21 20 -55 -8 -36 -16z M690 170 l28 -11 31 18 -8 27 -39 7 -20 -19z"/>
-      <path d="M760 260 l32 -18 42 9 30 26 -13 22 -49 4 -34 -17z M855 315 l20 -8 18 16 -7 15 -23 -3z"/>
-      <path d="M160 285 l23 -15 35 10 24 22 -16 20 -37 -3 -28 -16z"/>
-     </g>
-     <g fill="none" stroke="#b7d8d0" strokeWidth="1" opacity=".45"><path d="M0 215 H960 M480 0 V430 M0 107 H960 M0 322 H960"/></g>
-     {marker&&<g transform={"translate("+Math.max(12,Math.min(948,marker.x*9.6))+","+Math.max(12,Math.min(418,marker.y*4.3))+")"}><circle r="24" fill="#56d8ff" opacity=".15" filter="url(#islandGlow)"/><circle r="12" fill="none" stroke="#70e2ff" strokeWidth="2"><animate attributeName="r" values="8;22;8" dur="2.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.1;1" dur="2.5s" repeatCount="indefinite"/></circle><circle r="5" fill="#a8f2ff" stroke="#fff" strokeWidth="1.5"/></g>}
-     <g fill="#d2e9f5" fontSize="12" letterSpacing="2" opacity=".8"><text x="90" y="55">SUMATERA</text><text x="270" y="48">KALIMANTAN</text><text x="420" y="285">JAWA</text><text x="565" y="75">SULAWESI</text><text x="760" y="235">PAPUA</text></g>
-    </svg>
-    <div className="navy-map-coords">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"POSITION NOT AVAILABLE"}</div>
-    <div className="navy-map-legend"><span><i/> POSISI GPS KAPAL</span><span>SCHEMATIC MAP · NOT FOR NAVIGATION</span></div>
+   <div className="navy-map-top"><div><small>FLEET TRACKING · INDONESIAN ARCHIPELAGO</small><h2>Peta Maritim Indonesia</h2><p>Peta geografis OpenStreetMap · posisi dari master GPS NAVYHUB</p></div><div className={"navy-gps-state "+(gps?(stale?"stale":"live"):"offline")}><i/>{gps?(stale?"GPS DATA AGED":"GPS POSITION AVAILABLE"):"AWAITING GPS DATA"}</div></div>
+   <div className="navy-map-canvas navy-map-real"><iframe title="Peta geografis Indonesia dengan posisi GPS kapal" src={mapSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen/>
+    <div className="navy-map-coords">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"MENUNGGU POSISI GPS"}</div>
+    <div className="navy-map-legend"><span><i/> POSISI GPS KAPAL</span><span>OPENSTREETMAP · MAPNIK</span></div>
    </div>
-   <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{gps?"Last position: "+stamp(gps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button></div>
+   <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{gps?"Last position: "+stamp(gps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button><a href={gps?"https://www.openstreetmap.org/?mlat="+gps.latitude+"&mlon="+gps.longitude+"#map=7/"+gps.latitude+"/"+gps.longitude:"https://www.openstreetmap.org/#map=5/-2.5/118"} target="_blank" rel="noreferrer">BUKA PETA ↗</a></div>
   </div>
   <div className="navy-maritime-cards">
    <article className="navy-info-card"><div className="navy-info-head"><span>⌖</span><small>GPS · MASTER POSITION</small></div><b>{gps?fmt(gps.speed_knots)+" kn":"—"}</b><strong>{gps?"Kecepatan kapal":"Belum ada posisi GPS"}</strong><div className="navy-info-meta"><span>Haluan <b>{gps&&gps.course_degrees!=null?fmt(gps.course_degrees,0)+"°":"—"}</b></span><span>Satelit <b>{gps?.satellites??"—"}</b></span></div><small>{gps?"Diterima "+stamp(gps.received_at):"Menunggu input master GPS admin"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat master GPS"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
-  {canManage&&!isPreview&&<details className="navy-gps-admin" open><summary><span>ADMIN MASTER · INPUT POSISI GPS KAPAL</span><small>Tambah laporan posisi baru</small></summary><form onSubmit={saveGps}><div className="navy-gps-form-grid"><label>Latitude<input type="number" step="any" min="-90" max="90" value={lat} onChange={e=>setLat(e.target.value)} placeholder="-6.10" required/></label><label>Longitude<input type="number" step="any" min="-180" max="180" value={lon} onChange={e=>setLon(e.target.value)} placeholder="106.88" required/></label><label>Kecepatan (knots)<input type="number" step="any" min="0" value={speed} onChange={e=>setSpeed(e.target.value)} placeholder="Opsional"/></label><label>Haluan (0–359°)<input type="number" step="any" min="0" max="359.999" value={course} onChange={e=>setCourse(e.target.value)} placeholder="Opsional"/></label><label>Jumlah satelit<input type="number" step="1" min="0" value={satellites} onChange={e=>setSatellites(e.target.value)} placeholder="Opsional"/></label><label>Waktu posisi<input type="datetime-local" value={positionAt} onChange={e=>setPositionAt(e.target.value)} required/></label></div><div className="navy-gps-actions"><small>Setiap penyimpanan membuat rekaman posisi baru. Data lama tidak ditimpa.</small><button type="submit" disabled={saving}>{saving?"MENYIMPAN…":"SIMPAN MASTER GPS"}</button></div></form></details>}
-  {isPreview&&<div className="navy-gps-note">PREVIEW READ ONLY · Form master GPS dinonaktifkan karena preview masih menggunakan database produksi.</div>}
-  {!canManage&&!isPreview&&<div className="navy-gps-note">MASTER GPS hanya dapat dikelola oleh akun ADMIN. Pengguna lain dapat memantau posisi kapal.</div>}
+  {canManage&&<details className="navy-gps-admin" open><summary><span>ADMIN MASTER · PENGATURAN POSISI GPS UNTUK SELURUH UNIT</span><small>Hanya Admin yang dapat memperbarui</small></summary><form onSubmit={saveGps}><div className="navy-gps-form-grid"><label>Latitude<input type="number" step="any" min="-90" max="90" value={lat} onChange={e=>setLat(e.target.value)} placeholder="-6.10" required/></label><label>Longitude<input type="number" step="any" min="-180" max="180" value={lon} onChange={e=>setLon(e.target.value)} placeholder="106.88" required/></label><label>Kecepatan (knots)<input type="number" step="any" min="0" value={speed} onChange={e=>setSpeed(e.target.value)} placeholder="Opsional"/></label><label>Haluan (0–359°)<input type="number" step="any" min="0" max="359.999" value={course} onChange={e=>setCourse(e.target.value)} placeholder="Opsional"/></label><label>Jumlah satelit<input type="number" step="1" min="0" value={satellites} onChange={e=>setSatellites(e.target.value)} placeholder="Opsional"/></label><label>Waktu posisi<input type="datetime-local" value={positionAt} onChange={e=>setPositionAt(e.target.value)} required/></label></div><div className="navy-gps-actions"><small>Admin memasukkan satu koordinat master untuk unit. Data terbaru otomatis dibaca oleh seluruh akun unit. Riwayat posisi lama tetap tersimpan.</small><button type="submit" disabled={saving||isPreview}>{saving?"MENYIMPAN…":isPreview?"AKTIFKAN DI DATABASE PREVIEW":"SIMPAN MASTER GPS UNTUK SEMUA"}</button></div></form></details>}
+  {!canManage&&<div className="navy-gps-note">MASTER GPS dikelola oleh Admin unit. Semua pengguna dapat memantau posisi terbaru yang sama.</div>}
+  {isPreview&&canManage&&<div className="navy-gps-note">ROLE ADMIN TETAP AKTIF. Form master GPS ditampilkan, tetapi tombol simpan menunggu database staging terpisah agar data GPS production tidak berubah saat pengujian preview.</div>}
   {error&&<div className="navy-status-error">{error}</div>}{notice&&<div className="navy-status-notice">{notice}</div>}
-  <div className="navy-source-note">Cuaca: Open-Meteo. Data laut dan muka laut: model maritim Open-Meteo, bukan pengukuran pasang surut stasiun resmi. Untuk keputusan navigasi, gunakan publikasi dan peringatan resmi BMKG/BIG serta peta laut yang berlaku. Peta di atas bersifat skematis, bukan peta navigasi.</div>
+  <div className="navy-source-note">Peta dasar: OpenStreetMap (Mapnik), peta geografis interaktif dengan garis pantai dan pulau. Cuaca: Open-Meteo. Data laut adalah model maritim, bukan pengukuran pasang surut stasiun resmi. Peta ini bukan peta laut untuk navigasi; gunakan ENC/peta laut resmi dan publikasi keselamatan pelayaran untuk keputusan navigasi.</div>
  </section>
 }
