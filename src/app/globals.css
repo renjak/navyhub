@@ -613,3 +613,12 @@ body:before,.shell aside,.logout,.toolbar button{display:none!important}
 /* Perbesar nomor lambung pada emblem Welcome Aboard. */
 .hero-orb span{font-size:15px!important;line-height:1;font-weight:800;letter-spacing:4px;color:#f1f4f8;text-shadow:0 1px 8px rgba(255,255,255,.2)}
 @media(max-width:680px){.hero-orb span{font-size:12px!important;letter-spacing:3px}}
+
+/* NAVYHUB KRI Alamang visual identity: original ship photo + official emblem. */
+body{background:#080d16!important;position:relative}
+body:before{content:"";display:block!important;position:fixed!important;inset:0!important;z-index:-1!important;pointer-events:none;background:linear-gradient(90deg,rgba(3,8,16,.83),rgba(4,10,20,.72) 45%,rgba(3,8,16,.84)),linear-gradient(0deg,rgba(2,7,14,.72),rgba(2,7,14,.2)),url("/kri-alamang-bg.jpg") center 44%/cover no-repeat!important;opacity:1!important}
+.shell aside{background:linear-gradient(155deg,rgba(15,27,43,.78),rgba(9,15,25,.7))!important;border-color:rgba(153,195,225,.28)!important;backdrop-filter:blur(26px) saturate(135%)!important;-webkit-backdrop-filter:blur(26px) saturate(135%)!important}
+.hero,.module-hero,.panel,.stats article{background:linear-gradient(135deg,rgba(28,48,68,.62),rgba(10,19,32,.68))!important;border-color:rgba(154,196,224,.28)!important;color:#f4f8fc!important;backdrop-filter:blur(22px) saturate(135%)!important;-webkit-backdrop-filter:blur(22px) saturate(135%)!important}
+.hero-orb{width:116px!important;height:116px!important;padding:9px!important;border-radius:26px!important;transform:rotate(0)!important;background:rgba(5,15,27,.42)!important;border:1px solid rgba(169,210,238,.45)!important;box-shadow:0 14px 36px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.22)!important;overflow:hidden}
+.hero-orb img{width:100%;height:100%;object-fit:contain;display:block;border-radius:18px}
+@media(max-width:680px){.hero-orb{width:74px!important;height:74px!important;padding:5px!important;border-radius:18px!important}.hero-orb img{border-radius:13px}}
