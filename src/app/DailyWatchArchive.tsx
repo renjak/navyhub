@@ -103,11 +103,9 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
    <label className="watch-report-notes">Catatan tambahan Paga<textarea value={drafts[r.id]??r.additional_notes??""} onChange={e=>setDrafts(v=>({...v,[r.id]:e.target.value}))} disabled={!canWrite||!!r.approved_at} placeholder="Tambahkan kejadian, catatan, atau hal yang perlu diketahui Komandan..."/></label>
    {!r.approved_at&&canWrite&&<button className="watch-save-notes" onClick={()=>saveNotes(r)}>Simpan catatan tambahan</button>}
    <div className="watch-report-approval">{r.approved_at?<div><b>APPROVED</b><small>Oleh {profiles[r.approved_by]||"Komandan"} · {new Date(r.approved_at).toLocaleString("id-ID",{timeZone:WIB})}</small></div>:canReview?<div><label>Ketik APPROVED untuk menyetujui laporan<input value={approvalDrafts[r.id]||""} onChange={e=>setApprovalDrafts(v=>({...v,[r.id]:e.target.value.toUpperCase()}))} placeholder="APPROVED"/></label><button disabled={approvalDrafts[r.id]!=="APPROVED"} onClick={()=>approve(r)}>Setujui dan kunci laporan</button></div>:<small>Menunggu review akun Komandan.</small>}</div>
-  </article>}):<div className="watch-archive-empty">Belum ada rekap pada rentang tanggal ini. Buat rekap hari sebelumnya setelah pukul 08.00 WIB.</div>}
-  )}
+  </article>}):<div className="watch-archive-empty">Belum ada rekap pada rentang tanggal ini. Buat rekap hari sebelumnya setelah pukul 08.00 WIB.</div>)}
   {sourceFilter!=="reports"&&<><div className="watch-archive-section-title"><b>RIWAYAT LOGBOOK KEGIATAN</b><span>{activityMatches.length} CATATAN</span></div>}
-  {sourceFilter!=="reports"&&(activityMatches.length?<div className="watch-activity-list">{activityMatches.map(a=><article key={a.id}><time>{prettyDate(a.activity_date)} · {String(a.activity_time||"").slice(0,5)||"—"}</time><div><b>{a.title}</b><small>{a.category} · {a.status}</small>{a.description&&<p>{a.description}</p>}</div></article>)}</div>:<div className="watch-archive-empty">Tidak ada kegiatan yang cocok dengan filter pencarian.</div>}
-  )}
+  {sourceFilter!=="reports"&&(activityMatches.length?<div className="watch-activity-list">{activityMatches.map(a=><article key={a.id}><time>{prettyDate(a.activity_date)} · {String(a.activity_time||"").slice(0,5)||"—"}</time><div><b>{a.title}</b><small>{a.category} · {a.status}</small>{a.description&&<p>{a.description}</p>}</div></article>)}</div>:<div className="watch-archive-empty">Tidak ada kegiatan yang cocok dengan filter pencarian.</div>)}
   <p className="watch-archive-foot">Rekap otomatis dijalankan oleh scheduler database pukul 08.00 WIB. Persetujuan Komandan dicatat bersama identitas akun dan waktu server. Laporan yang telah disetujui tidak dapat diubah kembali.</p>
  </section>;
 }
