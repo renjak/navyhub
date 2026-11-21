@@ -20,6 +20,7 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
  const canReview=role==="commander",canWrite=!viewer&&["admin","commander","officer","operator"].includes(role);
  const load=useCallback(async()=>{
   if(!unitId)return;
+  if(fromDate&&toDate&&fromDate>toDate){setNotice("Rentang tanggal tidak valid: tanggal awal harus sebelum tanggal akhir.");return}
   setBusy(true);setNotice("");
   let rq=supabase.from("daily_watch_reports").select("*").eq("unit_id",unitId).order("duty_date",{ascending:false}).limit(500);
   let aq=supabase.from("activity_logs").select("id,activity_date,activity_time,title,description,category,status,created_at").eq("unit_id",unitId).order("activity_date",{ascending:false}).order("activity_time",{ascending:true}).limit(1000);
@@ -82,11 +83,11 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
  }),[reports,year,day,query]);
  const activityMatches=useMemo(()=>activities.filter(a=>(!year||a.activity_date.startsWith(year))&&(!day||new Date(a.activity_date+"T00:00:00+07:00").toLocaleDateString("id-ID",{weekday:"long",timeZone:WIB}).toLowerCase()===day)&&(!query||[a.title,a.description,a.category].join(" ").toLowerCase().includes(query.toLowerCase()))),[activities,year,day,query]);
  return <section className="watch-archive">
-  <div className="watch-archive-head"><div><small>NAVYDOCS / DIGITAL RECORDS</small><h3>{title}</h3><p>Status persetujuan Komandan dibagikan ke seluruh pengguna unit dan diperbarui otomatis setiap 15 detik.</p></div><button onClick={generateYesterday} disabled={!canWrite||busy||Number(localClock().slice(0,2))<8}>{busy?"Memproses...":"Buat rekap hari sebelumnya"}</button></div>
+  <div className="watch-archive-head"><div><small>NAVYDOCS / DIGITAL RECORDS</small><h3>{title}</h3></div><button onClick={generateYesterday} disabled={!canWrite||busy||Number(localClock().slice(0,2))<8}>{busy?"Memproses...":"Buat rekap hari sebelumnya"}</button></div>
   <div className="watch-archive-filters">
    <label>Dari tanggal<input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/></label>
    <label>Sampai tanggal<input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/></label>
-   <label>Tahun<input inputMode="numeric" maxLength={4} placeholder="Semua tahun" value={year} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setYear(v);if(v.length===4){setFromDate(v+"-01-01");setToDate(v+"-12-31")}}}/></label>
+   <label>Tahun<input inputMode="numeric" maxLength={4} placeholder="Semua tahun" value={year} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setYear(v);if(v.length===4){setFromDate(v+"-01-01");setToDate(v+"-12-31")}else if(v.length===0){setFromDate(wibDate(new Date(Date.now()-30*86400000)));setToDate(wibDate())}}}/></label>
    <label>Hari<select value={day} onChange={e=>setDay(e.target.value)}><option value="">Semua hari</option>{["senin","selasa","rabu","kamis","jumat","sabtu","minggu"].map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
    <label className="watch-search">Cari laporan<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nama, NRP, kegiatan, catatan..."/></label>
   </div>
