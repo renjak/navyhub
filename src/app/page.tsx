@@ -173,25 +173,361 @@ export default function Home(){
  if(loading)return <main className="loading"><div className="loaderglass">NAVYHUB <span>INITIALIZING</span></div></main>;
  if(!user)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>SHIP MANAGEMENT SYSTEM</small><h1>NAVYHUB</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke NAVYHUB"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
  if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>ACCOUNT ACCESS</small><h1>NAVYHUB</h1><p>Akun berhasil masuk, tetapi belum diaktifkan atau belum ditautkan ke unit.</p><button onClick={()=>sb.auth.signOut()}>Keluar</button></section></main>;
- return <div className="shell"><aside><div className="brand"><div className="crest smallcrest">N</div><div><b>NAVYHUB</b><small>COMMAND & LOGBOOK SYSTEM</small></div></div><div className="ship">KRI ALAMANG-644<small>SATUAN KAPAL CEPAT · KOARMADA I</small></div><nav><label>COMMAND CENTER</label>{visibleMenu.map(m=><button key={m.id} className={module===m.id?"selected":""} onClick={()=>{setModule(m.id);setSearch("");setNotice("")}}><span className="navicon">{m.icon}</span><span>{m.id}<small>{m.desc}</small></span><i>›</i></button>)}</nav><div className="asidefoot"><span className="live-dot"/> SECURE CONNECTION<small>SUPABASE AUTHENTICATED</small></div></aside><main className="main"><header><div><small>FLEET OPERATIONS / {module}</small><h2>{module==="Dashboard"?"Command Center":module}</h2></div><div className="user"><span>{profile.rank_title||""} {profile.full_name||user.email} {isViewer?"· VIEWER":""}</span><button className="logout" onClick={()=>sb.auth.signOut()}>Sign out</button></div></header>
+ return <div className="shell">
+<aside>
+<div className="brand">
+<div className="crest smallcrest">N</div>
+
+<div>
+<b>NAVYHUB</b>
+<small>COMMAND & LOGBOOK SYSTEM</small>
+</div>
+
+</div>
+
+<div className="ship">KRI ALAMANG-644<small>SATUAN KAPAL CEPAT · KOARMADA I</small>
+</div>
+
+<nav>
+<label>COMMAND CENTER</label>{visibleMenu.map(m=>
+<button key={m.id} className={module===m.id?"selected":""} onClick={()=>{setModule(m.id);setSearch("");setNotice("")}}>
+<span className="navicon">{m.icon}</span>
+<span>{m.id}<small>{m.desc}</small>
+</span>
+<i>›</i>
+</button>)}</nav>
+<div className="asidefoot">
+<span className="live-dot"/> SECURE CONNECTION<small>SUPABASE AUTHENTICATED</small>
+</div>
+
+</aside>
+<main className="main">
+<header>
+<div>
+<small>FLEET OPERATIONS / {module}</small>
+<h2>{module==="Dashboard"?"Command Center":module}</h2>
+</div>
+
+<div className="user">
+<span>{profile.rank_title||""} {profile.full_name||user.email} {isViewer?"· VIEWER":""}</span>
+<button className="logout" onClick={()=>sb.auth.signOut()}>Sign out</button>
+</div>
+
+</header>
  {module==="Dashboard" && <div className="dashboard-view">
- {isViewer&&<div className="viewer-notice"><b>MODE VIEWER · READ ONLY</b><span>Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data.</span></div>}
- <section className="hero"><div><small>INTEGRATED SHIP MANAGEMENT</small><h1>Welcome aboard, {(profile.full_name||"Operator").split(" ")[0]}.</h1><p>Operational records, maintenance, logistics and personnel in one command environment.</p></div><div className="hero-orb">N<span>644</span></div></section>
+ {isViewer&&<div className="viewer-notice">
+<b>MODE VIEWER · READ ONLY</b>
+<span>Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data.</span>
+</div>
+}
+ <section className="hero">
+<div>
+<small>INTEGRATED SHIP MANAGEMENT</small>
+<h1>Welcome aboard, {(profile.full_name||"Operator").split(" ")[0]}.</h1>
+<p>Operational records, maintenance, logistics and personnel in one command environment.</p>
+</div>
+
+<div className="hero-orb">N<span>644</span>
+</div>
+
+</section>
+
  
- <div className="section-title"><span>LIVE DATABASE OVERVIEW</span><small>REAL SUPABASE RECORDS</small></div>
+ <div className="section-title">
+<span>LIVE DATABASE OVERVIEW</span>
+<small>REAL SUPABASE RECORDS</small>
+</div>
+
  <div className="stats">
-  <article><small>PERSONNEL REGISTER</small><b>{dbCounts.personnel}</b><span>Records in NAVYCREW</span></article>
-  <article><small>INVENTORY MASTER</small><b>{dbCounts.inventory}</b><span>Items in NAVYSTOCK</span></article>
-  <article><small>STOCK MOVEMENTS</small><b>{dbCounts.movements}</b><span>Recorded transactions</span></article>
-  <article><small>ACTIVITY LOGS</small><b>{dbCounts.logs}</b><span>Current database records</span></article>
+  <article>
+<small>PERSONNEL REGISTER</small>
+<b>{dbCounts.personnel}</b>
+<span>Records in NAVYCREW</span>
+</article>
+  <article>
+<small>INVENTORY MASTER</small>
+<b>{dbCounts.inventory}</b>
+<span>Items in NAVYSTOCK</span>
+</article>
+  <article>
+<small>STOCK MOVEMENTS</small>
+<b>{dbCounts.movements}</b>
+<span>Recorded transactions</span>
+</article>
+  <article>
+<small>ACTIVITY LOGS</small>
+<b>{dbCounts.logs}</b>
+<span>Current database records</span>
+</article>
  </div>
- <div className="section-title"><span>SHIP CONSUMABLES</span><small>LIVE INVENTORY · LITER</small></div>
+
+ <div className="section-title">
+<span>SHIP CONSUMABLES</span>
+<small>LIVE INVENTORY · LITER</small>
+</div>
+
  <div className="supply-grid">
-  <article className="supply-card"><div className="supply-top"><small>FRESH WATER</small><span>{waterItem?"LIVE DATA":"NO DATA"}</span></div><h3>Air Tawar</h3><div className="supply-amount">{waterItem?waterStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small></div><div className="supply-track"><i style={{width:waterPct+"%"}}/></div><div className="supply-meta"><span>Kapasitas {waterItem?waterCapacity.toLocaleString("id-ID"):"—"} L</span><b>{waterItem?waterPct+"%":"—"}</b></div></article>
-  <article className="supply-card"><div className="supply-top"><small>FUEL · BBM</small><span>{fuelItem?"LIVE DATA":"NO DATA"}</span></div><h3>BBM</h3><div className="supply-amount">{fuelItem?fuelStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small></div><div className="supply-track"><i style={{width:fuelPct+"%"}}/></div><div className="supply-meta"><span>Kapasitas {fuelItem?fuelCapacity.toLocaleString("id-ID"):"—"} L</span><b>{fuelItem?fuelPct+"%":"—"}</b></div></article>
+  <article className="supply-card">
+<div className="supply-top">
+<small>FRESH WATER</small>
+<span>{waterItem?"LIVE DATA":"NO DATA"}</span>
+</div>
+
+<h3>Air Tawar</h3>
+<div className="supply-amount">{waterItem?waterStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small>
+</div>
+
+<div className="supply-track">
+<i style={{width:waterPct+"%"}}/>
+</div>
+
+<div className="supply-meta">
+<span>Kapasitas {waterItem?waterCapacity.toLocaleString("id-ID"):"—"} L</span>
+<b>{waterItem?waterPct+"%":"—"}</b>
+</div>
+
+</article>
+  <article className="supply-card">
+<div className="supply-top">
+<small>FUEL · BBM</small>
+<span>{fuelItem?"LIVE DATA":"NO DATA"}</span>
+</div>
+
+<h3>BBM</h3>
+<div className="supply-amount">{fuelItem?fuelStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small>
+</div>
+
+<div className="supply-track">
+<i style={{width:fuelPct+"%"}}/>
+</div>
+
+<div className="supply-meta">
+<span>Kapasitas {fuelItem?fuelCapacity.toLocaleString("id-ID"):"—"} L</span>
+<b>{fuelItem?fuelPct+"%":"—"}</b>
+</div>
+
+</article>
  </div>
- <section className="panel"><div className="panelhead"><div><h3>Operational modules</h3><p>Open a module to access its live records</p></div><span className="glass-chip">UNIT · KRI ALAMANG-644</span></div><div className="module-grid">{visibleMenu.filter(m=>m.id!=="Dashboard").map(m=><button key={m.id} onClick={()=>setModule(m.id)}><span>{m.icon}</span><b>{m.id}</b><small>{m.desc}</small><i>OPEN ↗</i></button>)}</div></section>
+
+ <section className="panel">
+<div className="panelhead">
+<div>
+<h3>Operational modules</h3>
+<p>Open a module to access its live records</p>
+</div>
+
+<span className="glass-chip">UNIT · KRI ALAMANG-644</span>
+</div>
+
+<div className="module-grid">{visibleMenu.filter(m=>m.id!=="Dashboard").map(m=>
+<button key={m.id} onClick={()=>setModule(m.id)}>
+<span>{m.icon}</span>
+<b>{m.id}</b>
+<small>{m.desc}</small>
+<i>OPEN ↗</i>
+</button>)}</div>
+
+</section>
+
  <footer>NAVYHUB · KRI ALAMANG-644 · KOARMADA I</footer>
-</div>}{module!=="Dashboard" && <div className="module-view">{isViewer&&<div className="viewer-notice"><b>MODE VIEWER · READ ONLY</b><span>Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia.</span></div>}{module!=="NAVYLOG"&&<section className="module-hero"><div><small>OPERATIONAL MODULE</small><h1>{module}</h1><p>{selected?.desc||"Operational management"}</p></div><div className="record-count">{selected?.table?rows.length:"—"}<small>RECORDS</small></div></section>}{selected?.table && <>{module==="NAVYLOG"&&<div className="navylog-board"><section className="panel plan-panel"><div className="panelhead"><div><h3>Agenda Kegiatan Berikutnya</h3><p>Satu tampilan untuk memahami kegiatan, penugasan, dan kesiagaan kapal.</p></div><span className="glass-chip">PHST · AGENDA HARI BERIKUTNYA</span></div>{!isViewer&&<><div className="phst-upload"><label className="upload-label">Pilih dokumen agenda<input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" onChange={handlePhstUpload}/></label>{docBusy&&<span>Memproses dokumen…</span>}{docName&&<small>File: {docName}</small>}</div>{docPlans.length>0&&<><div className="agenda-preview"><div className="agenda-preview-head"><div><b>Agenda kegiatan hari berikutnya</b><small>Hasil pembacaan dokumen · periksa sebelum disimpan</small></div><span>{docPlans.length} KEGIATAN</span></div><div className="agenda-sections">{phstSectionOrder.map(section=>{const items=docPlans.filter(p=>p.category===section);if(!items.length)return null;return <section className={"agenda-section "+section.charAt(0).toLowerCase()} key={section}><div className="agenda-section-title"><span>{section}</span><small>{items.length} {section==="C. UMUM"?"JADWAL":section==="D. KHUSUS"?"DEPARTEMEN":"INFORMASI"}</small></div><div className="agenda-cards">{items.map((p,i)=><article className="agenda-card" key={section+"-"+i}><div className="agenda-time">{p.activity_time||"•"}</div><div className="agenda-content"><h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}</div></article>)}</div></section>})}</div><div className="plan-actions"><small>Agenda disimpan sebagai DRAFT. Peralatan hanya ditampilkan bila tertulis di dokumen.</small><button onClick={importPhstPlans} disabled={busy}>{busy?"Menyimpan…":"Simpan agenda ke NAVYLOG"}</button></div></div></>}</>}</section><DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip NAVYLOG"/><section className="panel data-panel"><div className="panelhead"><div><h3>Agenda esok hari</h3><p>Rencana kegiatan tersimpan untuk tanggal kegiatan berikutnya</p></div><span className="glass-chip">{tomorrowPlans.length} KEGIATAN</span></div><div className="agenda-list">{tomorrowPlans.length>0?tomorrowPlans.map(p=><article className="agenda-card" key={p.id}><div className="agenda-time">{p.activity_time?p.activity_time.slice(0,5):"•"}</div><div className="agenda-content"><h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":p.status}</small></div></article>):<div className="empty">Belum ada agenda tersimpan. Unggah dokumen PHST untuk menampilkan kegiatan berikutnya.</div>}</div></section></div>}{module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="NAVYDOCS · Pusat Arsip"/>}{module!=="NAVYLOG"&&module!=="NAVYDOCS"&&<section className="panel data-panel"><div className="panelhead"><div><h3>{titles[selected.table]||module}</h3><p>Live data from Supabase · RLS protected</p></div><div className="panelhead-actions">{module==="NAVYSTOCK"&&isAdmin&&<button className="outline" onClick={()=>setStockDraft({item_code:"",item_name:"",category:"Logistik",unit_of_measure:"unit",initial_quantity:0,stock_ready:0,stock_unready:0,minimum_stock:0,is_active:true})}>+ Tambah barang</button>}<button className="outline" onClick={()=>loadModule()} disabled={busy}>{busy?"Loading…":"↻ Refresh"}</button></div></div><div className="toolbar"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search records…"/><span>{filtered.length} / {rows.length} records</span></div>{notice&&<div className="notice">{notice}</div>}{busy?<div className="empty">Loading secured records…</div>:filtered.length?<div className="table-wrap"><table><thead><tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=><th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}{module==="NAVYSTOCK"&&isAdmin&&<th>Aksi</th>}</tr></thead><tbody>{filtered.map((r,i)=><tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=><td key={k} className={isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)?"inline-edit-cell":""} title={isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)?"Klik untuk mengedit kolom ini":undefined} onClick={()=>{if(isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)){setEditingCell({id:r.id,field:k});setCellDraft(r[k]===null||r[k]===undefined?"":String(r[k]))}}}>{editingCell?.id===r.id&&editingCell.field===k?<input className="inline-cell-input" autoFocus value={cellDraft} disabled={cellSaving} onChange={e=>setCellDraft(e.target.value)} onBlur={()=>saveInlineCell(r,k)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur();if(e.key==="Escape")setEditingCell(null)}} onClick={e=>e.stopPropagation()}/>:<>{fmt(r[k])}{isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)&&<span className="inline-edit-hint"> ✎</span>}</>}</td>)}{module==="NAVYSTOCK"&&isAdmin&&<td><button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit lengkap</button></td></tr>)}</tbody></table></div>:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>}{module==="NAVYSTOCK"&&isAdmin&&stockDraft&&<section className="stock-editor"><div><small>ADMIN CONTROL · NAVYSTOCK</small><h3>{stockDraft.id?"Edit data persediaan":"Tambah data persediaan"}</h3></div><div className="stock-editor-grid">{["item_code","item_name","category","unit_of_measure","initial_quantity","stock_ready","stock_unready","minimum_stock","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","manufacture_year","country_of_origin","unit_price","capacity_liters"].map(k=><label key={k}>{labels[k]||k.replaceAll("_"," ")}<input type={["initial_quantity","stock_ready","stock_unready","minimum_stock","unit_price","capacity_liters","manufacture_year"].includes(k)?"number":"text"} step={["unit_price","capacity_liters","initial_quantity","stock_ready","stock_unready","minimum_stock"].includes(k)?"any":"1"} value={stockDraft[k]??""} onChange={e=>setStockDraft((v:any)=>({...v,[k]:e.target.value}))}/></label>)}<label>Status<select value={stockDraft.is_active?"true":"false"} onChange={e=>setStockDraft((v:any)=>({...v,is_active:e.target.value==="true"}))}><option value="true">Aktif</option><option value="false">Nonaktif</option></select></label></div><div className="stock-editor-actions"><button className="outline" onClick={()=>setStockDraft(null)} disabled={stockSaving}>Batal</button><button onClick={saveStockItem} disabled={stockSaving}>{stockSaving?"Menyimpan...":"Simpan data"}</button></div></section>}</section>}{module==="NAVYSTOCK"&&<section className="panel data-panel"><div className="panelhead"><div><h3>Riwayat transaksi stok</h3><p>Movement history · latest 100</p></div><span className="glass-chip">{movements.length} TRANSACTIONS</span></div>{movements.length?<div className="table-wrap"><table><thead><tr>{["movement_date","movement_type","quantity","reference_no","condition_status","movement_purpose","notes"].map(k=><th key={k}>{labels[k]}</th>)}</tr></thead><tbody>{movements.map(r=><tr key={r.id}>{["movement_date","movement_type","quantity","reference_no","condition_status","movement_purpose","notes"].map(k=><td key={k}>{fmt(r[k])}</td>)}</tr>)}</tbody></table></div>:<div className="empty">Belum ada transaksi atau tidak ada akses baca.</div>}</section>}{!selected?.table && <section className="panel coming"><div className="coming-icon">◇</div><small>MODULE FOUNDATION</small><h3>{module} is not yet connected to an operational database</h3><p>Modul ini belum memiliki tabel khusus pada schema Supabase yang diaudit. Tidak ada data contoh yang ditampilkan. Struktur data, alur kerja, dan hak akses harus ditetapkan sebelum modul diaktifkan.</p><span className="glass-chip">NO MOCK DATA · SECURE BY DESIGN</span></section>}</div>}
- <footer className="main-footer">© 2026 NAVYHUB · BLACK SMOKE / SILVER CRYSTAL INTERFACE</footer></main></div>
+</div>
+}
+{module!=="Dashboard" && <div className="module-view">{isViewer&&<div className="viewer-notice">
+<b>MODE VIEWER · READ ONLY</b>
+<span>Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia.</span>
+</div>
+}
+{module!=="NAVYLOG"&&<section className="module-hero">
+<div>
+<small>OPERATIONAL MODULE</small>
+<h1>{module}</h1>
+<p>{selected?.desc||"Operational management"}</p>
+</div>
+
+<div className="record-count">{selected?.table?rows.length:"—"}<small>RECORDS</small>
+</div>
+
+</section>
+}
+{selected?.table && <>{module==="NAVYLOG"&&<div className="navylog-board">
+<section className="panel plan-panel">
+<div className="panelhead">
+<div>
+<h3>Agenda Kegiatan Berikutnya</h3>
+<p>Satu tampilan untuk memahami kegiatan, penugasan, dan kesiagaan kapal.</p>
+</div>
+
+<span className="glass-chip">PHST · AGENDA HARI BERIKUTNYA</span>
+</div>
+{!isViewer&&<>
+<div className="phst-upload">
+<label className="upload-label">Pilih dokumen agenda<input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" onChange={handlePhstUpload}/>
+</label>{docBusy&&<span>Memproses dokumen…</span>}
+{docName&&<small>File: {docName}</small>}</div>
+{docPlans.length>0&&<>
+<div className="agenda-preview">
+<div className="agenda-preview-head">
+<div>
+<b>Agenda kegiatan hari berikutnya</b>
+<small>Hasil pembacaan dokumen · periksa sebelum disimpan</small>
+</div>
+
+<span>{docPlans.length} KEGIATAN</span>
+</div>
+
+<div className="agenda-sections">{phstSectionOrder.map(section=>{const items=docPlans.filter(p=>p.category===section);if(!items.length)return null;return <section className={"agenda-section "+section.charAt(0).toLowerCase()} key={section}>
+<div className="agenda-section-title">
+<span>{section}</span>
+<small>{items.length} {section==="C. UMUM"?"JADWAL":section==="D. KHUSUS"?"DEPARTEMEN":"INFORMASI"}</small>
+</div>
+
+<div className="agenda-cards">{items.map((p,i)=>
+<article className="agenda-card" key={section+"-"+i}>
+<div className="agenda-time">{p.activity_time||"•"}</div>
+
+<div className="agenda-content">
+<h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}</div>
+
+</article>)}</div>
+
+</section>
+})}</div>
+
+<div className="plan-actions">
+<small>Agenda disimpan sebagai DRAFT. Peralatan hanya ditampilkan bila tertulis di dokumen.</small>
+<button onClick={importPhstPlans} disabled={busy}>{busy?"Menyimpan…":"Simpan agenda ke NAVYLOG"}</button>
+</div>
+
+</div>
+
+</>
+}</>
+}</section>
+
+<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip NAVYLOG"/>
+<section className="panel data-panel">
+<div className="panelhead">
+<div>
+<h3>Agenda esok hari</h3>
+<p>Rencana kegiatan tersimpan untuk tanggal kegiatan berikutnya</p>
+</div>
+
+<span className="glass-chip">{tomorrowPlans.length} KEGIATAN</span>
+</div>
+
+<div className="agenda-list">{tomorrowPlans.length>0?tomorrowPlans.map(p=>
+<article className="agenda-card" key={p.id}>
+<div className="agenda-time">{p.activity_time?p.activity_time.slice(0,5):"•"}</div>
+
+<div className="agenda-content">
+<h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":p.status}</small>
+</div>
+
+</article>):<div className="empty">Belum ada agenda tersimpan. Unggah dokumen PHST untuk menampilkan kegiatan berikutnya.</div>
+}</div>
+
+</section>
+
+</div>
+}
+{module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="NAVYDOCS · Pusat Arsip"/>}
+{module!=="NAVYLOG"&&module!=="NAVYDOCS"&&<section className="panel data-panel">
+<div className="panelhead">
+<div>
+<h3>{titles[selected.table]||module}</h3>
+<p>Live data from Supabase · RLS protected</p>
+</div>
+
+<div className="panelhead-actions">{module==="NAVYSTOCK"&&isAdmin&&<button className="outline" onClick={()=>setStockDraft({item_code:"",item_name:"",category:"Logistik",unit_of_measure:"unit",initial_quantity:0,stock_ready:0,stock_unready:0,minimum_stock:0,is_active:true})}>+ Tambah barang</button>}<button className="outline" onClick={()=>loadModule()} disabled={busy}>{busy?"Loading…":"↻ Refresh"}</button>
+</div>
+
+</div>
+
+<div className="toolbar">
+<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search records…"/>
+<span>{filtered.length} / {rows.length} records</span>
+</div>
+{notice&&<div className="notice">{notice}</div>
+}
+{busy?<div className="empty">Loading secured records…</div>
+:filtered.length?<div className="table-wrap">
+<table>
+<thead>
+<tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=>
+<th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}
+{module==="NAVYSTOCK"&&isAdmin&&<th>Aksi</th>}</tr>
+</thead>
+<tbody>{filtered.map((r,i)=>
+<tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=>
+<td key={k} className={isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)?"inline-edit-cell":""} title={isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)?"Klik untuk mengedit kolom ini":undefined} onClick={()=>{if(isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)){setEditingCell({id:r.id,field:k});setCellDraft(r[k]===null||r[k]===undefined?"":String(r[k]))}}}>{editingCell?.id===r.id&&editingCell.field===k?<input className="inline-cell-input" autoFocus value={cellDraft} disabled={cellSaving} onChange={e=>setCellDraft(e.target.value)} onBlur={()=>saveInlineCell(r,k)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur();if(e.key==="Escape")setEditingCell(null)}} onClick={e=>e.stopPropagation()}/>:<>{fmt(r[k])}
+{isAdmin&&["NAVYSTOCK","NAVYCREW"].includes(module)&&!["id","unit_id","created_at","updated_at"].includes(k)&&<span className="inline-edit-hint"> ✎</span>}</>
+}</td>)}
+{module==="NAVYSTOCK"&&isAdmin&&<td>
+<button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit lengkap</button>
+</td>
+</tr>)}</tbody>
+</table>
+</div>
+:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>
+}
+{module==="NAVYSTOCK"&&isAdmin&&stockDraft&&<section className="stock-editor">
+<div>
+<small>ADMIN CONTROL · NAVYSTOCK</small>
+<h3>{stockDraft.id?"Edit data persediaan":"Tambah data persediaan"}</h3>
+</div>
+
+<div className="stock-editor-grid">{["item_code","item_name","category","unit_of_measure","initial_quantity","stock_ready","stock_unready","minimum_stock","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","manufacture_year","country_of_origin","unit_price","capacity_liters"].map(k=>
+<label key={k}>{labels[k]||k.replaceAll("_"," ")}<input type={["initial_quantity","stock_ready","stock_unready","minimum_stock","unit_price","capacity_liters","manufacture_year"].includes(k)?"number":"text"} step={["unit_price","capacity_liters","initial_quantity","stock_ready","stock_unready","minimum_stock"].includes(k)?"any":"1"} value={stockDraft[k]??""} onChange={e=>setStockDraft((v:any)=>({...v,[k]:e.target.value}))}/>
+</label>)}<label>Status<select value={stockDraft.is_active?"true":"false"} onChange={e=>setStockDraft((v:any)=>({...v,is_active:e.target.value==="true"}))}>
+<option value="true">Aktif</option>
+<option value="false">Nonaktif</option>
+</select>
+</label>
+</div>
+
+<div className="stock-editor-actions">
+<button className="outline" onClick={()=>setStockDraft(null)} disabled={stockSaving}>Batal</button>
+<button onClick={saveStockItem} disabled={stockSaving}>{stockSaving?"Menyimpan...":"Simpan data"}</button>
+</div>
+
+</section>
+}</section>
+}
+{module==="NAVYSTOCK"&&<section className="panel data-panel">
+<div className="panelhead">
+<div>
+<h3>Riwayat transaksi stok</h3>
+<p>Movement history · latest 100</p>
+</div>
+
+<span className="glass-chip">{movements.length} TRANSACTIONS</span>
+</div>
+{movements.length?<div className="table-wrap">
+<table>
+<thead>
+<tr>{["movement_date","movement_type","quantity","reference_no","condition_status","movement_purpose","notes"].map(k=>
+<th key={k}>{labels[k]}</th>)}</tr>
+</thead>
+<tbody>{movements.map(r=>
+<tr key={r.id}>{["movement_date","movement_type","quantity","reference_no","condition_status","movement_purpose","notes"].map(k=>
+<td key={k}>{fmt(r[k])}</td>)}</tr>)}</tbody>
+</table>
+</div>
+:<div className="empty">Belum ada transaksi atau tidak ada akses baca.</div>
+}</section>
+}
+{!selected?.table && <section className="panel coming">
+<div className="coming-icon">◇</div>
+
+<small>MODULE FOUNDATION</small>
+<h3>{module} is not yet connected to an operational database</h3>
+<p>Modul ini belum memiliki tabel khusus pada schema Supabase yang diaudit. Tidak ada data contoh yang ditampilkan. Struktur data, alur kerja, dan hak akses harus ditetapkan sebelum modul diaktifkan.</p>
+<span className="glass-chip">NO MOCK DATA · SECURE BY DESIGN</span>
+</section>
+}</div>
+}
+ <footer className="main-footer">© 2026 NAVYHUB · BLACK SMOKE / SILVER CRYSTAL INTERFACE</footer>
+</main>
+</div>
+
 }
