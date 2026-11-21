@@ -275,7 +275,7 @@ export default function Home(){
 </div>
 
 <div className="user">
-<span>{profile.rank_title&&profile.rank_title.toLowerCase()!==profile.role.toLowerCase()?profile.rank_title+" · ":""}{profile.full_name||user.email}{isViewer?" · VIEWER":" · "+profile.role.toUpperCase()}</span>
+<span>{profile.rank_title&&profile.rank_title.toLowerCase()!==profile.role.toLowerCase()?profile.rank_title+" · ":""}{profile.full_name&&profile.full_name.toLowerCase()!==profile.role.toLowerCase()?profile.full_name:(profile.rank_title&&profile.rank_title.toLowerCase()!==profile.role.toLowerCase()?profile.rank_title:"Pengguna")}{isViewer?" · VIEWER":" · "+profile.role.toUpperCase()}</span>
 <button className="logout" onClick={()=>sb.auth.signOut()}>Sign out</button>
 </div>
 
