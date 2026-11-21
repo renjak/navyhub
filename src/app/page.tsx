@@ -137,7 +137,6 @@ export default function Home(){
  const [docBusy,setDocBusy]=useState(false);
  const refreshProfile=useCallback(async(u:User)=>{const {data,error}=await sb.from("profiles").select("id,full_name,rank_title,unit_id,role,is_active").eq("id",u.id).maybeSingle();if(error)throw error;setProfile(data as Profile|null)},[]);
  useEffect(()=>{let alive=true;sb.auth.getSession().then(async({data})=>{const u=data.session?.user??null;if(!alive)return;setUser(u);if(u){try{await refreshProfile(u)}catch(e){setError("Gagal memuat profil akun.")}}setLoading(false)});const {data:listener}=sb.auth.onAuthStateChange((_event,session)=>{const u=session?.user??null;setUser(u);if(!u){setProfile(null);setRows([]);setMovements([])}else{setTimeout(()=>refreshProfile(u).catch(()=>setError("Gagal memuat profil.")),0)}});return()=>{alive=false;listener.subscription.unsubscribe()}},[refreshProfile]);
- const isPreview=false;
  const isViewer=profile?.role==="viewer";
  const isAdmin=profile?.role==="admin";
  const canManage=profile?.role==="admin"||profile?.role==="commander";
@@ -222,7 +221,7 @@ export default function Home(){
 </div>
 
 <div className="user">
-<span>{profile.rank_title||""} {profile.full_name||user.email} {isViewer?"· VIEWER":isPreview?"· PREVIEW / "+profile.role.toUpperCase():"· "+profile.role.toUpperCase()}</span>
+<span>{profile.rank_title||""} {profile.full_name||user.email} {isViewer?"· VIEWER":"· "+profile.role.toUpperCase()}</span>
 <button className="logout" onClick={()=>sb.auth.signOut()}>Sign out</button>
 </div>
 
@@ -230,10 +229,10 @@ export default function Home(){
  {module==="Dashboard" && <div className="dashboard-view">
  {isViewer&&<div className="viewer-notice">
 <b>MODE VIEWER · READ ONLY</b>
-<span>{isPreview?"PREVIEW AMAN · READ ONLY. Lingkungan ini terhubung ke Supabase produksi; seluruh operasi tulis dinonaktifkan.":"Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data."}</span>
+<span>{ "Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data."}</span>
 </div>
 }
- <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} isPreview={isPreview}/>
+ <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage}/>
  <section className="hero">
 <div>
 <small>INTEGRATED SHIP MANAGEMENT</small>
@@ -348,7 +347,7 @@ export default function Home(){
 }
 {module!=="Dashboard" && <div className="module-view">{isViewer&&<div className="viewer-notice">
 <b>MODE VIEWER · READ ONLY</b>
-<span>{isPreview?"PREVIEW AMAN · READ ONLY. Data produksi hanya ditampilkan; perubahan dan pengelolaan dinonaktifkan.":"Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia."}</span>
+<span>{ "Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia."}</span>
 </div>
 }
 {module!=="NAVYLOG"&&<section className="module-hero">
@@ -373,7 +372,7 @@ export default function Home(){
 
 <span className="glass-chip">PHST · AGENDA HARI BERIKUTNYA</span>
 </div>
-{!isViewer&&!isPreview&&<>
+{!isViewer&&<>
 <div className="phst-upload">
 <label className="upload-label">Pilih dokumen agenda<input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" onChange={handlePhstUpload}/>
 </label>{docBusy&&<span>Memproses dokumen…</span>}
@@ -418,7 +417,7 @@ export default function Home(){
 }</>
 }</section>
 
-<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer||isPreview}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer||isPreview} title="Arsip NAVYLOG"/>
+<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip NAVYLOG"/>
 <section className="panel data-panel">
 <div className="panelhead">
 <div>
@@ -444,7 +443,7 @@ export default function Home(){
 
 </div>
 }
-{module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer||isPreview} title="NAVYDOCS · Pusat Arsip"/>}
+{module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="NAVYDOCS · Pusat Arsip"/>}
 {module!=="NAVYLOG"&&module!=="NAVYDOCS"&&<section className="panel data-panel">
 <div className="panelhead">
 <div>
