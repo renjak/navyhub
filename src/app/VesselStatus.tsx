@@ -26,22 +26,28 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
   }else{setWeather(null);setMarine(null)}
   setLoading(false);
  },[supabase,unitId]);
- useEffect(()=>{load();const t=window.setInterval(load,60000);return()=>window.clearInterval(t)},[load]);
+ useEffect(()=>{load();const t=window.setInterval(load,30000);return()=>window.clearInterval(t)},[load]);
+ const publishPosition=useCallback(async(pos:GeolocationPosition)=>{
+  const now=new Date().toISOString();
+  const payload={unit_id:unitId,position_at:now,latitude:pos.coords.latitude,longitude:pos.coords.longitude,speed_knots:pos.coords.speed==null?null:Math.max(0,pos.coords.speed*1.943844),course_degrees:pos.coords.heading==null?null:((pos.coords.heading%360)+360)%360,satellites:null,fix_quality:"BROWSER HIGH ACCURACY GPS",source:"ADMIN DEVICE GPS",received_at:now,reporter_user_id:userId,accuracy_m:pos.coords.accuracy??null};
+  const {data,error}=await supabase.from("vessel_gps_positions").upsert(payload,{onConflict:"unit_id"}).select("id,unit_id,position_at,latitude,longitude,speed_knots,course_degrees,satellites,fix_quality,source,received_at,accuracy_m,reporter_user_id").single();
+  if(error){setError("GPS perangkat admin gagal dibagikan: "+error.message);return}
+  setGps(data);setNotice("Master GPS diperbarui otomatis setiap 30 detik dari lokasi perangkat admin dan dibagikan ke seluruh pengguna unit.");setError("");
+ },[supabase,unitId,userId]);
+ const geoError=useCallback((err:GeolocationPositionError)=>{
+  setError(err.code===1?"Izin lokasi ditolak. Aktifkan Location Services dan pilih Allow untuk NAVYHUB pada pengaturan browser.":err.code===2?"Lokasi perangkat belum tersedia. Periksa GPS dan layanan lokasi.":"GPS belum merespons. NAVYHUB akan mencoba kembali dalam 30 detik.");
+ },[]);
  useEffect(()=>{
   if(!canManage||!unitId||!userId||typeof navigator==="undefined"||!navigator.geolocation)return;
   let active=true;
-  const publish=async(pos:GeolocationPosition)=>{
+  const requestPosition=()=>{
    if(!active)return;
-   const now=new Date().toISOString();
-   const payload={unit_id:unitId,position_at:now,latitude:pos.coords.latitude,longitude:pos.coords.longitude,speed_knots:pos.coords.speed==null?null:Math.max(0,pos.coords.speed*1.943844),course_degrees:pos.coords.heading==null?null:((pos.coords.heading%360)+360)%360,satellites:null,fix_quality:"BROWSER HIGH ACCURACY GPS",source:"ADMIN DEVICE GPS",received_at:now,reporter_user_id:userId,accuracy_m:pos.coords.accuracy??null};
-   const {data,error}=await supabase.from("vessel_gps_positions").upsert(payload,{onConflict:"unit_id"}).select("id,unit_id,position_at,latitude,longitude,speed_knots,course_degrees,satellites,fix_quality,source,received_at,accuracy_m,reporter_user_id").single();
-   if(!active)return;
-   if(error){setError("GPS perangkat admin gagal dibagikan: "+error.message);return}
-   setGps(data);setNotice("Master GPS diperbarui otomatis dari lokasi perangkat admin dan dibagikan ke seluruh pengguna unit.");setError("");
+   navigator.geolocation.getCurrentPosition(pos=>{if(active)void publishPosition(pos)},err=>{if(active)geoError(err)},{enableHighAccuracy:true,maximumAge:0,timeout:25000});
   };
-  const watchId=navigator.geolocation.watchPosition(publish,err=>{if(!active)return;setError(err.code===1?"Izin lokasi ditolak. Aktifkan Location Services dan izinkan akses lokasi untuk NAVYHUB.":err.code===2?"Lokasi perangkat belum tersedia. Periksa GPS dan layanan lokasi.":"GPS belum merespons. NAVYHUB akan mencoba kembali saat posisi tersedia.")},{enableHighAccuracy:true,maximumAge:0,timeout:25000});
-  return()=>{active=false;navigator.geolocation.clearWatch(watchId)};
- },[canManage,unitId,userId,supabase]);
+  requestPosition();
+  const timer=window.setInterval(requestPosition,30000);
+  return()=>{active=false;window.clearInterval(timer)};
+ },[canManage,unitId,userId,publishPosition,geoError]);
  const current=weather?.current,mc=marine?.current;
  const hourly=(marine?.hourly?.sea_level_height_msl||[]).filter((v:any)=>typeof v==="number"&&Number.isFinite(v));
  const low=hourly.length?Math.min(...hourly):null,high=hourly.length?Math.max(...hourly):null;
@@ -65,7 +71,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
    <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat master GPS"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
-  {canManage&&<div className="navy-gps-admin"><strong>ADMIN MASTER GPS · OTOMATIS</strong><p>NAVYHUB mengambil posisi langsung dari layanan lokasi perangkat admin dengan akurasi tinggi, lalu membagikannya sebagai posisi master untuk seluruh akun unit. Tidak ada input koordinat manual.</p><small>{gps?"PELACAKAN OTOMATIS AKTIF · PEMBARUAN BERKALA":"MENUNGGU IZIN / SINYAL GPS PERANGKAT ADMIN"}</small></div>}
+  {canManage&&<div className="navy-gps-admin"><strong>ADMIN MASTER GPS · AUTO REFRESH 30 DETIK</strong><p>Admin diminta mengizinkan akses lokasi perangkat. Setelah izin diberikan, NAVYHUB mengambil posisi otomatis setiap 30 detik dan membagikannya sebagai master GPS untuk seluruh akun unit.</p><small>{gps?"PELACAKAN OTOMATIS AKTIF · PEMBARUAN SETIAP 30 DETIK":"MENUNGGU IZIN / SINYAL GPS PERANGKAT ADMIN"}</small><button type="button" onClick={()=>{if(typeof navigator!=="undefined"&&navigator.geolocation)navigator.geolocation.getCurrentPosition(pos=>void publishPosition(pos),geoError,{enableHighAccuracy:true,maximumAge:0,timeout:25000})}}>IZINKAN / AKTIFKAN LOKASI</button></div>}
   {!canManage&&<div className="navy-gps-note">MASTER GPS dikelola oleh Admin unit. Semua pengguna dapat memantau posisi terbaru yang sama.</div>}
   {error&&<div className="navy-status-error">{error}</div>}{notice&&<div className="navy-status-notice">{notice}</div>}
   <div className="navy-source-note">Peta dasar: OpenStreetMap (Mapnik), peta geografis interaktif dengan garis pantai dan pulau. Cuaca: Open-Meteo. Data laut adalah model maritim, bukan pengukuran pasang surut stasiun resmi. Peta ini bukan peta laut untuk navigasi; gunakan ENC/peta laut resmi dan publikasi keselamatan pelayaran untuk keputusan navigasi.</div>
