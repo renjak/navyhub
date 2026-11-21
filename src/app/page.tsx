@@ -183,7 +183,7 @@ export default function Home(){
   <div className="dashboard-map-foot"><span>PETA DASAR INDONESIA</span><span>TANPA PELACAKAN KAPAL</span></div>
  </section>
  <section className="hero"><div><small>INTEGRATED SHIP MANAGEMENT</small><h1>Welcome aboard, {(profile.full_name||"Operator").split(" ")[0]}.</h1><p>Operational records, maintenance, logistics and personnel in one command environment.</p></div><div className="hero-orb">N<span>644</span></div></section>
- <VesselStatus />
+ <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} isAdmin={isAdmin} />
  <div className="section-title"><span>LIVE DATABASE OVERVIEW</span><small>REAL SUPABASE RECORDS</small></div>
  <div className="stats">
   <article><small>PERSONNEL REGISTER</small><b>{dbCounts.personnel}</b><span>Records in NAVYCREW</span></article>
