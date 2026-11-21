@@ -119,6 +119,7 @@ export default function Home(){
  const [editingCell,setEditingCell]=useState<{id:string;field:string}|null>(null),[cellDraft,setCellDraft]=useState("");
  const [cellSaving,setCellSaving]=useState(false);
  const [supplyRows,setSupplyRows]=useState<RowData[]>([]);
+ const [supplyDraft,setSupplyDraft]=useState<RowData|null>(null),[supplySaving,setSupplySaving]=useState(false);
  const [stockDraft,setStockDraft]=useState<RowData|null>(null),[stockSaving,setStockSaving]=useState(false);
  const [maintenanceRows,setMaintenanceRows]=useState<RowData[]>([]),[maintenanceDraft,setMaintenanceDraft]=useState<RowData|null>(null),[maintenanceSaving,setMaintenanceSaving]=useState(false);
  const [assetDraft,setAssetDraft]=useState<RowData|null>(null),[assetSaving,setAssetSaving]=useState(false),[maintSection,setMaintSection]=useState("ALL");
@@ -194,6 +195,26 @@ export default function Home(){
    setStockSaving(false);
   }
  };
+ async function saveSupplyData(){
+  if(!isAdmin||!profile?.unit_id||!user||!supplyDraft){setNotice("Hanya admin yang dapat mengubah data Air Tawar dan HSD.");return}
+  const current=Number(supplyDraft.stock_ready_current||0),target=Number(supplyDraft.target_stock),capacity=Number(supplyDraft.capacity_liters);
+  if(!Number.isFinite(target)||target<0||!Number.isFinite(capacity)||capacity<0){setNotice("Stok dan kapasitas harus berupa angka nol atau lebih.");return}
+  if(capacity>0&&target>capacity){setNotice("Stok tersedia tidak boleh melebihi kapasitas tangki.");return}
+  setSupplySaving(true);setNotice("");
+  try{
+   const delta=target-current;
+   if(delta!==0){
+    const {error}=await sb.from("stock_movements").insert({unit_id:profile.unit_id,item_id:supplyDraft.id,movement_type:delta>0?"inbound":"outbound",quantity:Math.abs(delta),movement_date:new Date().toISOString().slice(0,10),condition_status:"not_applicable",movement_purpose:"Penyesuaian stok oleh admin melalui Dashboard",notes:"Penyesuaian saldo "+(supplyDraft.category==="Air Tawar"?"Air Tawar":"HSD"),recorded_by:user.id});
+    if(error)throw new Error("Penyesuaian stok gagal: "+error.message);
+   }
+   const {error:capacityError}=await sb.from("inventory_items").update({capacity_liters:capacity,updated_at:new Date().toISOString()}).eq("id",supplyDraft.id).eq("unit_id",profile.unit_id);
+   if(capacityError)throw new Error("Stok tercatat, tetapi pembaruan kapasitas gagal: "+capacityError.message);
+   const {data,error:refreshError}=await sb.from("inventory_items").select("id,item_name,category,capacity_liters,stock_ready,stock_unready,unit_of_measure").eq("unit_id",profile.unit_id).eq("is_active",true).in("category",["Air Tawar","BBM"]);
+   if(refreshError)throw new Error("Data tersimpan, tetapi tampilan belum dapat diperbarui: "+refreshError.message);
+   setSupplyRows((data||[]) as RowData[]);setSupplyDraft(null);setNotice("Data "+(supplyDraft.category==="Air Tawar"?"Air Tawar":"HSD")+" berhasil diperbarui. Penyesuaian saldo tercatat pada riwayat transaksi.");
+  }catch(error:any){setNotice(error?.message||"Perubahan data gagal disimpan.")}
+  finally{setSupplySaving(false)}
+ }
  async function saveAsset(){if(!profile?.unit_id||!assetDraft){setNotice("Data aset atau unit belum tersedia.");return;}const code=String(assetDraft.asset_code||"").trim(),name=String(assetDraft.asset_name||"").trim();if(!code||!name){setNotice("Kode dan nama aset wajib diisi.");return}setAssetSaving(true);const payload={asset_code:code,asset_name:name,category:String(assetDraft.category||"Peralatan"),location_label:String(assetDraft.location_label||"").trim()||null,condition_label:String(assetDraft.condition_label||"Baik"),is_active:assetDraft.is_active!==false,unit_id:profile.unit_id};const result=assetDraft.id?await sb.from("maintenance_assets").update(payload).eq("id",assetDraft.id).eq("unit_id",profile.unit_id):await sb.from("maintenance_assets").insert(payload);setNotice(result.error?"Data aset gagal disimpan: "+result.error.message:"Data aset berhasil disimpan.");if(!result.error){setAssetDraft(null);await loadModule()}setAssetSaving(false)}
  async function saveMaintenance(){if(!profile?.unit_id||!user||!maintenanceDraft){setNotice("Data laporan atau akun belum tersedia.");return;}const issue=String(maintenanceDraft.issue_description||"").trim();if(!issue){setNotice("Uraian kerusakan wajib diisi.");return}setMaintenanceSaving(true);const {error}=await sb.from("maintenance_records").insert({unit_id:profile.unit_id,asset_id:maintenanceDraft.asset_id||null,report_date:maintenanceDraft.report_date||new Date().toISOString().slice(0,10),issue_description:issue,action_taken:String(maintenanceDraft.action_taken||"").trim()||null,status:"reported",reported_by:user.id});setNotice(error?"Laporan pemeliharaan gagal disimpan: "+error.message:"Laporan kerusakan berhasil dicatat.");if(!error){setMaintenanceDraft(null);await loadModule()}setMaintenanceSaving(false)}
  async function updateMaintenanceStatus(row:RowData,status:string){if(!["admin","commander"].includes(profile?.role||"")){setNotice("Hanya pengelola unit yang dapat mengubah status pemeliharaan.");return}const payload:any={status,updated_at:new Date().toISOString()};if(status==="completed")payload.completed_at=new Date().toISOString();const {error}=await sb.from("maintenance_records").update(payload).eq("id",row.id).eq("unit_id",profile?.unit_id);setNotice(error?"Status pemeliharaan gagal diperbarui: "+error.message:"Status pemeliharaan diperbarui.");if(!error)await loadModule()}
@@ -303,7 +324,7 @@ export default function Home(){
 </div>
 
  <div className="supply-grid">
-  <article className="supply-card">
+  <article className={"supply-card"+(isAdmin&&waterItem?" supply-card-editable":"")} onClick={()=>{if(isAdmin&&waterItem)setSupplyDraft({...waterItem,target_stock:String(waterStock),stock_ready_current:waterStock})}} role={isAdmin&&waterItem?"button":undefined} tabIndex={isAdmin&&waterItem?0:undefined} onKeyDown={e=>{if(isAdmin&&waterItem&&(e.key==="Enter"||e.key===" ")){e.preventDefault();setSupplyDraft({...waterItem,target_stock:String(waterStock),stock_ready_current:waterStock})}}}>
 <div className="supply-top">
 <small>FRESH WATER</small>
 <span>{waterItem?"LIVE DATA":"NO DATA"}</span>
@@ -323,13 +344,13 @@ export default function Home(){
 </div>
 
 </article>
-  <article className="supply-card">
+  <article className={"supply-card"+(isAdmin&&fuelItem?" supply-card-editable":"")} onClick={()=>{if(isAdmin&&fuelItem)setSupplyDraft({...fuelItem,target_stock:String(fuelStock),stock_ready_current:fuelStock})}} role={isAdmin&&fuelItem?"button":undefined} tabIndex={isAdmin&&fuelItem?0:undefined} onKeyDown={e=>{if(isAdmin&&fuelItem&&(e.key==="Enter"||e.key===" ")){e.preventDefault();setSupplyDraft({...fuelItem,target_stock:String(fuelStock),stock_ready_current:fuelStock})}}}>
 <div className="supply-top">
-<small>FUEL · BBM</small>
+<small>FUEL · DIESEL</small>
 <span>{fuelItem?"LIVE DATA":"NO DATA"}</span>
 </div>
 
-<h3>BBM</h3>
+<h3>HSD</h3>
 <div className="supply-amount">{fuelItem?fuelStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small>
 </div>
 
@@ -345,7 +366,8 @@ export default function Home(){
 </article>
  </div>
 
- <section className="panel">
+ {isAdmin&&supplyDraft&&<div className="supply-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!supplySaving)setSupplyDraft(null)}}><section className="supply-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="supply-editor-title"><header><div><small>ADMIN CONTROL · SHIP CONSUMABLES</small><h3 id="supply-editor-title">Ubah data {supplyDraft.category==="Air Tawar"?"Air Tawar":"HSD"}</h3><p>Perubahan saldo dicatat sebagai transaksi agar riwayat persediaan tetap terlacak.</p></div><button type="button" aria-label="Tutup" disabled={supplySaving} onClick={()=>setSupplyDraft(null)}>×</button></header><div className="supply-modal-grid"><label>Stok tersedia (liter)<input type="number" min="0" step="any" value={supplyDraft.target_stock??""} onChange={e=>setSupplyDraft((v:any)=>({...v,target_stock:e.target.value}))}/><small>Saldo saat ini: {Number(supplyDraft.stock_ready_current||0).toLocaleString("id-ID")} L</small></label><label>Kapasitas tangki (liter)<input type="number" min="0" step="any" value={supplyDraft.capacity_liters??""} onChange={e=>setSupplyDraft((v:any)=>({...v,capacity_liters:e.target.value}))}/></label></div><footer><button className="outline" type="button" disabled={supplySaving} onClick={()=>setSupplyDraft(null)}>Batal</button><button type="button" disabled={supplySaving} onClick={saveSupplyData}>{supplySaving?"Menyimpan…":"Simpan perubahan"}</button></footer></section></div>}
+<section className="panel">
 <div className="panelhead">
 <div>
 <h3>Operational modules</h3>
