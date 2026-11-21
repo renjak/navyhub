@@ -180,16 +180,20 @@ export default function Home() {
     return () => { window.clearInterval(poll); sb.removeChannel(channel); };
   }, [user, profile?.unit_id]);
 
-  const writeGps = useCallback(async (latitude: number, longitude: number, source: string, accuracy?: number) => {
+  const writeGps = useCallback(async (latitude: number, longitude: number, source: string) => {
     if (!user || !profile?.unit_id || !isAdmin || previewReadOnly) return;
-    const timestamp = new Date().toISOString();
-    const { error: writeError } = await sb.from("vessel_gps_positions").upsert({
-      unit_id: profile.unit_id, latitude, longitude, position_at: timestamp, received_at: timestamp,
-      source, reporter_user_id: user.id, accuracy_m: accuracy ?? null
-    }, { onConflict: "unit_id" });
-    if (writeError) { setGpsError("Gagal memperbarui GPS: " + writeError.message); return; }
+    const { data: sessionData } = await sb.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) { setGpsError("Sesi admin berakhir. Silakan masuk kembali."); return; }
+    const response = await fetch("/api/gps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ latitude, longitude, source, position_at: new Date().toISOString() })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { setGpsError("Gagal memperbarui GPS: " + (result.error || response.statusText)); return; }
     setGpsError("");
-    setLastGpsUpdate(timestamp);
+    setLastGpsUpdate(new Date().toISOString());
     const { data } = await sb.from("vessel_gps_positions").select("unit_id,latitude,longitude,position_at,received_at,source,speed_knots,course_degrees,satellites,accuracy_m").eq("unit_id", profile.unit_id).maybeSingle();
     setGps(data as Gps | null);
   }, [user, profile?.unit_id, isAdmin]);
@@ -198,7 +202,7 @@ export default function Home() {
     if (!gpsEnabled || !isAdmin || module !== "GPS") return;
     if (!navigator.geolocation) { setGpsError("Perangkat ini tidak mendukung geolocation."); return; }
     const update = () => navigator.geolocation.getCurrentPosition(
-      pos => writeGps(pos.coords.latitude, pos.coords.longitude, "admin_device_gps", pos.coords.accuracy),
+      pos => writeGps(pos.coords.latitude, pos.coords.longitude, "admin_device_gps"),
       err => setGpsError(err.code === 1 ? "Izin lokasi ditolak. Aktifkan Location untuk browser ini." : "GPS belum tersedia. Periksa layanan lokasi dan koneksi perangkat."),
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
