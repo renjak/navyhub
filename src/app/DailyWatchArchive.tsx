@@ -33,7 +33,7 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
   if(ids.length){const {data}=await supabase.from("profiles").select("id,full_name,rank_title").in("id",ids);const map:Record<string,string>={};(data||[]).forEach((p:any)=>map[p.id]=[p.rank_title,p.full_name].filter(Boolean).join(" "));setProfiles(map)}
   setBusy(false);
  },[supabase,unitId,fromDate,toDate]);
- useEffect(()=>{load()},[load]);
+ useEffect(()=>{load();const timer=window.setInterval(()=>{if(document.visibilityState==="visible")load()},15000);return()=>window.clearInterval(timer)},[load]);
  const generateYesterday=async()=>{
   if(!canWrite||busy)return;
   if(Number(localClock().slice(0,2))<8){setNotice("Rekap harian baru dibuka setelah pukul 08.00 WIB.");return}
@@ -82,7 +82,7 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
  }),[reports,year,day,query]);
  const activityMatches=useMemo(()=>activities.filter(a=>(!year||a.activity_date.startsWith(year))&&(!day||new Date(a.activity_date+"T00:00:00+07:00").toLocaleDateString("id-ID",{weekday:"long",timeZone:WIB}).toLowerCase()===day)&&(!query||[a.title,a.description,a.category].join(" ").toLowerCase().includes(query.toLowerCase()))),[activities,year,day,query]);
  return <section className="watch-archive">
-  <div className="watch-archive-head"><div><small>NAVYDOCS / DIGITAL RECORDS</small><h3>{title}</h3><p>Arsip harian, riwayat kegiatan, dan persetujuan Komandan yang dapat ditelusuri kembali.</p></div><button onClick={generateYesterday} disabled={!canWrite||busy||Number(localClock().slice(0,2))<8}>{busy?"Memproses...":"Buat rekap hari sebelumnya"}</button></div>
+  <div className="watch-archive-head"><div><small>NAVYDOCS / DIGITAL RECORDS</small><h3>{title}</h3><p>Status persetujuan Komandan dibagikan ke seluruh pengguna unit dan diperbarui otomatis setiap 15 detik.</p></div><button onClick={generateYesterday} disabled={!canWrite||busy||Number(localClock().slice(0,2))<8}>{busy?"Memproses...":"Buat rekap hari sebelumnya"}</button></div>
   <div className="watch-archive-filters">
    <label>Dari tanggal<input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/></label>
    <label>Sampai tanggal<input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/></label>
@@ -93,7 +93,7 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
   {notice&&<div className="watch-archive-notice">{notice}</div>}
   <div className="watch-archive-section-title"><b>REKAP SERAH TERIMA JAGA</b><span>{reportMatches.length} DOKUMEN</span></div>
   {busy?<div className="watch-archive-empty">Memuat arsip...</div>:reportMatches.length?reportMatches.map(r=>{const d=r.report_data||{},a=d.watch_assignment||{},logs=d.activity_logs||[],nested=d.checklists||[],runs=d.checklist_runs||nested.map((x:any)=>x.run).filter(Boolean),responses=d.checklist_responses||nested.flatMap((x:any)=>x.responses||[]).map((x:any)=>x.response).filter(Boolean);return <article className="watch-report" key={r.id}>
-   <div className="watch-report-top"><div><small>LOGBOOK HARIAN · {r.duty_date}</small><h4>{prettyDate(r.duty_date)}</h4><span className={"watch-report-status "+(r.approved_at?"approved":"pending")}>{r.approved_at?"APPROVED · TERKUNCI":"MENUNGGU PERSETUJUAN"}</span></div><div className="watch-report-actions"><button onClick={()=>exportWord(r)}>Export Word</button><button onClick={()=>exportPdf(r)}>Export PDF</button></div></div>
+   <div className="watch-report-top"><div><small>LOGBOOK HARIAN · {r.duty_date}</small><h4>{prettyDate(r.duty_date)}</h4><span className={"watch-report-status "+(r.approved_at?"approved":"pending")}>{r.approved_at?"DISETUJUI KOMANDAN · TERKUNCI":"BELUM DISETUJUI · MENUNGGU KOMANDAN"}</span></div><div className="watch-report-actions"><button onClick={()=>exportWord(r)}>Export Word</button><button onClick={()=>exportPdf(r)}>Export PDF</button></div></div>
    <div className="watch-report-grid"><div><small>JENIS JAGA</small><b>{a.watch_type||"—"}</b></div><div><small>PERWIRA JAGA LAMA</small><b>{a.old_watch_rank||"—"} {a.old_watch_name||"—"}</b><span>NRP {a.old_watch_nrp||"—"}</span></div><div><small>PERWIRA JAGA BARU</small><b>{a.new_watch_rank||"—"} {a.new_watch_name||"—"}</b><span>NRP {a.new_watch_nrp||"—"}</span></div><div><small>KEGIATAN / CHECKLIST</small><b>{logs.length} kegiatan · {runs.length} sesi · {responses.length} hasil</b></div></div>
    {logs.length>0&&<div className="watch-report-logs"><b>Ringkasan kegiatan</b>{logs.slice(0,8).map((x:any)=><div key={x.id}><time>{String(x.activity_time||"").slice(0,5)||"—"}</time><span><strong>{x.title}</strong><small>{x.category} · {x.status}</small></span></div>)}</div>}
    <label className="watch-report-notes">Catatan tambahan Paga<textarea value={drafts[r.id]??r.additional_notes??""} onChange={e=>setDrafts(v=>({...v,[r.id]:e.target.value}))} disabled={!canWrite||!!r.approved_at} placeholder="Tambahkan kejadian, catatan, atau hal yang perlu diketahui Komandan..."/></label>
