@@ -4,7 +4,7 @@ import type {User} from "@supabase/supabase-js";
 import {supabase} from "./lib/supabase";
 import Workspace from "./components/Workspace";
 type Profile={id:string;full_name:string;rank_title:string|null;unit_id:string|null;role:string;is_active:boolean};
-const navigation=[["Dashboard","Pusat kendali","⌂"],["NAVYLOG","Jurnal kegiatan & serah terima","▤"],["NAVYMAINT","Pemeliharaan peralatan","⚙"],["NAVYSTOCK","Persediaan & logistik","▣"],["NAVYCREW","Personel & jadwal jaga","♙"],["NAVYDOCS","Dokumen & arsip","▧"],["NAVYMAP","Peta wilayah Indonesia","⌖"]];
+const navigation=[["Dashboard","Pusat kendali","⌂"],["NAVYLOG","Jurnal kegiatan & serah terima","▤"],["NAVYMAINT","Pemeliharaan peralatan","⚙"],["NAVYSTOCK","Persediaan & logistik","▣"],["NAVYCHECK","Pemeriksaan & checklist","☑"],["NAVYROSTER","Personel & jadwal jaga","♙"],["NAVYMEAL","Bekal & konsumsi","◉"],["NAVYDOCS","Dokumen & arsip","▧"],["NAVYFIT","Latihan & kebugaran","⌁"],["NAVYMAP","Peta wilayah Indonesia","⌖"]];
 export default function Home(){
  const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile|null>(null),[loading,setLoading]=useState(true),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false),[module,setModule]=useState("Dashboard");
  const refreshProfile=useCallback(async(u:User)=>{const {data,error}=await supabase.from("profiles").select("id,full_name,rank_title,unit_id,role,is_active").eq("id",u.id).maybeSingle();if(error)throw error;setProfile(data as Profile|null)},[]);
