@@ -155,21 +155,44 @@ export default function Home(){
  useEffect(()=>{if(user&&profile?.unit_id&&profile.is_active)loadModule()},[user,profile,loadModule]);
  const saveInlineCell=async(row:RowData,field:string)=>{if(!isAdmin||!profile?.unit_id||!row.id)return;const numeric=["sequence_no","minimum_stock","initial_quantity","stock_ready","stock_unready","unit_price","capacity_liters","manufacture_year"];const dateFields=["roster_period","birth_date"];let value:any=cellDraft;if(numeric.includes(field))value=cellDraft.trim()===""?null:Number(cellDraft);else if(dateFields.includes(field))value=cellDraft.trim()||null;else value=cellDraft.trim()||null;if(numeric.includes(field)&&value!==null&&!Number.isFinite(value)){setNotice("Nilai harus berupa angka yang valid.");return}setCellSaving(true);const {error}=await sb.from(selected?.table||"").update({[field]:value,updated_at:new Date().toISOString()}).eq("id",row.id).eq("unit_id",profile.unit_id);if(error)setNotice("Perubahan gagal disimpan: "+error.message);else{setRows(old=>old.map(x=>x.id===row.id?{...x,[field]:value}:x));setNotice("Perubahan kolom berhasil disimpan.");}setCellSaving(false);setEditingCell(null)};
  const saveStockItem=async()=>{
-  if(!canManage||!profile?.unit_id||!stockDraft)return;
-  if(!String(stockDraft.item_code||"").trim()||!String(stockDraft.item_name||"").trim()){setNotice("Kode dan nama barang wajib diisi.");return}
+  if(!canManage||!profile?.unit_id||!stockDraft){setNotice("Akun tidak memiliki hak kelola atau data unit belum tersedia.");return}
+  const itemCode=String(stockDraft.item_code||"").trim();
+  const itemName=String(stockDraft.item_name||"").trim();
+  if(!itemCode||!itemName){setNotice("Kode dan nama barang wajib diisi.");return}
   setStockSaving(true);setNotice("");
-  const numeric=["minimum_stock","unit_price","capacity_liters","manufacture_year"];
-  const payload:any={};
-  for(const k of ["item_code","item_name","category","unit_of_measure","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","country_of_origin"]){const value=String(stockDraft[k]??"").trim();payload[k]=value||(k==="category"?"Logistik":k==="unit_of_measure"?"unit":null)}
-  for(const k of numeric){payload[k]=stockDraft[k]===""||stockDraft[k]===null||stockDraft[k]===undefined?(k==="minimum_stock"?0:null):Number(stockDraft[k])}if(!stockDraft.id){payload.initial_quantity=0;payload.stock_ready=0;payload.stock_unready=0}
-  payload.is_active=stockDraft.is_active!==false;
-  payload.updated_at=new Date().toISOString();
-  let result:any;
-  if(stockDraft.id)result=await sb.from("inventory_items").update(payload).eq("id",stockDraft.id).eq("unit_id",profile.unit_id);
-  else result=await sb.from("inventory_items").insert({...payload,unit_id:profile.unit_id});
-  if(result.error)setNotice("Perubahan NAVYSTOCK gagal disimpan: "+result.error.message);
-  else{setNotice("Data persediaan berhasil disimpan.");setStockDraft(null);await loadModule()}
-  setStockSaving(false);
+  try{
+   const numeric=["minimum_stock","unit_price","capacity_liters","manufacture_year"];
+   const payload:any={};
+   for(const k of ["item_code","item_name","category","unit_of_measure","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","country_of_origin"]){
+    const value=String(stockDraft[k]??"").trim();
+    payload[k]=value||(k==="category"?"Logistik":k==="unit_of_measure"?"unit":null);
+   }
+   for(const k of numeric){
+    const raw=stockDraft[k];
+    const value=raw===""||raw===null||raw===undefined?null:Number(raw);
+    if(value!==null&&(!Number.isFinite(value)||(k==="manufacture_year"&&!Number.isInteger(value)))){
+     setNotice("Nilai "+k.replaceAll("_"," ")+" harus berupa angka yang valid.");return;
+    }
+    payload[k]=k==="minimum_stock"&&value===null?0:value;
+   }
+   payload.is_active=stockDraft.is_active!==false;
+   payload.updated_at=new Date().toISOString();
+   let result:any;
+   if(stockDraft.id){
+    result=await sb.from("inventory_items").update(payload).eq("id",stockDraft.id).eq("unit_id",profile.unit_id).select("id").maybeSingle();
+    if(!result.error&&!result.data){setNotice("Data tidak berubah: baris tidak ditemukan pada unit ini atau akun tidak memiliki izin UPDATE. Periksa role admin/komandan dan kebijakan akses.");return}
+   }else{
+    result=await sb.from("inventory_items").insert({...payload,unit_id:profile.unit_id}).select("id").single();
+   }
+   if(result.error){setNotice("NAVYSTOCK gagal disimpan: "+result.error.message);return}
+   setNotice(stockDraft.id?"Perubahan data persediaan berhasil disimpan.":"Barang baru berhasil ditambahkan.");
+   setStockDraft(null);
+   await loadModule();
+  }catch(error:any){
+   setNotice("NAVYSTOCK gagal disimpan: "+(error?.message||"Kesalahan tidak diketahui"));
+  }finally{
+   setStockSaving(false);
+  }
  };
  async function saveAsset(){if(!profile?.unit_id||!assetDraft){setNotice("Data aset atau unit belum tersedia.");return;}const code=String(assetDraft.asset_code||"").trim(),name=String(assetDraft.asset_name||"").trim();if(!code||!name){setNotice("Kode dan nama aset wajib diisi.");return}setAssetSaving(true);const payload={asset_code:code,asset_name:name,category:String(assetDraft.category||"Peralatan"),location_label:String(assetDraft.location_label||"").trim()||null,condition_label:String(assetDraft.condition_label||"Baik"),is_active:assetDraft.is_active!==false,unit_id:profile.unit_id};const result=assetDraft.id?await sb.from("maintenance_assets").update(payload).eq("id",assetDraft.id).eq("unit_id",profile.unit_id):await sb.from("maintenance_assets").insert(payload);setNotice(result.error?"Data aset gagal disimpan: "+result.error.message:"Data aset berhasil disimpan.");if(!result.error){setAssetDraft(null);await loadModule()}setAssetSaving(false)}
  async function saveMaintenance(){if(!profile?.unit_id||!user||!maintenanceDraft){setNotice("Data laporan atau akun belum tersedia.");return;}const issue=String(maintenanceDraft.issue_description||"").trim();if(!issue){setNotice("Uraian kerusakan wajib diisi.");return}setMaintenanceSaving(true);const {error}=await sb.from("maintenance_records").insert({unit_id:profile.unit_id,asset_id:maintenanceDraft.asset_id||null,report_date:maintenanceDraft.report_date||new Date().toISOString().slice(0,10),issue_description:issue,action_taken:String(maintenanceDraft.action_taken||"").trim()||null,status:"reported",reported_by:user.id});setNotice(error?"Laporan pemeliharaan gagal disimpan: "+error.message:"Laporan kerusakan berhasil dicatat.");if(!error){setMaintenanceDraft(null);await loadModule()}setMaintenanceSaving(false)}
