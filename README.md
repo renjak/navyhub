@@ -47,6 +47,7 @@ Client:
 Server:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server only; never expose to browser)
 - `VESSEL_GPS_INGEST_TOKEN`
 
 Never commit Supabase secret/service-role keys or the GPS ingest token.
