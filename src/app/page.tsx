@@ -344,14 +344,11 @@ export default function Home(){
 <div className="supply-amount">{waterItem?waterStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small>
 </div>
 
+<div className="supply-progress-label"><b>{waterItem?waterPct+"%":"—"}</b><span>TINGKAT KETERSEDIAAN</span></div>
 <div className="supply-track">
 <i style={{width:waterPct+"%"}}/>
 </div>
-
-<div className="supply-meta">
-<span>Kapasitas {waterItem?waterCapacity.toLocaleString("id-ID"):"—"} L</span>
-<b>{waterItem?waterPct+"%":"—"}</b>
-</div>
+<div className="supply-meta"><span>Kapasitas {waterItem?waterCapacity.toLocaleString("id-ID"):"—"} L</span></div>
 
 </article>
   <article className={"supply-card"+(isAdmin&&fuelItem?" supply-card-editable":"")} onClick={()=>{if(isAdmin&&fuelItem)setSupplyDraft({...fuelItem,target_stock:String(fuelStock),stock_ready_current:fuelStock})}} role={isAdmin&&fuelItem?"button":undefined} tabIndex={isAdmin&&fuelItem?0:undefined} onKeyDown={e=>{if(isAdmin&&fuelItem&&(e.key==="Enter"||e.key===" ")){e.preventDefault();setSupplyDraft({...fuelItem,target_stock:String(fuelStock),stock_ready_current:fuelStock})}}}>
@@ -364,14 +361,11 @@ export default function Home(){
 <div className="supply-amount">{fuelItem?fuelStock.toLocaleString("id-ID"):"—"} <small>Liter tersedia</small>
 </div>
 
+<div className="supply-progress-label"><b>{fuelItem?fuelPct+"%":"—"}</b><span>TINGKAT KETERSEDIAAN</span></div>
 <div className="supply-track">
 <i style={{width:fuelPct+"%"}}/>
 </div>
-
-<div className="supply-meta">
-<span>Kapasitas {fuelItem?fuelCapacity.toLocaleString("id-ID"):"—"} L</span>
-<b>{fuelItem?fuelPct+"%":"—"}</b>
-</div>
+<div className="supply-meta"><span>Kapasitas {fuelItem?fuelCapacity.toLocaleString("id-ID"):"—"} L</span></div>
 
 </article>
  </div>
