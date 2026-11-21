@@ -495,6 +495,7 @@ export default function Home(){
 :<div className="empty">Belum ada transaksi atau tidak ada akses baca.</div>
 }</section>
 }
+</>}
 {!selected?.table && <section className="panel coming">
 <div className="coming-icon">◇</div>
 
