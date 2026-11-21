@@ -253,3 +253,22 @@ td{color:#f0f1f5}
 .dl-watch-form small{grid-column:1/-1;color:#efc57d;font-size:9px}
 .dl-assigned{display:flex;flex-direction:column;gap:6px}
 @media(max-width:650px){.dl-watch-form{grid-template-columns:1fr}.dl-watch-form textarea,.dl-watch-save,.dl-watch-form small{grid-column:auto}}
+
+
+/* NAVYHUB dashboard liquid-glass Indonesia map */
+.dashboard-mapglass{position:relative;overflow:hidden;margin:0 0 22px;padding:16px;border:1px solid rgba(151,205,235,.25);border-radius:22px;background:linear-gradient(135deg,rgba(17,48,70,.72),rgba(6,17,31,.82));box-shadow:0 22px 58px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.dashboard-map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 4px 14px}.dashboard-map-head small{font-size:9px;letter-spacing:.16em;color:#81d9f3}.dashboard-map-head h3{margin:5px 0;color:#f1f8ff;font-size:18px;letter-spacing:.02em}.dashboard-map-head p{margin:0;color:#9eb7c9;font-size:10px}.dashboard-gps-status{padding:7px 10px;border:1px solid rgba(87,207,244,.28);border-radius:30px;background:rgba(20,103,141,.2);color:#a8eaff;font-size:9px;letter-spacing:.1em;white-space:nowrap}
+.dashboard-map-frame{position:relative;isolation:isolate;overflow:hidden;height:clamp(240px,35vw,430px);border:1px solid rgba(160,215,245,.2);border-radius:16px;background:radial-gradient(ellipse at 50% 50%,#123b55,#071827 72%);box-shadow:inset 0 0 50px rgba(0,0,0,.4)}
+.dashboard-map-frame iframe{width:100%;height:100%;border:0;filter:saturate(.68) contrast(1.1) brightness(.82) hue-rotate(7deg)}
+.dashboard-map-frame:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(113,211,255,.08),transparent 35%,rgba(1,12,23,.13));box-shadow:inset 0 0 35px rgba(0,0,0,.22)}
+.dashboard-echo{position:absolute;z-index:2;left:50%;top:50%;width:20px;height:20px;transform:translate(-50%,-50%);pointer-events:none}
+.dashboard-echo i{position:absolute;inset:0;border:2px solid #36aaff;border-radius:50%;background:rgba(35,149,255,.13);box-shadow:0 0 15px rgba(39,155,255,.9);animation:navyEcho 2s ease-out infinite}
+.dashboard-echo i:nth-child(2){animation-delay:.66s}.dashboard-echo i:nth-child(3){animation-delay:1.32s}
+.dashboard-echo b{position:absolute;top:25px;left:50%;transform:translateX(-50%);padding:5px 8px;border:1px solid rgba(102,190,255,.5);border-radius:6px;background:rgba(4,20,36,.88);color:#d8efff;font-size:8px;letter-spacing:.1em;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+@keyframes navyEcho{0%{transform:scale(.45);opacity:.95}100%{transform:scale(4.8);opacity:0}}
+.dashboard-map-glass-label{position:absolute;z-index:3;left:12px;bottom:12px;max-width:calc(100% - 24px);padding:8px 11px;border:1px solid rgba(175,222,246,.22);border-radius:9px;background:rgba(3,18,31,.76);backdrop-filter:blur(14px);color:#d5eaf7;font-size:9px;box-shadow:0 8px 22px rgba(0,0,0,.22)}
+.dashboard-map-foot{display:flex;justify-content:space-between;gap:10px;padding:11px 4px 0;color:#7f9eb2;font-size:8px;letter-spacing:.12em}
+.inline-edit-cell{cursor:text;position:relative}.inline-edit-cell:hover{background:rgba(45,145,190,.12)!important;box-shadow:inset 0 0 0 1px rgba(100,205,245,.25)}.inline-edit-hint{color:#72c9ed;opacity:.65;font-size:10px}.inline-cell-input{min-width:90px;width:100%;padding:7px;border:1px solid rgba(95,208,245,.65);border-radius:6px;background:#061c30;color:#f0faff;font:inherit;outline:none;box-shadow:0 0 0 3px rgba(40,157,207,.14)}
+.watch-report-status.pending{background:rgba(208,155,57,.18);border:1px solid rgba(226,181,99,.3);color:#ffd98d}.watch-report-status.approved{background:rgba(48,176,129,.17);border:1px solid rgba(91,220,172,.28);color:#a0f0d0}
+@media(max-width:650px){.dashboard-mapglass{padding:11px;border-radius:16px}.dashboard-map-head{align-items:flex-start;flex-direction:column}.dashboard-map-frame{height:270px}.dashboard-map-foot{font-size:7px;flex-direction:column}.dashboard-echo b{font-size:7px}}
+@media(prefers-reduced-motion:reduce){.dashboard-echo i{animation:none!important;opacity:.5}}
