@@ -208,7 +208,7 @@ export default function Home(){
  async function saveSupplyData(){
   if(!isAdmin||!profile?.unit_id||!user||!supplyDraft){setNotice("Hanya admin yang dapat mengubah data Air Tawar dan HSD.");return}
   const current=Number(supplyDraft.stock_ready_current||0),target=Number(supplyDraft.target_stock),capacity=Number(supplyDraft.capacity_liters);
-  if(!Number.isFinite(target)||target<0||!Number.isFinite(capacity)||capacity<0){setNotice("Stok dan kapasitas harus berupa angka nol atau lebih.");return}
+  if(!Number.isFinite(target)||target<0||!Number.isFinite(capacity)||capacity<=0){setNotice("Stok dan kapasitas harus berupa angka nol atau lebih.");return}
   if(capacity>0&&target>capacity){setNotice("Stok tersedia tidak boleh melebihi kapasitas tangki.");return}
   setSupplySaving(true);setNotice("");
   try{
@@ -275,7 +275,7 @@ export default function Home(){
 </div>
 
 <div className="user">
-<span>{profile.rank_title||""} {profile.full_name||user.email} {isViewer?"· VIEWER":"· "+profile.role.toUpperCase()}</span>
+<span>{profile.rank_title&&profile.rank_title.toLowerCase()!==profile.role.toLowerCase()?profile.rank_title+" · ":""}{profile.full_name||user.email}{isViewer?" · VIEWER":" · "+profile.role.toUpperCase()}</span>
 <button className="logout" onClick={()=>sb.auth.signOut()}>Sign out</button>
 </div>
 
