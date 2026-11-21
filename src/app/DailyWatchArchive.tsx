@@ -73,20 +73,20 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
   setNotice(error?"Persetujuan gagal disimpan: "+error.message:"Laporan disetujui dan dikunci sebagai arsip permanen.");
   if(!error)await load();
  };
- const exportWord=(r:any)=>{const blob=new Blob(["\ufeff",makeHtml({...r,approved_by_name:profiles[r.approved_by]})],{type:"application/msword"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="NAVYLOG-"+r.duty_date+".doc";a.click();URL.revokeObjectURL(url)};
+ const exportWord=(r:any)=>{const blob=new Blob(["\ufeff",makeHtml({...r,approved_by_name:profiles[r.approved_by]})],{type:"application/msword"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="NAVYLOG-"+r.duty_date+".doc";a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000)};
  const exportPdf=(r:any)=>{const w=window.open("","_blank");if(!w){setNotice("Izinkan pop-up untuk mencetak PDF.");return}w.document.open();w.document.write(makeHtml({...r,approved_by_name:profiles[r.approved_by]}));w.document.close();w.focus();window.setTimeout(()=>w.print(),350)};
  const reportMatches=useMemo(()=>reports.filter(r=>{
   const d=r.report_data||{},a=d.watch_assignment||{},date=new Date(r.duty_date+"T00:00:00+07:00");
   const dayName=date.toLocaleDateString("id-ID",{weekday:"long",timeZone:WIB}).toLowerCase();
-  const text=[r.duty_date,r.additional_notes,a.watch_type,a.old_watch_name,a.new_watch_name,a.old_watch_nrp,a.new_watch_nrp,JSON.stringify(d.activity_logs||[])].join(" ").toLowerCase();
-  return (!year||r.duty_date.startsWith(year))&&(!day||dayName===day)&&(!query||text.includes(query.toLowerCase()));
+  const text=[r.duty_date,r.additional_notes,a.watch_type,a.old_watch_name,a.new_watch_name,a.old_watch_nrp,a.new_watch_nrp,JSON.stringify(d.activity_logs||[]),JSON.stringify(d.checklist_runs||[]),JSON.stringify(d.checklist_responses||[]),JSON.stringify(d.checklist_items||[]),JSON.stringify(d.checklists||[])].join(" ").toLowerCase();
+  return (!year||r.duty_date.startsWith(year))&&(!day||dayName===day)&&(!query||text.includes(query.trim().toLowerCase()));
  }),[reports,year,day,query]);
  const activityMatches=useMemo(()=>activities.filter(a=>(!year||a.activity_date.startsWith(year))&&(!day||new Date(a.activity_date+"T00:00:00+07:00").toLocaleDateString("id-ID",{weekday:"long",timeZone:WIB}).toLowerCase()===day)&&(!query||[a.title,a.description,a.category].join(" ").toLowerCase().includes(query.toLowerCase()))),[activities,year,day,query]);
  return <section className="watch-archive">
   <div className="watch-archive-head"><div><small>NAVYDOCS / DIGITAL RECORDS</small><h3>{title}</h3></div><button onClick={generateYesterday} disabled={!canWrite||busy||Number(localClock().slice(0,2))<8}>{busy?"Memproses...":"Buat rekap hari sebelumnya"}</button></div>
   <div className="watch-archive-filters">
-   <label>Dari tanggal<input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/></label>
-   <label>Sampai tanggal<input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/></label>
+   <label>Dari tanggal<input type="date" value={fromDate} max={toDate||undefined} onChange={e=>{setYear("");setFromDate(e.target.value)}}/></label>
+   <label>Sampai tanggal<input type="date" value={toDate} min={fromDate||undefined} onChange={e=>{setYear("");setToDate(e.target.value)}}/></label>
    <label>Tahun<input inputMode="numeric" maxLength={4} placeholder="Semua tahun" value={year} onChange={e=>{const v=e.target.value.replace(/\D/g,"").slice(0,4);setYear(v);if(v.length===4){setFromDate(v+"-01-01");setToDate(v+"-12-31")}else if(v.length===0){setFromDate(wibDate(new Date(Date.now()-30*86400000)));setToDate(wibDate())}}}/></label>
    <label>Hari<select value={day} onChange={e=>setDay(e.target.value)}><option value="">Semua hari</option>{["senin","selasa","rabu","kamis","jumat","sabtu","minggu"].map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
    <label className="watch-search">Cari laporan<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nama, NRP, kegiatan, catatan..."/></label>
@@ -100,7 +100,7 @@ export default function DailyWatchArchive({supabase,unitId,userId,role,viewer,ti
    <label className="watch-report-notes">Catatan tambahan Paga<textarea value={drafts[r.id]??r.additional_notes??""} onChange={e=>setDrafts(v=>({...v,[r.id]:e.target.value}))} disabled={!canWrite||!!r.approved_at} placeholder="Tambahkan kejadian, catatan, atau hal yang perlu diketahui Komandan..."/></label>
    {!r.approved_at&&canWrite&&<button className="watch-save-notes" onClick={()=>saveNotes(r)}>Simpan catatan tambahan</button>}
    <div className="watch-report-approval">{r.approved_at?<div><b>APPROVED</b><small>Oleh {profiles[r.approved_by]||"Komandan"} · {new Date(r.approved_at).toLocaleString("id-ID",{timeZone:WIB})}</small></div>:canReview?<div><label>Ketik APPROVED untuk menyetujui laporan<input value={approvalDrafts[r.id]||""} onChange={e=>setApprovalDrafts(v=>({...v,[r.id]:e.target.value.toUpperCase()}))} placeholder="APPROVED"/></label><button disabled={approvalDrafts[r.id]!=="APPROVED"} onClick={()=>approve(r)}>Setujui dan kunci laporan</button></div>:<small>Menunggu review akun Komandan.</small>}</div>
-  </article>}):<div className="watch-archive-empty">Belum ada rekap pada rentang tanggal ini. Rekap otomatis dijadwalkan setiap pukul 08.00 WIB setelah hari sebelumnya berakhir.</div>}
+  </article>}):<div className="watch-archive-empty">Belum ada rekap pada rentang tanggal ini. Buat rekap hari sebelumnya setelah pukul 08.00 WIB.</div>}
   <div className="watch-archive-section-title"><b>RIWAYAT LOGBOOK KEGIATAN</b><span>{activityMatches.length} CATATAN</span></div>
   {activityMatches.length?<div className="watch-activity-list">{activityMatches.map(a=><article key={a.id}><time>{prettyDate(a.activity_date)} · {String(a.activity_time||"").slice(0,5)||"—"}</time><div><b>{a.title}</b><small>{a.category} · {a.status}</small>{a.description&&<p>{a.description}</p>}</div></article>)}</div>:<div className="watch-archive-empty">Tidak ada kegiatan yang cocok dengan filter pencarian.</div>}
   <p className="watch-archive-foot">Persetujuan Komandan disimpan bersama identitas akun dan waktu server. Laporan yang telah disetujui tidak dapat diubah kembali.</p>
