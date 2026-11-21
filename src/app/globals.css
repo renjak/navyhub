@@ -278,3 +278,50 @@ td{color:#f0f1f5}
 .editor-panel h3{margin:0 0 8px;color:#e9f6ff;font-size:16px}.editor-panel>p{margin:0 0 14px;color:#91aabd;font-size:12px;line-height:1.6}
 .editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.editor-grid label{display:flex;flex-direction:column;gap:6px;color:#a8c1d3;font-size:11px;letter-spacing:.04em}.editor-grid label.wide,.editor-grid>.wide{grid-column:1/-1}.editor-grid input,.editor-grid select,.editor-grid textarea{width:100%;min-width:0;border:1px solid rgba(138,188,215,.22);border-radius:8px;padding:10px 11px;background:rgba(2,14,25,.82);color:#eff8ff;font:inherit;font-size:13px;outline:none}.editor-grid input:focus,.editor-grid select:focus,.editor-grid textarea:focus{border-color:#55b9e8;box-shadow:0 0 0 3px rgba(55,166,214,.12)}.editor-grid textarea{resize:vertical;line-height:1.5}.editor-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:15px}.editor-actions button{border:1px solid rgba(107,190,225,.35);border-radius:8px;padding:9px 14px;background:#17628a;color:white;font-size:12px;font-weight:700}.editor-actions button.outline{background:transparent;color:#c4d7e4}.editor-actions button:disabled{opacity:.55;cursor:not-allowed}.stock-editor-grid .wide{grid-column:1/-1;color:#9ab4c8;font-size:12px;line-height:1.5;margin:0 0 4px}.panelhead-actions{display:flex;flex-wrap:wrap;gap:8px}.panelhead-actions button{white-space:nowrap}
 @media(max-width:650px){.editor-panel{padding:14px}.editor-grid{grid-template-columns:1fr}.editor-grid label.wide,.editor-grid>.wide{grid-column:auto}.editor-actions{flex-direction:column-reverse}.editor-actions button{width:100%}.panelhead-actions{width:100%}.panelhead-actions button{flex:1}}
+
+
+/* NAVYHUB maritime command glass dashboard */
+.navy-maritime{display:grid;gap:16px;margin:0 0 24px}
+.navy-map-shell{position:relative;overflow:hidden;border:1px solid rgba(148,205,231,.22);border-radius:22px;background:linear-gradient(135deg,rgba(13,34,52,.96),rgba(5,17,30,.98));box-shadow:0 18px 50px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.08);color:#e8f5ff}
+.navy-map-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 24px 14px}
+.navy-map-top small,.navy-info-head small{font-size:10px;letter-spacing:1.7px;color:#8fb7ce;font-weight:800}
+.navy-map-top h2{font-size:21px;letter-spacing:.2px;margin:7px 0 4px;color:#f2f8fc}
+.navy-map-top p{margin:0;color:#9bb8ca;font-size:12px}
+.navy-gps-state{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.12);border-radius:30px;padding:8px 11px;font-size:9px;letter-spacing:1px;white-space:nowrap;color:#b9cbd5;background:rgba(255,255,255,.05)}
+.navy-gps-state i,.navy-map-legend i{width:7px;height:7px;border-radius:50%;display:inline-block;background:#8496a2;box-shadow:0 0 12px currentColor}
+.navy-gps-state.live i,.navy-map-legend i{background:#55e0c0;color:#55e0c0}
+.navy-gps-state.stale i{background:#f5bd62;color:#f5bd62}
+.navy-map-canvas{height:clamp(250px,36vw,410px);position:relative;overflow:hidden;background:#0a2134}
+.navy-map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(119,180,211,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(119,180,211,.08) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,transparent,black 18%,black 82%,transparent)}
+.navy-map-canvas svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 7px 15px rgba(0,0,0,.28))}
+.navy-map-coords{position:absolute;left:18px;bottom:45px;padding:8px 11px;border:1px solid rgba(152,205,229,.22);border-radius:9px;background:rgba(3,17,29,.68);backdrop-filter:blur(12px);font:600 11px ui-monospace,monospace;color:#d9efff}
+.navy-map-legend{position:absolute;right:18px;bottom:45px;display:flex;gap:14px;align-items:center;padding:8px 11px;border:1px solid rgba(152,205,229,.18);border-radius:9px;background:rgba(3,17,29,.68);font-size:8px;letter-spacing:1px;color:#b4cbd8}
+.navy-map-legend span:first-child{display:flex;align-items:center;gap:7px}
+.navy-map-footer{display:flex;align-items:center;gap:14px;padding:12px 20px;color:#9bb7c9;font-size:10px;letter-spacing:.6px;border-top:1px solid rgba(158,205,230,.12)}
+.navy-map-footer span:nth-child(2){margin-left:auto}
+.navy-map-footer button,.navy-gps-actions button{border:1px solid rgba(115,205,236,.38);border-radius:9px;padding:8px 12px;background:rgba(51,155,193,.16);color:#dff7ff;font-size:10px;font-weight:800;letter-spacing:.8px;cursor:pointer}
+.navy-map-footer button:disabled,.navy-gps-actions button:disabled{opacity:.5;cursor:wait}
+.navy-maritime-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.navy-info-card{min-width:0;border:1px solid rgba(130,171,198,.2);border-radius:16px;padding:16px;background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(18px);color:var(--foreground,#e9f2f8)}
+.navy-info-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.navy-info-head>span{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:rgba(71,177,213,.14);color:#76d7f2;font-size:18px}
+.navy-info-card>b{display:block;font-size:27px;line-height:1.15;letter-spacing:-.8px;margin-bottom:5px}
+.navy-info-card>strong{display:block;font-size:11px;color:var(--muted-foreground,#9bb0bf);font-weight:600}
+.navy-info-meta{display:flex;justify-content:space-between;gap:8px;margin:15px 0 10px;padding-top:11px;border-top:1px solid rgba(140,180,202,.14);font-size:10px;color:#9bb0bf}
+.navy-info-meta b{display:block;color:var(--foreground,#e8f2f8);font-size:11px;margin-top:4px}
+.navy-info-card>small:last-child{font-size:9px;color:#8ea7b7;line-height:1.5}
+.navy-gps-admin{border:1px solid rgba(96,166,199,.25);border-radius:15px;background:rgba(35,94,123,.08);padding:0 16px}
+.navy-gps-admin summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0;color:#8fdcf3;font-size:10px;letter-spacing:1px;font-weight:800}
+.navy-gps-admin summary::-webkit-details-marker{display:none}
+.navy-gps-admin summary small{font-size:10px;letter-spacing:0;color:var(--muted-foreground,#9bb0bf);font-weight:500}
+.navy-gps-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:4px 0 14px}
+.navy-gps-form-grid label{display:grid;gap:6px;font-size:10px;color:var(--muted-foreground,#9bb0bf)}
+.navy-gps-form-grid input{width:100%;min-width:0;border:1px solid rgba(133,180,204,.24);border-radius:9px;padding:10px;background:rgba(0,0,0,.16);color:var(--foreground,#eaf4fa);outline:none}
+.navy-gps-form-grid input:focus{border-color:#65c9e9;box-shadow:0 0 0 3px rgba(101,201,233,.1)}
+.navy-gps-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 0 15px}
+.navy-gps-actions small,.navy-gps-note,.navy-source-note{font-size:10px;line-height:1.6;color:var(--muted-foreground,#94aab8)}
+.navy-gps-note,.navy-status-error,.navy-status-notice{border-radius:10px;padding:11px 13px;background:rgba(111,151,177,.1);font-size:10px;color:var(--muted-foreground,#a8bac6)}
+.navy-status-error{border:1px solid rgba(237,112,112,.3);color:#e79a9a}
+.navy-status-notice{border:1px solid rgba(85,201,157,.3);color:#8ed8b6}
+.navy-source-note{padding:0 4px}
+@media(max-width:760px){.navy-map-top{padding:17px 16px 12px;flex-direction:column}.navy-gps-state{font-size:8px}.navy-map-canvas{height:270px}.navy-map-footer{flex-wrap:wrap;padding:11px 13px}.navy-map-footer span:nth-child(2){margin-left:0}.navy-map-footer button{margin-left:auto}.navy-maritime-cards{grid-template-columns:1fr}.navy-gps-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.navy-gps-actions{align-items:flex-start;flex-direction:column}.navy-map-legend{right:9px;bottom:9px;font-size:7px}.navy-map-coords{left:9px;bottom:9px;font-size:9px}}
