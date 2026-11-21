@@ -136,10 +136,11 @@ export default function Home(){
  const [docBusy,setDocBusy]=useState(false);
  const refreshProfile=useCallback(async(u:User)=>{const {data,error}=await sb.from("profiles").select("id,full_name,rank_title,unit_id,role,is_active").eq("id",u.id).maybeSingle();if(error)throw error;setProfile(data as Profile|null)},[]);
  useEffect(()=>{let alive=true;sb.auth.getSession().then(async({data})=>{const u=data.session?.user??null;if(!alive)return;setUser(u);if(u){try{await refreshProfile(u)}catch(e){setError("Gagal memuat profil akun.")}}setLoading(false)});const {data:listener}=sb.auth.onAuthStateChange((_event,session)=>{const u=session?.user??null;setUser(u);if(!u){setProfile(null);setRows([]);setMovements([])}else{setTimeout(()=>refreshProfile(u).catch(()=>setError("Gagal memuat profil.")),0)}});return()=>{alive=false;listener.subscription.unsubscribe()}},[refreshProfile]);
- const isViewer=profile?.role==="viewer";
- const isAdmin=profile?.role==="admin";
- const canManage=profile?.role==="admin"||profile?.role==="commander";
- const canOperate=["admin","commander","officer","operator"].includes(profile?.role||"");
+ const isPreview=process.env.NEXT_PUBLIC_NAVYHUB_PREVIEW==="true";
+ const isViewer=profile?.role==="viewer"||isPreview;
+ const isAdmin=!isPreview&&profile?.role==="admin";
+ const canManage=!isPreview&&(profile?.role==="admin"||profile?.role==="commander");
+ const canOperate=!isPreview&&["admin","commander","officer","operator"].includes(profile?.role||"");
  const visibleMenu=isViewer?menu.filter(m=>["Dashboard","NAVYLOG","NAVYMAINT","NAVYSTOCK","NAVYCREW","NAVYDOCS"].includes(m.id)):menu;
  const selected=menu.find(m=>m.id===module);
  useEffect(()=>{if(isViewer&&!visibleMenu.some(m=>m.id===module))setModule("Dashboard")},[isViewer,module]);
@@ -228,7 +229,7 @@ export default function Home(){
  {module==="Dashboard" && <div className="dashboard-view">
  {isViewer&&<div className="viewer-notice">
 <b>MODE VIEWER · READ ONLY</b>
-<span>Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data.</span>
+<span>{isPreview?"PREVIEW AMAN · READ ONLY. Lingkungan ini terhubung ke Supabase produksi; seluruh operasi tulis dinonaktifkan.":"Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data."}</span>
 </div>
 }
  <section className="hero">
@@ -345,7 +346,7 @@ export default function Home(){
 }
 {module!=="Dashboard" && <div className="module-view">{isViewer&&<div className="viewer-notice">
 <b>MODE VIEWER · READ ONLY</b>
-<span>Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia.</span>
+<span>{isPreview?"PREVIEW AMAN · READ ONLY. Data produksi hanya ditampilkan; perubahan dan pengelolaan dinonaktifkan.":"Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia."}</span>
 </div>
 }
 {module!=="NAVYLOG"&&<section className="module-hero">
