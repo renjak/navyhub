@@ -72,7 +72,6 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
   {canManage&&<div className="navy-gps-admin"><span className="navy-gps-compact-state">{gps?(stale?"DATA GPS LAMA":"GPS AKTIF"):"GPS BELUM AKTIF"}</span><button type="button" onClick={()=>{if(typeof navigator!=="undefined"&&navigator.geolocation)navigator.geolocation.getCurrentPosition(pos=>void publishPosition(pos),geoError,{enableHighAccuracy:true,maximumAge:0,timeout:25000})}}>{gps?"PERBARUI LOKASI":"AKTIFKAN LOKASI"}</button></div>}
-  {!canManage&&}
   {error&&<div className="navy-status-error">{error}</div>}{notice&&<div className="navy-status-notice">{notice}</div>}
   <div className="navy-source-note">Data cuaca dan laut merupakan estimasi model, bukan pengganti publikasi navigasi resmi.</div>
  </section>
