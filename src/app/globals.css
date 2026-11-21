@@ -530,3 +530,22 @@ button:focus-visible,[role="button"]:focus-visible{outline:2px solid #75d7f3;out
 .watch-activity-list article>div{min-width:0;overflow-wrap:anywhere}
 @media(max-width:1050px){.supply-meta>b{font-size:26px!important}}
 @media(max-width:650px){.supply-meta>b{font-size:24px!important}.watch-activity-list article{grid-template-columns:1fr;gap:6px}.watch-report-actions button{flex:1}}
+
+/* NAVYDOCS archive intelligence */
+.watch-archive-subtitle{margin:7px 0 0;color:#93adbd;font-size:11px;line-height:1.5}
+.watch-archive-head-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.watch-archive-filters{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
+.watch-archive-filters label{min-width:0}
+.watch-archive-filters input,.watch-archive-filters select{min-width:0;width:100%;box-sizing:border-box}
+.watch-report-details{margin:14px 0;padding:12px 14px;border:1px solid rgba(123,168,194,.22);border-radius:12px;background:rgba(8,28,43,.28)}
+.watch-report-details summary{cursor:pointer;color:#cce0eb;font-size:12px;font-weight:700}
+.watch-detail-block{display:grid;gap:8px;margin-top:13px}
+.watch-detail-block>section{display:grid;gap:7px;padding:10px;border-radius:9px;background:rgba(255,255,255,.025)}
+.watch-detail-row{display:flex;align-items:flex-start;gap:12px;padding:7px 0;border-bottom:1px solid rgba(130,166,187,.12);font-size:11px;min-width:0}
+.watch-detail-row time{min-width:48px;color:#91b7c9;font-variant-numeric:tabular-nums}
+.watch-detail-row span{display:grid;gap:3px;min-width:0;overflow-wrap:anywhere}
+.watch-detail-row p{margin:3px 0 0;color:#9eb5c4;white-space:pre-wrap}
+.watch-detail-row>b{margin-left:auto;color:#c5e6d5;white-space:nowrap}
+.watch-report-history{display:flex;gap:8px 18px;flex-wrap:wrap;padding-top:10px;margin-top:10px;border-top:1px solid rgba(130,166,187,.14);font-size:10px;color:#8da9b9}
+.watch-report-history b{color:#d2e4ed}
+@media(max-width:650px){.watch-archive-head-actions{width:100%;justify-content:stretch}.watch-archive-head-actions button{flex:1}.watch-report-history{display:grid;gap:6px}}
