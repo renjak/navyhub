@@ -1,0 +1,49 @@
+name: Generate NAVYHUB Native Projects
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/navyhub-operational-modules
+    paths:
+      - "src/capacitor.config.ts"
+      - "src/package.json"
+      - ".github/workflows/generate-native-projects.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Android project
+        run: npx cap add android
+      - name: Generate iOS project
+        run: npx cap add ios
+      - name: Sync Capacitor
+        run: npx cap sync
+      - name: Package native projects
+        run: |
+          cd ..
+          zip -r navyhub-native-projects.zip src/android src/ios src/capacitor.config.ts src/mobile/README.md
+      - name: Upload native project bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: navyhub-native-projects
+          path: navyhub-native-projects.zip
+          retention-days: 14
