@@ -13,7 +13,7 @@ export default function PWAClient() {
     const standalone = window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
     if (standalone) { setInstalled(true); return; }
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    if (isIOS) setVisible(true);
+    if (isIOS) { setVisible(true); if (new URLSearchParams(window.location.search).get("install") === "ios") setShowIOSHelp(true); }
     const onBeforeInstall = (event: Event) => { event.preventDefault(); setInstallEvent(event as InstallPromptEvent); setVisible(true); };
     const onInstalled = () => { setInstalled(true); setVisible(false); setInstallEvent(null); };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
