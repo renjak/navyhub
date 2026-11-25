@@ -35,7 +35,7 @@ A fault is linked to a part by the tag at the start of `issue_description`, e.g.
 - Tank positions in the model are schematic (the drawings do not show tanks); fill levels come only from inventory data.
 - The welcome card uses `/branding/alnav-dms-logo.jpg` with `object-fit: contain`.
 
-## Known issue: logo file
+## Logo file (fixed in this branch)
 
 `public/branding/alnav-dms-logo.jpg` in the repo is a truncated JPEG (5,141 bytes, 450×150, fails to decode), and the Next.js app root is `src/`, so `/branding/alnav-dms-logo.jpg` is not served from `src/public/` either. The logo therefore does not render anywhere in the app. Fixing it needs the owner's approval because the file is the official asset: restore the original file into `public/branding/` and add the same file under `src/public/branding/`.
 
