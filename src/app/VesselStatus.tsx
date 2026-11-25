@@ -118,7 +118,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
   <section className="navy-telemetry-command" aria-label="Telemetri navigasi kapal">
    <div className="navy-telemetry-heading">
     <div><small>ALAMANG NAVAL DATA MANAGEMENT SYSTEM</small><h2>VESSEL NAVIGATION · KRI ALAMANG-644</h2><p>Telemetri posisi dan pergerakan kapal dari sumber yang tercatat</p></div>
-    <span className={"navy-telemetry-freshness "+(simMode?"is-live":gps?(stale?"is-stale":"is-live"):"is-offline")}><i/>{simMode?"SIMULATION ACTIVE":gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
+    <span className={"navy-telemetry-freshness " + (simMode ? "is-live" : gps ? (stale ? "is-stale" : "is-live") : "is-offline")}><i/>{simMode?"SIMULATION ACTIVE":gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
    </div>
    <div className="navy-telemetry-grid">
     <article className="navy-telemetry-compass">
