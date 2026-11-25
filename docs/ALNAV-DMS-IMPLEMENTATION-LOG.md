@@ -42,3 +42,15 @@
 - Stabilized role-aware navigation filtering with useMemo.
 - Latest Vercel Preview deployment: READY, commit `265599cbfdd1d19d2d3257298165419869978243`, branch `alnav-dms/phase-1-gps-safety`.
 - Build evidence: Next.js compile succeeded; type validity passed; static pages generated; deployment completed; npm audit reported zero vulnerabilities. This confirms build health only, not E2E behavior, logged-in role checks, direct database RLS tests or mobile QA.
+
+
+### 25 November 2026 — Department schema, Class V RLS and Admin account provisioning
+- Applied additive Supabase migration `departmental_identity_and_supply_classification` to the active project after a transaction-wrapped syntax test. Existing records were preserved.
+- Seeded OPS/SIN/EKA/LOG departments for the active unit and added department ownership columns to core operational tables.
+- Added profile entitlements `department_code`, `is_department_head`, `can_access_class_v` and supply class classification on inventory items.
+- Verified inventory classification: 1 Class I/LOG, 1 Class III/LOG, 15 Class V/SIN.
+- Added restrictive RLS for Class V inventory and linked stock-movement reads. Admin and Commander have command-level visibility; other users require explicit profile entitlement.
+- Deployed JWT-protected Supabase Edge Function `admin-invite-user`; server verifies active Admin profile, sends invite email, assigns profile scope, and writes audit log.
+- Added Admin UI to assign department/head/Class V entitlement and invite new personnel by email.
+- Security advisor still flags leaked-password protection disabled; enable in Supabase Auth security settings.
+- Department write-side RLS matrix remains outstanding; do not merge to production until the module-specific policies and cross-department deny tests pass.
