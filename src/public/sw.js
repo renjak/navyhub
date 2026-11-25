@@ -1,4 +1,4 @@
-/* NAVYHUB PWA. Never cache authenticated HTML, Supabase responses, API payloads or user records. */
+/* ALNAV DMS PWA. Never cache authenticated HTML, Supabase responses, API payloads or user records. */
 const CACHE_VERSION = "navyhub-static-v1";
 const OFFLINE_URL = "/offline.html";
 const APP_ASSETS = [OFFLINE_URL, "/alamang-emblem.jpg", "/kri-alamang-bg.jpg", "/navyhub-icon.svg"];
@@ -15,7 +15,7 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
   if (request.mode === "navigate" || url.pathname.startsWith("/api/")) {
     if (request.mode !== "navigate") return;
-    event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE_URL)) || new Response("NAVYHUB memerlukan koneksi internet.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } })));
+    event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE_URL)) || new Response("ALNAV DMS memerlukan koneksi internet.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } })));
     return;
   }
   const staticAsset = url.pathname.startsWith("/_next/static/") || ["/alamang-emblem.jpg", "/kri-alamang-bg.jpg", "/navyhub-icon.svg"].includes(url.pathname);
