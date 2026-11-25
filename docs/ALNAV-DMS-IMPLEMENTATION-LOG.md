@@ -25,3 +25,12 @@
 ### Release safety
 - All changes are on an isolated preview branch.
 - No production deployment, production data mutation or Supabase schema migration occurred.
+
+### 25 November 2026 — STOCK and access-control direction
+- Implemented a six-card expandable STOCK interface: Class I, III, IV, V, VIII, IX. Cards show only inventory items already present in Supabase; empty classes are explicitly empty, not seeded with mock data.
+- Mapped existing Air Tawar to Class I, BBM to Class III, and Amunisi to Class V without changing database rows or categories.
+- Existing non-manager STOCK query excludes the legacy Amunisi category as an interim UI/API query minimization. Direct RLS protection for Class V still must be implemented and tested before production readiness.
+- Confirmed current role enum is admin/commander/officer/operator/viewer and profiles has no department field. Recorded the OPS/SIN/EKA/LOG department RBAC model, data ownership requirements, and RLS test plan in docs/ALNAV-DMS-DEPARTMENTAL-RBAC.md.
+- Updated DigitalLogbook, Archive, PWA manifest and offline message to ALNAV DMS / current display labels.
+- Stock class preview build passed Next.js compilation, lint/type validity and static page generation (Vercel preview READY for commit a1f3f97). Later branding string changes triggered another preview build; verify its newest result separately.
+- No Supabase schema migration, live data writes, production merge or production deployment in this slice.
