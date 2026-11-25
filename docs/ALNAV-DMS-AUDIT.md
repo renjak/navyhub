@@ -137,3 +137,38 @@ The project reports one default Supabase branch with with_data=false; this is no
 - Deployed Supabase Edge Function `admin-invite-user` (JWT required). It verifies an active Admin profile server-side, sends Auth email invitations, assigns unit/role/department/head/Class V fields, and records an audit event. It does not permit creating Admin or Commander accounts.
 - Admin UI now supports department assignment, head designation, explicit Class V entitlement and email invitation. Profile assignment uses the existing Admin-only profile update policy.
 - Important remaining work: write-side RLS for activity logs, stock transactions, maintenance, checklists, daily reports and personnel must be implemented and tested before department heads can edit their own module data. Legacy record ownership stays NULL until confirmed; no guessed department mapping.
+
+
+## 10. Supplemental verification — 25 November 2026
+### Active source and release
+- GitHub repository is private `renjak/navyhub`; repository default branch is `main`. The project README records `feat/navyhub-operational-modules` as the production baseline and `alnav-dms/phase-1-gps-safety` as the implementation branch. Do not equate the GitHub default branch with the Vercel production branch.
+- The Next.js app root is `src/`; `src/package.json` declares Next.js 15.5.29, React 19.2.6, TypeScript 5.8.3, Supabase JS 2.57.x and Capacitor 8.6.x. No `src/package-lock.json` was found.
+- Vercel project `navyhub` is linked to this repository, custom domain `navyhub.app` exists, and SSO protection is enabled for non-custom deployment URLs.
+- Preview commit `c4751bd8c4bcb33a5801344fa7d13ce0310ba405` reached `READY` at `https://navyhub-kj5lwhs5j-644warship-2118.vercel.app`. This is a successful preview build/deployment, not full authenticated QA.
+
+### PHST source and workflow
+- The inspected source is the 10-page uploaded `PHST ALAMANG 2025 copy.docx`. Its extracted pages contain dated PHST records for 23 November 2026, 1–3 September 2026, 28 August 2026 and 8–9 August 2026, plus page-separated D. KHUSUS/F. Lain-lain content. Some page-separated department entries do not repeat a date; do not assign those entries to a date without source evidence.
+- Existing parser handles A. SITUASI, B. TUGAS POKOK, C. UMUM, D. KHUSUS and F. LAIN-LAIN. The importer appends unseen entries and skips exact duplicates.
+- Checklist tables exist with 10 templates and 32 items, but the current database snapshot has zero checklist runs and zero responses. The current DigitalLogbook execution flow is limited to Perwira Jaga. Its animated ship tour is explicitly a visual demo, not PHST evidence or an operational completion record.
+
+### Security and database findings
+- All 16 public application tables have RLS enabled. The separate `private.vessel_gps_ingest_config` table is reported by the Supabase security advisor with RLS disabled. Do not simply enable RLS without policies: first verify schema exposure and design/test service-only grants and server access.
+- Supabase Auth leaked-password protection is disabled (security WARN).
+- Personnel table contains sensitive fields including birthplace, birth date and NRP. The frontend general directory uses an allow-list, but RLS alone does not protect columns. Direct API/column-level access still needs a security boundary and role tests.
+- Performance advisor flags a missing covering index on `inventory_items_department_fk`, multiple permissive SELECT policies on `departments`, and unused indexes. Investigate plans before index changes; do not delete indexes solely because they are currently unused.
+- Current stock data remains 17 records (Air Tawar 1, BBM 1, Amunisi 15); stock movement history has 2 rows. Do not seed or fabricate other classes.
+- Maintenance assets and records, daily watch assignments/reports, checklist runs/responses have zero rows in the last recorded snapshot. This is absence of data, not permission to create sample operational records.
+
+### Updated status classifications
+| Feature | Status | Root cause / next implementation |
+|---|---|---|
+| Dashboard | PARTIALLY WORKING | Existing counts, consumables, GPS/map/weather and navigation panel; readiness aggregation and complete LIVE/DELAYED/STALE/OFFLINE states remain. |
+| Heading | NOT IMPLEMENTED FROM SENSOR | Database exposes COG only; no heading/gyro/AHRS column or confirmed onboard source. |
+| STOCK | PARTIALLY WORKING | Class cards and existing inventory transactions; requested full attributes and transaction types (return/transfer/disposal/reversal) remain. |
+| PHST execution | PARTIALLY WORKING | PHST import and generic checklist tables exist; dated PHST execution/verification lifecycle is not yet linked. |
+| PERSONEL privacy | SECURITY RISK | Frontend allow-list is not sufficient column security; sensitive detail isolation and direct API tests required. |
+| MAINTENANCE | PARTIALLY WORKING | Corrective reports/basic assets only; preventive schedules, work orders and stock linkage remain. |
+| ARCHIVE | NOT IMPLEMENTED AS FULL ARCHIVE | Existing daily-watch archive and private bucket; document register/versioning/access history remain. |
+| Departmental RBAC | PARTIALLY WORKING | Admin identity and Class V access foundation; full department-specific write policies remain. |
+| GSAP/ScrollTrigger/Lenis | NOT IMPLEMENTED | Dependencies are absent from `src/package.json`; motion layer and reduced-motion support remain. |
+| End-to-end QA | NOT VERIFIED | Vercel preview is READY, but authenticated E2E, RLS matrix, responsive and operational regression tests have not been evidenced. |
