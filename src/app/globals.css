@@ -982,3 +982,8 @@ tbody tr:hover{background:rgba(160,196,222,.08)}
 .phst-row-actions button,.phst-manager-toolbar button{white-space:nowrap}
 .phst-execution-note{padding:7px 9px;border-left:2px solid #78a9d0;background:rgba(70,120,164,.08)}
 @media(max-width:700px){.phst-manager{padding:14px}.phst-manager-editor{grid-template-columns:1fr}.phst-manager-editor .wide,.phst-manager-editor .editor-actions{grid-column:1}.phst-schedule-row{grid-template-columns:52px minmax(0,1fr)}.phst-row-actions{grid-column:2;justify-content:flex-start}}
+
+
+.phst-inline-note{display:grid;gap:6px;min-width:190px;max-width:260px;color:var(--muted,#9aadc3);font-size:10px;letter-spacing:.04em}
+.phst-inline-note textarea{width:100%;min-height:54px;resize:vertical;padding:8px 10px;border:1px solid rgba(148,177,207,.22);border-radius:9px;background:rgba(8,22,38,.72);color:inherit;font:inherit;letter-spacing:normal}
+@media(max-width:700px){.phst-inline-note{max-width:none;width:100%}}
