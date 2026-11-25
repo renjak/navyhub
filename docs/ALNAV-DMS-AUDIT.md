@@ -115,3 +115,10 @@ The project reports one default Supabase branch with with_data=false; this is no
 7. Implement preventive maintenance/work orders and private Archive metadata.
 8. Add animation stack with reduced-motion and mobile fallbacks.
 9. Run full preview QA and only later seek production approval.
+
+## 11. STOCK class interface and departmental access
+- The current preview branch adds expandable class cards for I, III, IV, V, VIII and IX and groups existing records without data migration. Existing 1 Air Tawar, 1 BBM and 15 Amunisi records map to Class I, III and V respectively. Other classes remain empty until actual physical inventory is entered.
+- Existing non-manager item query filters the old Amunisi category as an interim frontend minimization. This is not a security boundary; a dedicated RLS policy on the database is still mandatory for Class V.
+- Supabase currently supports only generic roles admin/commander/officer/operator/viewer. The profiles table has no department_code or department-head entitlement. Therefore heads of OPS/SIN/EKA/LOG cannot yet be safely scoped to edit their department. See docs/ALNAV-DMS-DEPARTMENTAL-RBAC.md for the target permission matrix and migration/test sequence.
+- All active personnel should be able to read shared vessel information; writes are scoped to department-owned records and enforced server-side/RLS. Supply class and responsible department are separate dimensions.
+- No department RBAC migration was applied because the only available Supabase branch is empty (with_data=false); production schema was not changed.
