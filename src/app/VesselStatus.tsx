@@ -107,7 +107,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
   const bbox="94.5%2C-11.5%2C141.5%2C6.5";
   const marker=shownGps?"&marker="+encodeURIComponent(Number(shownGps.latitude)+","+Number(shownGps.longitude)):"";
   return "https://www.openstreetmap.org/export/embed.html?bbox="+bbox+"&layer=mapnik"+marker;
- },[gps?.latitude,gps?.longitude]);
+ },[shownGps?.latitude,shownGps?.longitude]);
   return <section className="navy-maritime">
   {mapOpen&&<div className="navy-map-modal" role="dialog" aria-modal="true" aria-label="Peta maritim Indonesia" onClick={e=>{if(e.target===e.currentTarget)setMapOpen(false)}}><div className="navy-map-dialog"><div className="navy-map-shell">
    <div className="navy-map-top"><div><small>FLEET TRACKING · INDONESIAN ARCHIPELAGO</small><h2>Peta Maritim Indonesia</h2><p>Posisi terakhir tercatat KRI Alamang-644</p></div><div className="navy-map-top-actions"><div className={"navy-gps-state "+(gps?(stale?"stale":"live"):"offline")}><i/>{gps?(stale?"GPS DATA AGED":"GPS POSITION AVAILABLE"):"AWAITING GPS DATA"}</div><button type="button" className="navy-map-close" onClick={()=>setMapOpen(false)} aria-label="Tutup peta">✕</button></div></div>
@@ -115,7 +115,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
     <div className="navy-map-coords">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"MENUNGGU POSISI GPS"}</div>
     <div className="navy-map-legend"><span><i/> {simMode?"POSISI SIMULASI · BUKAN GPS REAL":"POSISI TERCATAT KRI ALAMANG-644"}</span><span>OPENSTREETMAP · MAPNIK</span></div>
    </div>
-   <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{gps?"Last position: "+stamp(gps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button><a href={gps?"https://www.openstreetmap.org/?mlat="+gps.latitude+"&mlon="+gps.longitude+"#map=7/"+gps.latitude+"/"+gps.longitude:"https://www.openstreetmap.org/#map=5/-2.5/118"} target="_blank" rel="noreferrer">BUKA PETA ↗</a></div>
+   <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{shownGps?(simMode?"SIMULATION: ":"Last position: ")+stamp(shownGps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button><a href={shownGps?"https://www.openstreetmap.org/?mlat="+shownGps.latitude+"&mlon="+shownGps.longitude+"#map=7/"+shownGps.latitude+"/"+shownGps.longitude:"https://www.openstreetmap.org/#map=5/-2.5/118"} target="_blank" rel="noreferrer">BUKA PETA ↗</a></div>
   </div></div></div>}
   <section className="navy-telemetry-command" aria-label="Telemetri navigasi kapal">
    <div className="navy-telemetry-heading">
