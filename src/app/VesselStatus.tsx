@@ -28,26 +28,32 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  },[supabase,unitId]);
  useEffect(()=>{load();const t=window.setInterval(load,30000);return()=>window.clearInterval(t)},[load]);
  const publishPosition=useCallback(async(pos:GeolocationPosition)=>{
-  const now=new Date().toISOString();
-  const payload={unit_id:unitId,position_at:now,latitude:pos.coords.latitude,longitude:pos.coords.longitude,speed_knots:pos.coords.speed==null?null:Math.max(0,pos.coords.speed*1.943844),course_degrees:pos.coords.heading==null?null:((pos.coords.heading%360)+360)%360,satellites:null,fix_quality:"MASTER GPS KRI ALAMANG-644",source:"KRI_ALAMANG_644_MASTER_GPS",received_at:now,reporter_user_id:userId,accuracy_m:pos.coords.accuracy??null};
-  const {data,error}=await supabase.from("vessel_gps_positions").upsert(payload,{onConflict:"unit_id"}).select("id,unit_id,position_at,latitude,longitude,speed_knots,course_degrees,satellites,fix_quality,source,received_at,accuracy_m,reporter_user_id").single();
-  if(error){setError("Pembaruan master GPS KRI Alamang-644 gagal: "+error.message);return}
-  setGps(data);setNotice("");setError("");
- },[supabase,unitId,userId]);
+  setError("");setNotice("");
+  const {data:{session},error:sessionError}=await supabase.auth.getSession();
+  if(sessionError||!session?.access_token){setError("Sesi Admin tidak tersedia. Silakan masuk kembali.");return}
+  const response=await fetch("/api/gps",{
+   method:"POST",
+   headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},
+   body:JSON.stringify({
+    latitude:pos.coords.latitude,
+    longitude:pos.coords.longitude,
+    speed_knots:pos.coords.speed==null?null:Math.max(0,pos.coords.speed*1.943844),
+    course_degrees:pos.coords.heading==null?null:((pos.coords.heading%360)+360)%360,
+    accuracy_m:pos.coords.accuracy??null,
+    position_at:new Date().toISOString(),
+    fix_quality:"Lokasi perangkat Admin; bukan GPS onboard",
+    source:"admin_device_gps"
+   })
+  });
+  const result=await response.json().catch(()=>({error:"Respons server tidak valid."}));
+  if(!response.ok){setError(result.error||"Lokasi perangkat gagal dikirim.");return}
+  await load();
+  setNotice("Lokasi perangkat Admin berhasil dikirim. Data ini bukan bukti posisi dari GPS onboard kapal.");
+ },[supabase,load]);
  const geoError=useCallback((err:GeolocationPositionError)=>{
   setError(err.code===1?"Izin lokasi ditolak. Aktifkan Location Services dan pilih Allow untuk NAVYHUB pada pengaturan browser.":err.code===2?"Lokasi perangkat belum tersedia. Periksa GPS dan layanan lokasi.":"GPS belum merespons. NAVYHUB akan mencoba kembali dalam 30 detik.");
  },[]);
- useEffect(()=>{
-  if(!canManage||!unitId||!userId||typeof navigator==="undefined"||!navigator.geolocation)return;
-  let active=true;
-  const requestPosition=()=>{
-   if(!active)return;
-   navigator.geolocation.getCurrentPosition(pos=>{if(active)void publishPosition(pos)},err=>{if(active)geoError(err)},{enableHighAccuracy:true,maximumAge:0,timeout:25000});
-  };
-  requestPosition();
-  const timer=window.setInterval(requestPosition,30000);
-  return()=>{active=false;window.clearInterval(timer)};
- },[canManage,unitId,userId,publishPosition,geoError]);
+ const gpsSourceLabel=(source:string|null|undefined)=>source==="onboard_gps"?"GPS onboard (gateway)":source==="admin_device_gps"?"Lokasi perangkat Admin":source==="KRI_ALAMANG_644_MASTER_GPS"?"Data lama · sumber perangkat belum terverifikasi":source||"Sumber posisi tidak diketahui";
  const current=weather?.current,mc=marine?.current;
  const hourly=(marine?.hourly?.sea_level_height_msl||[]).filter((v:any)=>typeof v==="number"&&Number.isFinite(v));
  const low=hourly.length?Math.min(...hourly):null,high=hourly.length?Math.max(...hourly):null;
@@ -59,19 +65,19 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  },[gps?.latitude,gps?.longitude]);
   return <section className="navy-maritime">
   {mapOpen&&<div className="navy-map-modal" role="dialog" aria-modal="true" aria-label="Peta maritim Indonesia" onClick={e=>{if(e.target===e.currentTarget)setMapOpen(false)}}><div className="navy-map-dialog"><div className="navy-map-shell">
-   <div className="navy-map-top"><div><small>FLEET TRACKING · INDONESIAN ARCHIPELAGO</small><h2>Peta Maritim Indonesia</h2><p>Posisi master GPS KRI Alamang-644</p></div><div className="navy-map-top-actions"><div className={"navy-gps-state "+(gps?(stale?"stale":"live"):"offline")}><i/>{gps?(stale?"GPS DATA AGED":"GPS POSITION AVAILABLE"):"AWAITING GPS DATA"}</div><button type="button" className="navy-map-close" onClick={()=>setMapOpen(false)} aria-label="Tutup peta">✕</button></div></div>
+   <div className="navy-map-top"><div><small>FLEET TRACKING · INDONESIAN ARCHIPELAGO</small><h2>Peta Maritim Indonesia</h2><p>Posisi terakhir tercatat KRI Alamang-644</p></div><div className="navy-map-top-actions"><div className={"navy-gps-state "+(gps?(stale?"stale":"live"):"offline")}><i/>{gps?(stale?"GPS DATA AGED":"GPS POSITION AVAILABLE"):"AWAITING GPS DATA"}</div><button type="button" className="navy-map-close" onClick={()=>setMapOpen(false)} aria-label="Tutup peta">✕</button></div></div>
    <div className="navy-map-canvas navy-map-real"><iframe title="Peta geografis Indonesia dengan posisi GPS kapal" src={mapSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen/>
     <div className="navy-map-coords">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"MENUNGGU POSISI GPS"}</div>
-    <div className="navy-map-legend"><span><i/> POSISI KRI ALAMANG-644</span><span>OPENSTREETMAP · MAPNIK</span></div>
+    <div className="navy-map-legend"><span><i/> POSISI TERCATAT KRI ALAMANG-644</span><span>OPENSTREETMAP · MAPNIK</span></div>
    </div>
    <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{gps?"Last position: "+stamp(gps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button><a href={gps?"https://www.openstreetmap.org/?mlat="+gps.latitude+"&mlon="+gps.longitude+"#map=7/"+gps.latitude+"/"+gps.longitude:"https://www.openstreetmap.org/#map=5/-2.5/118"} target="_blank" rel="noreferrer">BUKA PETA ↗</a></div>
   </div></div></div>}
   <div className="navy-maritime-cards">
-   <button type="button" className="navy-info-card navy-coordinate-card" onClick={()=>setMapOpen(true)} aria-label="Buka peta Indonesia berdasarkan koordinat GPS"><div className="navy-info-head"><span>⌖</span><small>GPS · SUMBER POSISI</small><i>BUKA PETA ↗</i></div><b className="navy-coordinate-value">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"—"}</b><strong>{gps?"MASTER GPS · KRI ALAMANG-644":"Belum ada posisi GPS"}</strong><div className="navy-info-meta"><span>Kecepatan <b>{gps?fmt(gps.speed_knots)+" kn":"—"}</b></span><span>Haluan <b>{gps&&gps.course_degrees!=null?fmt(gps.course_degrees,0)+"°":"—"}</b></span></div><small>{gps?"Diperbarui "+stamp(gps.position_at):"Menunggu posisi master GPS kapal"} · Tekan untuk membuka peta</small></button>
-   <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat master GPS"}</small></article>
+   <button type="button" className="navy-info-card navy-coordinate-card" onClick={()=>setMapOpen(true)} aria-label="Buka peta Indonesia berdasarkan koordinat GPS"><div className="navy-info-head"><span>⌖</span><small>GPS · SUMBER POSISI</small><i>BUKA PETA ↗</i></div><b className="navy-coordinate-value">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"—"}</b><strong>{gps?gpsSourceLabel(gps.source):"Belum ada posisi GPS"}</strong><div className="navy-info-meta"><span>Kecepatan <b>{gps?fmt(gps.speed_knots)+" kn":"—"}</b></span><span>Haluan <b>{gps&&gps.course_degrees!=null?fmt(gps.course_degrees,0)+"°":"—"}</b></span></div><small>{gps?"Diperbarui "+stamp(gps.position_at):"Menunggu data posisi kapal"} · Tekan untuk membuka peta</small></button>
+   <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat posisi terakhir"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
-  {canManage&&<div className="navy-gps-admin"><span className="navy-gps-compact-state">{gps?(stale?"DATA GPS LAMA":"GPS AKTIF"):"GPS BELUM AKTIF"}</span><button type="button" onClick={()=>{if(typeof navigator!=="undefined"&&navigator.geolocation)navigator.geolocation.getCurrentPosition(pos=>void publishPosition(pos),geoError,{enableHighAccuracy:true,maximumAge:0,timeout:25000})}}>{gps?"PERBARUI LOKASI":"AKTIFKAN LOKASI"}</button></div>}
+  {canManage&&<div className="navy-gps-admin"><span className="navy-gps-compact-state">{gps?(stale?"DATA POSISI LAMA":gpsSourceLabel(gps.source).toUpperCase()):"BELUM ADA DATA POSISI"}</span><button type="button" onClick={()=>{if(typeof navigator!=="undefined"&&navigator.geolocation)navigator.geolocation.getCurrentPosition(pos=>void publishPosition(pos),geoError,{enableHighAccuracy:true,maximumAge:0,timeout:25000});else setError("Perangkat ini tidak menyediakan layanan lokasi.")}}>{gps?"KIRIM LOKASI PERANGKAT ADMIN":"AMBIL LOKASI PERANGKAT ADMIN"}</button></div>}
   {error&&<div className="navy-status-error">{error}</div>}{notice&&<div className="navy-status-notice">{notice}</div>}
  </section>
 }
