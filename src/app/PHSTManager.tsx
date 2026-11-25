@@ -8,7 +8,8 @@ type Verification = {id:string;execution_id:string;decision:string;remarks:strin
 export default function PHSTManager({supabase,unitId,userId,canManage,canOperate,viewer}:{supabase:any;unitId:string;userId:string;canManage:boolean;canOperate:boolean;viewer:boolean}){
  const today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Jakarta"});
  const [date,setDate]=useState(today),[rows,setRows]=useState<Schedule[]>([]),[executions,setExecutions]=useState<Execution[]>([]),[verifications,setVerifications]=useState<Verification[]>([]);
- const [draft,setDraft]=useState<any>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");\n const [executionNotes,setExecutionNotes]=useState<Record<string,string>>({}),[verificationNotes,setVerificationNotes]=useState<Record<string,string>>({});
+ const [draft,setDraft]=useState<any>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
+ const [executionNotes,setExecutionNotes]=useState<Record<string,string>>({}),[verificationNotes,setVerificationNotes]=useState<Record<string,string>>({});
  const reload=useCallback(async()=>{
   const {data,error}=await supabase.from("phst_schedule_items").select("*").eq("unit_id",unitId).eq("activity_date",date).order("sequence_no").order("scheduled_time");
   if(error){setNotice("Jadwal PHST gagal dimuat: "+error.message);return}
