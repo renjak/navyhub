@@ -7,10 +7,13 @@ import PHSTManager from "./PHSTManager";
 import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
 import VesselStatus from "./VesselStatus";
+import dynamic from "next/dynamic";
+const VesselModel3D=dynamic(()=>import("./VesselModel3D"),{ssr:false,loading:()=><div className="module-hero"><p>Memuat model 3D…</p></div>});
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 pdfjsLib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.mjs",import.meta.url).toString();
 const menu=[
  {id:"Dashboard",label:"DASHBOARD",desc:"Pusat kendali",icon:"⌂"},
+ {id:"NAVY3D",label:"MODEL 3D",desc:"Kapal digital & status sistem",icon:"◈"},
  {id:"NAVYLOG",label:"LOGBOOK",desc:"Jurnal kegiatan & serah terima",icon:"▤",table:"activity_logs"},
  {id:"NAVYMAINT",label:"MAINTENANCE",desc:"Pemeliharaan peralatan",icon:"⚙",table:"maintenance_assets"},
  {id:"NAVYSTOCK",label:"STOCK",desc:"Persediaan & logistik",icon:"▣",table:"inventory_items"},
@@ -511,7 +514,8 @@ export default function Home(){
 <span>{ "Akun ini hanya dapat melihat data. Perubahan dan pengelolaan data tidak tersedia."}</span>
 </div>
 }
-{module!=="NAVYLOG"&&module!=="NAVYMAINT"&&<section className="module-hero">
+{module==="NAVY3D"&&<VesselModel3D supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV}/>}
+{module!=="NAVYLOG"&&module!=="NAVYMAINT"&&module!=="NAVY3D"&&<section className="module-hero">
 <div>
 <small>OPERATIONAL MODULE</small>
 <h1>{selected?.label||module}</h1>
@@ -715,7 +719,7 @@ export default function Home(){
  </section>
  <section className="admin-access-roadmap"><div><small>DEPARTMENTAL RBAC · NEXT CONTROL LAYER</small><h3>Struktur akses departemen</h3><p>Semua personel aktif dapat membaca informasi kapal yang bersifat umum. Hak input, edit dan persetujuan dibatasi berdasarkan departemen dan tingkat kewenangan.</p></div><div className="admin-department-grid">{[["OPS","OPERASI"],["SIN","SENJATA"],["EKA","ELEKTRONIKA"],["LOG","LOGISTIK"]].map(([code,name])=><article key={code}><b>{code}</b><span>{name}</span><small>KEPALA DEPARTEMEN · AKSES TERTENTU</small></article>)}</div><div className="admin-access-warning"><b>Identitas dan undangan akun sudah tersedia.</b><span>Admin dapat mengundang personel melalui email, menetapkan OPS/SIN/EKA/LOG, menunjuk Kepala Departemen dan memberi otorisasi Class V kepada akun SIN. Pembatasan tulis lintas departemen untuk modul operasional masih menjadi tahap berikutnya; penetapan departemen belum otomatis memberikan hak edit lintas modul.</span></div></section>
 </section>}
-{!selected?.table&&module!=="ADMINISTRATION" && <section className="panel coming">
+{!selected?.table&&module!=="ADMINISTRATION"&&module!=="NAVY3D" && <section className="panel coming">
 <div className="coming-icon">◇</div>
 
 <small>MODULE FOUNDATION</small>
