@@ -58,3 +58,9 @@ See `docs/ALNAV-DMS-DEPARTMENTAL-RBAC.md`. The target model is shared read acces
 
 ## STOCK classes
 The interface now presents expandable cards for Class I, III, IV, V, VIII and IX. Existing Air Tawar, BBM and Amunisi records are mapped in the UI without rewriting stored records. Other class inventories display as empty until verified records are entered; no mock stock is seeded.
+
+
+## Latest preview validation — 2026-11-25
+- Vercel preview deployment for commit `265599cbfdd1d19d2d3257298165419869978243` is READY at `https://navyhub-git-alnav-dms-phase-1-gps-safety-644warship-2118.vercel.app`.
+- Build log confirms optimized Next.js build, successful compile, type validity, static page generation, and deployment completion. No end-to-end authenticated user workflow or RLS test suite has been claimed.
+- Admin-only ADMINISTRATION workspace now displays actual unit profiles/roles and the four planned department scopes; department editing is explicitly shown as not yet active until database migration/RLS is validated.
