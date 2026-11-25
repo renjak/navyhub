@@ -64,3 +64,11 @@ The interface now presents expandable cards for Class I, III, IV, V, VIII and IX
 - Vercel preview deployment for commit `265599cbfdd1d19d2d3257298165419869978243` is READY at `https://navyhub-git-alnav-dms-phase-1-gps-safety-644warship-2118.vercel.app`.
 - Build log confirms optimized Next.js build, successful compile, type validity, static page generation, and deployment completion. No end-to-end authenticated user workflow or RLS test suite has been claimed.
 - Admin-only ADMINISTRATION workspace now displays actual unit profiles/roles and the four planned department scopes; department editing is explicitly shown as not yet active until database migration/RLS is validated.
+
+
+## Department foundation now active — 25 November 2026
+- Supabase production schema now contains OPS/SIN/EKA/LOG departments, profile department/head/Class V entitlement fields, department ownership columns on operational tables, and persisted supply_class I/III/IV/V/VIII/IX.
+- Existing Air Tawar and BBM inventory rows are classified as I/III owned by LOG; 15 Amunisi rows are classified as V owned by SIN. No other department ownership is guessed.
+- Class V inventory and movement SELECT are restricted by RLS to Admin, Commander, or explicitly entitled accounts. The Admin interface now assigns department, head designation and Class V entitlement and can send email invitations using the deployed Admin-only Edge Function.
+- The full write-side department RLS matrix is not yet active. Existing general manager/operator write policies remain until the department-by-department replacement policies are implemented and tested. Do not describe heads as having operational write access across all modules yet.
+- Security advisor reports one existing warning: leaked-password protection is disabled in Supabase Auth.
