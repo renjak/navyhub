@@ -97,8 +97,36 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
    </div>
    <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{gps?"Last position: "+stamp(gps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button><a href={gps?"https://www.openstreetmap.org/?mlat="+gps.latitude+"&mlon="+gps.longitude+"#map=7/"+gps.latitude+"/"+gps.longitude:"https://www.openstreetmap.org/#map=5/-2.5/118"} target="_blank" rel="noreferrer">BUKA PETA ↗</a></div>
   </div></div></div>}
+  <section className="navy-telemetry-command" aria-label="Telemetri navigasi kapal">
+   <div className="navy-telemetry-heading">
+    <div><small>ALAMANG NAVAL DATA MANAGEMENT SYSTEM</small><h2>VESSEL NAVIGATION · KRI ALAMANG-644</h2><p>Telemetri posisi dan pergerakan kapal dari sumber yang tercatat</p></div>
+    <span className={"navy-telemetry-freshness "+(gps?(stale?"is-stale":"is-live"):"is-offline")}><i/>{gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
+   </div>
+   <div className="navy-telemetry-grid">
+    <article className="navy-telemetry-compass">
+     <div className="navy-telemetry-label">COURSE OVER GROUND <span>COG</span></div>
+     <div className="navy-compass-dial">
+      <span className="navy-compass-n">N</span><span className="navy-compass-e">E</span><span className="navy-compass-s">S</span><span className="navy-compass-w">W</span>
+      <div className="navy-compass-needle" style={{transform:"rotate("+(gps?.course_degrees==null?0:Number(gps.course_degrees))+"deg)"}}><i/><b/></div>
+      <div className="navy-compass-center"/>
+     </div>
+     <strong>{gps?.course_degrees==null?"—":fmt(gps.course_degrees,0)+"°"}</strong>
+     <small>{gps?.course_degrees==null?"Arah gerak belum tersedia":"Arah pergerakan terhadap permukaan bumi"}</small>
+    </article>
+    <div className="navy-telemetry-readouts">
+     <article className="navy-telemetry-value"><small>SHIP HEADING</small><b>—</b><span>Belum ada data gyro / kompas kapal</span></article>
+     <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{gps?.speed_knots==null?"—":fmt(gps.speed_knots,1)} <em>kn</em></b><span>Kecepatan terhadap permukaan bumi</span></article>
+     <article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"—"}</b><span>{gps?gpsSourceLabel(gps.source):"Menunggu posisi GPS"}</span><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>
+    </div>
+    <div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
+     <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{gps?.fix_quality||"—"}</b><span>{gps?.satellites==null?"Jumlah satelit tidak tersedia":gps.satellites+" satelit terdeteksi"}</span></article>
+     <article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{gps?.accuracy_m==null?"—":fmt(gps.accuracy_m,1)+" m"}</b><span>Estimasi akurasi posisi perangkat/sumber</span></article>
+     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{gps?gpsSourceLabel(gps.source):"—"}</b><span>Position time: {gps?stamp(gps.position_at):"—"}</span><span>Received: {gps?.received_at?stamp(gps.received_at):"—"}</span></article>
+    </div>
+   </div>
+   <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading kapal memerlukan data kompas/gyro/AHRS onboard. Sistem tidak mengganti nilai yang belum tersedia dengan angka perkiraan.</span></div>
+  </section>
   <div className="navy-maritime-cards">
-   <button type="button" className="navy-info-card navy-coordinate-card" onClick={()=>setMapOpen(true)} aria-label="Buka peta Indonesia berdasarkan koordinat GPS"><div className="navy-info-head"><span>⌖</span><small>GPS · SUMBER POSISI</small><i>BUKA PETA ↗</i></div><b className="navy-coordinate-value">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"—"}</b><strong>{gps?gpsSourceLabel(gps.source):"Belum ada posisi GPS"}</strong><div className="navy-info-meta"><span>Speed <b>{gps?fmt(gps.speed_knots)+" kn":"—"}</b></span><span>Heading <b>—</b></span><span>Course (COG) <b>{gps&&gps.course_degrees!=null?fmt(gps.course_degrees,0)+"°":"—"}</b></span></div><small>{gps?"Diperbarui "+stamp(gps.position_at):"Menunggu data posisi kapal"} · Tekan untuk membuka peta</small></button>
    <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat posisi terakhir"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
