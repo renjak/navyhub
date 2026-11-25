@@ -54,3 +54,28 @@
 - Added Admin UI to assign department/head/Class V entitlement and invite new personnel by email.
 - Security advisor still flags leaked-password protection disabled; enable in Supabase Auth security settings.
 - Department write-side RLS matrix remains outstanding; do not merge to production until the module-specific policies and cross-department deny tests pass.
+
+
+## Supplemental implementation checkpoint — 25 November 2026
+### Verified
+- Preview commit `c4751bd8c4bcb33a5801344fa7d13ce0310ba405` is Vercel `READY` (preview only): https://navyhub-kj5lwhs5j-644warship-2118.vercel.app
+- The latest dashboard telemetry panel separates COG from ship heading. The GPS schema has no heading field; no heading value is fabricated.
+- PHST source was reopened and inspected from the uploaded 10-page `PHST ALAMANG 2025 copy.docx`. The source is dated and includes A/B/C/D/F sections; page-separated, undated content is not auto-assigned to a day.
+- Supabase currently has 20 migrations; 16 public tables have RLS enabled.
+
+### Security blockers — not auto-remediated
+- Supabase advisor flags `private.vessel_gps_ingest_config` with RLS disabled. A safe server-only policy/grant design must be reviewed before changing it.
+- Supabase Auth leaked-password protection is disabled.
+- Personnel sensitive columns remain present in the same table; frontend allow-list is not column-level enforcement.
+- Department-specific write-side RLS matrix is incomplete.
+
+### Next actions
+1. Review schema exposure/grants and implement tested personnel column privacy.
+2. Design safe access for the private GPS ingest configuration and admin-controlled source registry.
+3. Link dated PHST schedule instances to execution responses and approval records.
+4. Expand stock attributes and transaction types using additive/reversible migrations.
+5. Add preventive maintenance/work orders and a private document archive lifecycle.
+6. Add the GSAP/ScrollTrigger/Lenis foundation with reduced-motion handling.
+7. Execute TypeScript/build, role-based RLS, authenticated E2E and tablet/mobile regression checks.
+
+Production remains unchanged. A preview marked READY is not a production release.
