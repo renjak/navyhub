@@ -52,3 +52,9 @@ Internal identifiers remain stable to avoid breaking current application logic, 
 6. Do not deploy production until preview build, TypeScript, functional, RLS and regression checks succeed and release is approved.
 
 See docs/ALNAV-DMS-AUDIT.md and docs/ALNAV-DMS-IMPLEMENTATION-LOG.md for detailed audit and work history.
+
+## Departmental access model
+See `docs/ALNAV-DMS-DEPARTMENTAL-RBAC.md`. The target model is shared read access for active ship personnel, with create/edit/approval rights scoped by OPS/SIN/EKA/LOG and enforced by Supabase RLS. Current profiles do not yet contain department assignment; no department-scoped access is claimed as complete until a data-bearing development database is available and the RLS matrix passes.
+
+## STOCK classes
+The interface now presents expandable cards for Class I, III, IV, V, VIII and IX. Existing Air Tawar, BBM and Amunisi records are mapped in the UI without rewriting stored records. Other class inventories display as empty until verified records are entered; no mock stock is seeded.
