@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PWAClient from "./PWAClient";
+import MotionProvider from "./MotionProvider";
 export const metadata: Metadata = {
   title: "ALNAV DMS | KRI Alamang-644",
   description: "Sistem administrasi, logbook, pemeliharaan, logistik dan personel KRI Alamang-644.",
@@ -11,5 +12,5 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { themeColor: "#07111f", width: "device-width", initialScale: 1, viewportFit: "cover" };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="id"><body>{children}<PWAClient /></body></html>;
+  return <html lang="id"><body><MotionProvider>{children}</MotionProvider><PWAClient /></body></html>;
 }
