@@ -6,16 +6,15 @@ import DigitalLogbook from "./DigitalLogbook";
 import PHSTManager from "./PHSTManager";
 import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
-import VesselStatus from "./VesselStatus";
+import {NavRuntimeProvider,NavRunningChips,useNav} from "./NavRuntime";
+import NavMapButton from "./NavMap";
 import DashboardHome from "./DashboardHome";
 import dynamic from "next/dynamic";
-const VesselModel3D=dynamic(()=>import("./VesselModel3D"),{ssr:false,loading:()=><div className="module-hero"><p>Memuat model 3D…</p></div>});
+const VesselModel3D=dynamic(()=>import("./VesselModel3D"),{ssr:false,loading:()=><div className="dg-3d-loading">Memuat model 3D…</div>});
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 pdfjsLib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.mjs",import.meta.url).toString();
 const menu=[
  {id:"Dashboard",title:"Dashboard",label:"DASHBOARD",desc:"Pusat kendali",icon:"⌂"},
- {id:"NAVYNAV",title:"Telemetri",label:"TELEMETRI",desc:"GPS, COG, peta & Master GPS",icon:"◎"},
- {id:"NAVY3D",title:"Model 3D",label:"MODEL 3D",desc:"Kapal digital & status sistem",icon:"◈"},
  {id:"NAVYLOG",title:"Logbook PHST",label:"LOGBOOK",desc:"Jurnal kegiatan & serah terima",icon:"▤",table:"activity_logs"},
  {id:"NAVYSTOCK",title:"Stock",label:"STOCK",desc:"Persediaan & logistik",icon:"▣",table:"inventory_items"},
  {id:"NAVYCREW",title:"Personel",label:"PERSONEL",desc:"Personel & jadwal jaga",icon:"♙",table:"personnel"},
@@ -24,7 +23,7 @@ const menu=[
  {id:"ADMINISTRATION",title:"Administrasi",label:"ADMINISTRATION",desc:"Akun, departemen & hak akses",icon:"⚿"},
 ];
 const menuGroups=[
- {label:"Operasi",ids:["Dashboard","NAVYNAV","NAVY3D","NAVYLOG"]},
+ {label:"Operasi",ids:["Dashboard","NAVYLOG"]},
  {label:"Logistik & personel",ids:["NAVYSTOCK","NAVYCREW"]},
  {label:"Teknik & arsip",ids:["NAVYMAINT","NAVYDOCS","ADMINISTRATION"]},
 ];
@@ -175,6 +174,7 @@ const fields:Record<string,string[]>={activity_logs:["activity_date","activity_t
 const labels:Record<string,string>={activity_date:"Tanggal",activity_time:"Waktu",title:"Judul",category:"Kategori",description:"Uraian",status:"Status",asset_code:"Kode aset",asset_name:"Nama aset",location_label:"Lokasi",condition_label:"Kondisi",is_active:"Aktif",report_date:"Tanggal laporan",issue_description:"Kerusakan",action_taken:"Tindakan",item_code:"Kode barang",item_name:"Nama barang",unit_of_measure:"Satuan",stock_ready:"Stok siap",stock_unready:"Stok tidak siap",minimum_stock:"Stok minimum",brand:"Merek",caliber:"Kaliber",caliber_unit:"Satuan kaliber",secondary_caliber:"Kaliber sekunder",ammo_type:"Jenis amunisi",lot_no:"Nomor lot",manufacture_year:"Tahun produksi",country_of_origin:"Negara asal",unit_price:"Harga satuan",initial_quantity:"Jumlah awal",capacity_liters:"Kapasitas (L)",movement_date:"Tanggal transaksi",movement_type:"Jenis transaksi",quantity:"Jumlah",reference_no:"Nomor referensi",condition_status:"Kondisi",movement_purpose:"Tujuan",notes:"Catatan",item_order:"Urutan",item_label:"Item pemeriksaan",is_required:"Wajib",performed_at:"Waktu pelaksanaan",summary:"Ringkasan",sequence_no:"No.",full_name:"Nama",rank_title:"Pangkat",nrp:"NRP",position:"Jabatan",roster_period:"Periode",remarks:"Keterangan"};
 const fmt=(v:any)=>v===null||v===undefined||v===""?"—":typeof v==="boolean"?(v?"Ya":"Tidak"):typeof v==="object"?JSON.stringify(v):String(v);
 function parseWatchMeta(description?:string){const values:Record<string,string>={};for(const line of (description||"").split("\n")){const i=line.indexOf(":");if(i>0)values[line.slice(0,i)]=line.slice(i+1).trim()}return values}
+function LogShip3D({sb,unitId,userId,role,canAccessClassV}:{sb:any;unitId:string;userId:string;role:string;canAccessClassV:boolean}){const nav=useNav();return <VesselModel3D supabase={sb} unitId={unitId} userId={userId} role={role} canAccessClassV={canAccessClassV} modes={["jaga","putar-ulang","latihan"]} nav={{gps:nav.gps,sim:null}} className="dg-3d"/>}
 export default function Home(){
  const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile|null>(null),[loading,setLoading]=useState(true),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false),[module,setModule]=useState("Dashboard"),[rows,setRows]=useState<RowData[]>([]),[movements,setMovements]=useState<RowData[]>([]),[search,setSearch]=useState(""),[notice,setNotice]=useState("");
  const [dbCounts,setDbCounts]=useState({personnel:"—",inventory:"—",movements:"—",logs:"—"});
@@ -183,7 +183,7 @@ export default function Home(){
  const [accountInviteDraft,setAccountInviteDraft]=useState<RowData|null>(null),[accountInviteSaving,setAccountInviteSaving]=useState(false);
  const [editingCell,setEditingCell]=useState<{id:string;field:string}|null>(null),[cellDraft,setCellDraft]=useState("");
  const [cellSaving,setCellSaving]=useState(false);
- const [supplyRows,setSupplyRows]=useState<RowData[]>([]);
+ const [supplyRows,setSupplyRows]=useState<RowData[]>([]),[supplyTick,setSupplyTick]=useState(0);
  const [supplyDraft,setSupplyDraft]=useState<RowData|null>(null),[supplySaving,setSupplySaving]=useState(false);
  const [skiffFuelDraft,setSkiffFuelDraft]=useState<RowData|null>(null),[skiffFuelSaving,setSkiffFuelSaving]=useState(false);
  const [stockDraft,setStockDraft]=useState<RowData|null>(null),[stockSaving,setStockSaving]=useState(false);
@@ -217,7 +217,7 @@ export default function Home(){
  useEffect(()=>{if(!visibleMenu.some(m=>m.id===module))setModule("Dashboard")},[visibleMenu,module]);
  useEffect(()=>{if(module!=="ADMINISTRATION"||!isAdmin||!profile?.unit_id)return;let alive=true;setAccountBusy(true);setAccountError("");sb.from("profiles").select("id,full_name,rank_title,role,is_active,department_code,is_department_head,can_access_class_v").eq("unit_id",profile.unit_id).order("full_name",{ascending:true}).then(({data,error})=>{if(!alive)return;if(error){setAccountError("Direktori akun gagal dimuat: "+error.message);setAccountRows([])}else setAccountRows((data||[]) as RowData[]);setAccountBusy(false)});return()=>{alive=false}},[module,isAdmin,profile?.unit_id]);
  useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const names=["personnel","inventory_items","stock_movements","activity_logs"];const results=await Promise.all(names.map(table=>sb.from(table).select("*",{count:"exact",head:true}).eq("unit_id",profile.unit_id!)));if(live)setDbCounts({personnel:results[0].error?"—":String(results[0].count??0),inventory:results[1].error?"—":String(results[1].count??0),movements:results[2].error?"—":String(results[2].count??0),logs:results[3].error?"—":String(results[3].count??0)})})();return()=>{live=false}},[profile?.unit_id]);
- useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const {data,error}=await sb.from("inventory_items").select("id,item_name,category,capacity_liters,stock_ready,stock_unready,unit_of_measure").eq("unit_id",profile.unit_id!).eq("is_active",true).in("category",["Air Tawar","BBM"]);if(live)setSupplyRows(error?[]:(data||[]) as RowData[])})();return()=>{live=false}},[profile?.unit_id]);
+ useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const {data,error}=await sb.from("inventory_items").select("id,item_name,category,capacity_liters,stock_ready,stock_unready,unit_of_measure").eq("unit_id",profile.unit_id!).eq("is_active",true).in("category",["Air Tawar","BBM"]);if(live)setSupplyRows(error?[]:(data||[]) as RowData[])})();return()=>{live=false}},[profile?.unit_id,supplyTick]);
  const loadTomorrowPlans=useCallback(async()=>{if(!profile?.unit_id)return;const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");const {data,error}=await sb.from("activity_logs").select("id,activity_date,activity_time,title,description,category,status").eq("unit_id",profile.unit_id).gte("activity_date",today).order("activity_date",{ascending:true}).order("activity_time",{ascending:true});if(error){setNotice("Agenda tersimpan tidak dapat dimuat: "+error.message);return}const rows=(data||[]) as RowData[];const nextDate=rows[0]?.activity_date;setTomorrowPlans(nextDate?rows.filter(p=>p.activity_date===nextDate):[])},[profile?.unit_id]);
  const agendaDutyMeta=useMemo(()=>parseWatchMeta(tomorrowPlans.find(p=>p.category==="PHST META")?.description),[tomorrowPlans]);
  const agendaVisibleRows=useMemo(()=>tomorrowPlans.filter(p=>p.category!=="PHST META"&&p.category!=="D. KHUSUS"&&(!p.activity_time||p.activity_time.slice(0,5)<="22:00")),[tomorrowPlans]);
@@ -387,10 +387,12 @@ export default function Home(){
  const greetName=cleanName?(profile?.rank_title?profile.rank_title+" ":"")+cleanName.split(" ")[0]:displayName;
  const initials=displayName.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
  const roleLabel=roleNames[profile?.role||""]||profile?.role||"";
+ const [focusPart,setFocusPart]=useState<string|undefined>(undefined);
+ const pickAssetRoom=useCallback((name:string)=>{setAssetDraft((d:any)=>d?{...d,location_label:name}:{asset_code:"",asset_name:"",category:maintSection,location_label:name,condition_label:"Baik",is_active:true});setNotice("Lokasi aset diisi: "+name+". Lengkapi kode dan nama aset pada formulir di bawah.")},[maintSection]);
  if(loading)return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="Logo ALNAV DMS"/> <span>INITIALIZING</span></div></main>;
- if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS"/><small>SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke ALNAV DMS"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
+ if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS"/><img className="dg-login-ship" src="/images/kri-alamang-644-side.png" alt="Gambar garis KRI ALAMANG-644"/><small>Welcome aboard · SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke ALNAV DMS"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
  if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Akun berhasil masuk, tetapi belum diaktifkan atau belum ditautkan ke unit.</p><button onClick={()=>sb.auth.signOut()}>Keluar</button></section></main>;
-return <div className="dg-app">
+return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><div className="dg-app">
 <aside className="dg-glass dg-side">
 <div className="dg-logo"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV-DMS — Alamang Naval Data Management System"/></div>
 <button type="button" className="dg-ship" onClick={()=>openModule("Dashboard")}><b className="dg-h">KRI ALAMANG-644</b><small>{envName==="production"?"Satuan Kapal Cepat · Koarmada I":envName==="preview"?"Pratinjau · bukan production":"Satuan Kapal Cepat · Koarmada I"}</small></button>
@@ -411,18 +413,17 @@ return <div className="dg-app">
 <kbd>⌘K</kbd>
 </form>
 <div className="dg-header-tools">
+<NavRunningChips/>
 <div className="dg-clock"><b>{clockWib} WIB · {clockUtc} UTC</b><small>{clockDate}</small></div>
 {canOperate&&<button type="button" className="dg-btn dg-btn-accent" onClick={()=>openModule("NAVYLOG")}>+ Catat log</button>}
 </div>
 </header>
 <div className="dg-content">
 {isViewer&&<div className="dg-glass dg-viewer"><b>Mode viewer · hanya baca</b><span>Anda dapat memantau informasi kapal, tetapi tidak dapat mengubah atau menghapus data.</span></div>}
-{module==="Dashboard"&&<DashboardHome supabase={sb} unitId={profile.unit_id} greetingName={greetName} isAdmin={isAdmin} canAccessClassV={canAccessClassV} supplyRows={supplyRows} onOpen={openModule} onEditSupply={item=>{const cur=Number(item.stock_ready||0);setSupplyDraft({...item,target_stock:String(cur),stock_ready_current:cur})}}/>}
+{module==="Dashboard"&&<DashboardHome supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} greetingName={greetName} isAdmin={isAdmin} canAccessClassV={canAccessClassV} supplyRows={supplyRows} onOpen={(id,partId)=>{setFocusPart(partId);openModule(id)}} onEditSupply={item=>{const cur=Number(item.stock_ready||0);setSupplyDraft({...item,target_stock:String(cur),stock_ready_current:cur})}}/>}
  {isAdmin&&supplyDraft&&<div className="supply-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!supplySaving)setSupplyDraft(null)}}><section className="supply-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="supply-editor-title"><header><div><small>ADMIN CONTROL · SHIP CONSUMABLES</small><h3 id="supply-editor-title">Ubah data {supplyDraft.category==="Air Tawar"?"Air Tawar":"HSD"}</h3><p>Perubahan saldo dicatat sebagai transaksi agar riwayat persediaan tetap terlacak.</p></div><button type="button" aria-label="Tutup" disabled={supplySaving} onClick={()=>setSupplyDraft(null)}>×</button></header><div className="supply-modal-grid"><label>Stok tersedia (liter)<input type="number" min="0" step="any" value={supplyDraft.target_stock??""} onChange={e=>setSupplyDraft((v:any)=>({...v,target_stock:e.target.value}))}/><small>Saldo saat ini: {Number(supplyDraft.stock_ready_current||0).toLocaleString("id-ID")} L</small></label><label>Kapasitas tangki (liter)<input type="number" min="0" step="any" value={supplyDraft.capacity_liters??""} onChange={e=>setSupplyDraft((v:any)=>({...v,capacity_liters:e.target.value}))}/></label></div><footer><button className="outline" type="button" disabled={supplySaving} onClick={()=>setSupplyDraft(null)}>Batal</button><button type="button" disabled={supplySaving} onClick={saveSupplyData}>{supplySaving?"Menyimpan…":"Simpan perubahan"}</button></footer></section></div>}
 {module!=="Dashboard" && <div className="module-view">
-{module==="NAVYNAV"&&<VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={isAdmin}/>}
-{module==="NAVY3D"&&<VesselModel3D supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV}/>}
-{module!=="NAVYLOG"&&module!=="NAVYMAINT"&&module!=="NAVY3D"&&module!=="NAVYNAV"&&<section className="module-hero">
+{module!=="NAVYLOG"&&module!=="NAVYMAINT"&&<section className="module-hero">
 <div>
 <small>OPERATIONAL MODULE</small>
 <h1>{selected?.label||module}</h1>
@@ -435,6 +436,9 @@ return <div className="dg-app">
 </section>
 }
 {module==="NAVYMAINT"&&<section className="maint-overview"><div className="maint-title"><small>VESSEL ENGINEERING</small><h1>SHIP MAINTENANCE</h1><p>Pengelolaan pemeliharaan dan kesiapan teknis kapal</p></div><div className="maint-overview-cards" aria-label="Ship maintenance categories"><button className={"maint-overview-card "+(maintSection==="SEWACO"?"active":"")} onClick={()=>{setMaintSection("SEWACO");setSearch("")}}><small>SENSOR · WEAPON · COMMAND</small><b>SEWACO</b><span>Sistem senjata, sensor, dan kendali</span><strong>{rows.filter(r=>String(r.category||"").toUpperCase().includes("SEWACO")||(!String(r.category||"").toUpperCase().includes("PLATFORM")&&!String(r.category||"").toUpperCase().includes("SEWACO"))).length} ASET</strong></button><button className={"maint-overview-card "+(maintSection==="PLATFORM"?"active":"")} onClick={()=>{setMaintSection("PLATFORM");setSearch("")}}><small>HULL · PROPULSION · AUXILIARY</small><b>PLATFORM</b><span>Struktur, mesin, dan sistem pendukung kapal</span><strong>{rows.filter(r=>String(r.category||"").toUpperCase().includes("PLATFORM")).length} ASET</strong></button></div></section>}
+{module==="NAVYMAINT"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · kerusakan &amp; denah</div><h2 className="dg-h dg-card-title">Tandai kerusakan di kapal</h2><div className="dg-sub">Pilih bagian kapal untuk melapor atau mengubah status. {canManage?"Di tampilan Geladak, pilih ruangan untuk mengisi lokasi aset.":""}</div></div></div><VesselModel3D supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["kerusakan","geladak"]} key={"maint3d-"+(focusPart||"")} initialPart={focusPart} onDataChange={loadModule} onRoomPick={canManage?pickAssetRoom:undefined} roomPickLabel="Jadikan lokasi aset" className="dg-3d"/></section>}
+{module==="NAVYSTOCK"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · Kelas I &amp; III</div><h2 className="dg-h dg-card-title">Tangki BBM &amp; air tawar</h2><div className="dg-sub">Isi tangki dari persediaan HSD dan Air Tawar. {isAdmin?"Masukkan hasil sounding untuk memperbarui saldo.":"Hanya Admin yang dapat memperbarui sounding."} Letak tangki di model bersifat skematik.</div></div></div><VesselModel3D supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["tangki"]} onDataChange={()=>{void loadModule();setSupplyTick(t=>t+1)}} className="dg-3d"/></section>}
+{module==="NAVYLOG"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · jaga, jejak &amp; latihan</div><h2 className="dg-h dg-card-title">Pos jaga, putar ulang pelayaran &amp; latihan peran</h2><div className="dg-sub">Pos jaga hari ini dari penugasan jaga harian, jejak GPS per tanggal bersama catatan logbook, dan latihan peran (tidak disimpan).</div></div><NavMapButton label="Buka peta"/></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV}/></section>}
 {selected?.table && <>{module==="NAVYLOG"&&<div className="navylog-board">
 <section className="panel plan-panel">
 <div className="panelhead">
@@ -626,7 +630,7 @@ return <div className="dg-app">
  </section>
  <section className="admin-access-roadmap"><div><small>DEPARTMENTAL RBAC · NEXT CONTROL LAYER</small><h3>Struktur akses departemen</h3><p>Semua personel aktif dapat membaca informasi kapal yang bersifat umum. Hak input, edit dan persetujuan dibatasi berdasarkan departemen dan tingkat kewenangan.</p></div><div className="admin-department-grid">{[["OPS","OPERASI"],["SIN","SENJATA"],["EKA","ELEKTRONIKA"],["LOG","LOGISTIK"]].map(([code,name])=><article key={code}><b>{code}</b><span>{name}</span><small>KEPALA DEPARTEMEN · AKSES TERTENTU</small></article>)}</div><div className="admin-access-warning"><b>Identitas dan undangan akun sudah tersedia.</b><span>Admin dapat mengundang personel melalui email, menetapkan OPS/SIN/EKA/LOG, menunjuk Kepala Departemen dan memberi otorisasi Class V kepada akun SIN. Pembatasan tulis lintas departemen untuk modul operasional masih menjadi tahap berikutnya; penetapan departemen belum otomatis memberikan hak edit lintas modul.</span></div></section>
 </section>}
-{!selected?.table&&module!=="ADMINISTRATION"&&module!=="NAVY3D"&&module!=="NAVYNAV" && <section className="panel coming">
+{!selected?.table&&module!=="ADMINISTRATION" && <section className="panel coming">
 <div className="coming-icon">◇</div>
 
 <small>MODULE FOUNDATION</small>
@@ -638,6 +642,6 @@ return <div className="dg-app">
 }
 </div>
 </main>
-</div>
+</div></NavRuntimeProvider>
 
 }

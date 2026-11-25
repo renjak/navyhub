@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { NavControls, fixState, useNav } from "./NavRuntime";
+import NavMapButton from "./NavMap";
+const VesselModel3D = dynamic(() => import("./VesselModel3D"), { ssr: false, loading: () => <div className="dg-3d-loading">Memuat model 3D…</div> });
 
 /* Dashboard — dark glass. Every number comes from Supabase under the
    signed-in user's RLS; anything missing renders "—". Nothing is invented. */
@@ -10,11 +14,13 @@ type Period = 0 | 6 | 29;
 type Props = {
   supabase: SupabaseClient;
   unitId: string;
+  userId: string;
+  role: string;
   greetingName: string;
   isAdmin: boolean;
   canAccessClassV: boolean;
   supplyRows: Row[];
-  onOpen: (moduleId: string) => void;
+  onOpen: (moduleId: string, partId?: string) => void;
   onEditSupply: (item: Row) => void;
 };
 
@@ -54,13 +60,10 @@ function dm(v: number, pos: string, neg: string) {
 const num = (v: any) => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
 const fmtInt = (v: number | null) => (v === null ? "—" : v.toLocaleString("id-ID"));
 
-type Gps = { position_at: string; latitude: number; longitude: number; speed_knots: number | null; course_degrees: number | null; source: string | null } | null;
-function gpsState(g: Gps): { key: "live" | "proxy" | "stale" | "none"; label: string } {
-  if (!g) return { key: "none", label: "Belum ada data" };
-  const age = (Date.now() - new Date(g.position_at).getTime()) / 60000;
-  if (g.source === "onboard_gps" && age <= 15) return { key: "live", label: "Live" };
-  if (g.source === "admin_device_gps" && age <= 2) return { key: "proxy", label: "Proxy perangkat Admin" };
-  return { key: "stale", label: "Tidak live" };
+type Gps = { position_at: string; latitude: number; longitude: number; speed_knots: number | null; course_degrees: number | null; source: string | null; accuracy_m: number | null } | null;
+function gpsState(g: Gps): { key: "live" | "proxy" | "stale" | "none" | "demo"; label: string } {
+  const k = fixState(g);
+  return { key: k, label: k === "live" ? "Live" : k === "proxy" ? "Proxy perangkat Admin" : k === "stale" ? "Tidak live" : "Belum ada data" };
 }
 
 function Gauge({ pct, tone, label }: { pct: number | null; tone: string; label: string }) {
@@ -72,9 +75,13 @@ function Gauge({ pct, tone, label }: { pct: number | null; tone: string; label: 
   );
 }
 
-export default function DashboardHome({ supabase: sb, unitId, greetingName, isAdmin, canAccessClassV, supplyRows, onOpen, onEditSupply }: Props) {
+export default function DashboardHome({ supabase: sb, unitId, userId, role, greetingName, isAdmin, canAccessClassV, supplyRows, onOpen, onEditSupply }: Props) {
   const [period, setPeriod] = useState<Period>(0);
-  const [gps, setGps] = useState<Gps>(null), [gpsCount, setGpsCount] = useState<number | null>(null), [gpsErr, setGpsErr] = useState(false);
+  const navRt = useNav();
+  const gpsErr = !!navRt.gpsError;
+  const sim = navRt.sim;
+  const gps: Gps = sim || navRt.gps;
+  const [gpsCount, setGpsCount] = useState<number | null>(null);
   const [items, setItems] = useState<Row[] | null>(null);
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [phst, setPhst] = useState<Row | null | undefined>(undefined);
@@ -84,8 +91,7 @@ export default function DashboardHome({ supabase: sb, unitId, greetingName, isAd
     let live = true;
     const head = (t: string) => sb.from(t).select("*", { count: "exact", head: true }).eq("unit_id", unitId);
     (async () => {
-      const [g, gc, inv, per, prof, mov, chk, faults, watch, order] = await Promise.all([
-        sb.from("vessel_gps_positions").select("position_at,latitude,longitude,speed_knots,course_degrees,source").eq("unit_id", unitId).order("position_at", { ascending: false }).limit(1).maybeSingle(),
+      const [gc, inv, per, prof, mov, chk, faults, watch, order] = await Promise.all([
         head("vessel_gps_positions"),
         sb.from("inventory_items").select("id,category,supply_class,department_code").eq("unit_id", unitId).eq("is_active", true).limit(2000),
         head("personnel"),
@@ -97,8 +103,6 @@ export default function DashboardHome({ supabase: sb, unitId, greetingName, isAd
         sb.from("phst_daily_orders").select("duty_officer,readiness_level").eq("unit_id", unitId).eq("activity_date", wibDate()).maybeSingle()
       ]);
       if (!live) return;
-      setGpsErr(!!g.error);
-      setGps(g.error || !g.data ? null : { ...g.data, latitude: Number(g.data.latitude), longitude: Number(g.data.longitude), speed_knots: num(g.data.speed_knots), course_degrees: num(g.data.course_degrees) });
       setGpsCount(gc.error ? null : gc.count ?? 0);
       setItems(inv.error ? null : (inv.data || []).filter((r: Row) => canAccessClassV || classOf(r) !== "V"));
       const c = (r: { error: any; count: number | null }) => (r.error ? null : r.count ?? 0);
@@ -147,7 +151,8 @@ export default function DashboardHome({ supabase: sb, unitId, greetingName, isAd
   });
   const lowTank = tanks.filter(t => t.pct !== null).sort((a, b) => (a.pct! - b.pct!))[0];
 
-  const gs = gpsState(gps);
+  const gsReal = gpsState(navRt.gps);
+  const gs = sim ? { key: "demo" as const, label: "Simulasi (DEMO)" } : gpsState(navRt.gps);
   const env = process.env.NEXT_PUBLIC_VERCEL_ENV;
   const envLabel = env === "production" ? "Production" : env === "preview" ? "Preview" : env === "development" || process.env.NODE_ENV === "development" ? "Lokal (dev)" : "—";
   const periodLabel = period === 0 ? "hari ini" : `${period + 1} hari terakhir`;
@@ -175,9 +180,13 @@ export default function DashboardHome({ supabase: sb, unitId, greetingName, isAd
               <h2 className="dg-h dg-ship-name">KRI ALAMANG-644</h2>
               <div className="dg-sub">Lambung baja high tensile · bangunan atas aluminium</div>
             </div>
-            <button type="button" className="dg-btn" onClick={() => onOpen("NAVY3D")}>Buka model 3D</button>
+            <span className="dg-sub dg-hint">Klik bagian kapal untuk detail · seret untuk memutar</span>
           </div>
-          <img className="dg-ship-art" src="/images/kri-alamang-644-side.png" alt="Gambar garis tampak samping KRI ALAMANG-644" />
+          <VesselModel3D supabase={sb} unitId={unitId} userId={userId} role={role} canAccessClassV={canAccessClassV}
+            key={sim ? "3d-sim" : "3d-real"} modes={["status", "telemetri"]} initialMode={sim || gsReal.key === "live" || gsReal.key === "proxy" ? "telemetri" : "status"} panelCollapsed
+            nav={{ gps: navRt.gps, sim: navRt.sim }} telemetrySlot={<p className="v3d-note">Kontrol Master GPS dan simulasi ada di kartu Telemetri.</p>}
+            onExternalMode={(m, partId) => onOpen(m === "tangki" ? "NAVYSTOCK" : m === "jaga" || m === "putar-ulang" || m === "latihan" ? "NAVYLOG" : "NAVYMAINT", partId)}
+            className="dg-3d" />
           <div className="dg-specs">
             <div className="dg-well"><span>Panjang (LOA)</span><b>44,00 m</b></div>
             <div className="dg-well"><span>Lebar · sarat</span><b>7,40 · 1,80 m</b></div>
@@ -192,13 +201,17 @@ export default function DashboardHome({ supabase: sb, unitId, greetingName, isAd
             <span className={"dg-pill dg-pill-" + gs.key}><i />{gpsErr ? "Tidak dapat dimuat" : gs.label}</span>
           </div>
           <div className="dg-grid2">
-            <div className="dg-well dg-span2"><span>Posisi{gps ? " · " + timeWib(gps.position_at) : ""}</span><b className="dg-mono">{gps ? `${dm(gps.latitude, "U", "S")}  ${dm(gps.longitude, "T", "B")}` : "—"}</b></div>
+            <div className="dg-well dg-span2"><span>{sim ? "Posisi simulasi (DEMO)" : "Posisi"}{gps && !sim ? " · " + timeWib(gps.position_at) : ""}</span><b className="dg-mono">{gps ? `${dm(gps.latitude, "U", "S")}  ${dm(gps.longitude, "T", "B")}` : "—"}</b></div>
             <div className="dg-well"><span>SOG</span><b>{gps?.speed_knots != null ? gps.speed_knots.toFixed(1) + " kn" : "—"}</b></div>
             <div className="dg-well"><span>COG</span><b>{gps?.course_degrees != null ? String(Math.round(gps.course_degrees)).padStart(3, "0") + "°" : "—"}</b></div>
             <div className="dg-well dg-span2"><span>Heading</span><b>—</b></div>
           </div>
-          <p className="dg-note">Heading butuh gyro/AHRS; COG bukan heading. {gpsCount === null ? "" : `${fmtInt(gpsCount)} posisi tersimpan`}{gps?.source ? `, sumber terakhir: ${gps.source === "onboard_gps" ? "GPS kapal" : gps.source === "admin_device_gps" ? "perangkat Admin (proxy)" : gps.source}.` : "."}</p>
-          <button type="button" className="dg-btn dg-btn-block" onClick={() => onOpen("NAVYNAV")}>Buka peta &amp; jejak</button>
+          <p className="dg-note">Heading butuh gyro/AHRS; COG bukan heading. {gpsCount === null ? "" : `${fmtInt(gpsCount)} posisi tersimpan`}{!sim && navRt.gps?.source ? `, sumber terakhir: ${navRt.gps.source === "onboard_gps" ? "GPS kapal" : navRt.gps.source === "admin_device_gps" ? "perangkat Admin (proxy)" : navRt.gps.source}.` : "."}{sim ? " Nilai di atas berasal dari simulasi dan tidak disimpan." : ""}</p>
+          <NavControls />
+          <div className="dg-btn-row">
+            <NavMapButton className="dg-btn dg-btn-block" label="Buka peta" />
+            <button type="button" className="dg-btn dg-btn-block" onClick={() => onOpen("NAVYLOG")}>Jejak di Logbook</button>
+          </div>
         </article>
       </section>
 
@@ -246,7 +259,7 @@ export default function DashboardHome({ supabase: sb, unitId, greetingName, isAd
         <article className="dg-glass dg-card dg-third">
           <h2 className="dg-h dg-card-title">Status sistem</h2>
           <div className="dg-status">
-            <div className="dg-well"><i className={"dg-dot dg-dot-" + (gs.key === "live" ? "ok" : gs.key === "proxy" ? "info" : gs.key === "stale" ? "warn" : "none")} /><span>GPS</span><em>{gpsErr ? "—" : gs.key === "live" ? "live" : gs.key === "proxy" ? "proxy Admin" : gs.key === "stale" ? "belum live" : "belum ada data"}</em></div>
+            <div className="dg-well"><i className={"dg-dot dg-dot-" + (gsReal.key === "live" ? "ok" : gsReal.key === "proxy" ? "info" : gsReal.key === "stale" ? "warn" : "none")} /><span>GPS</span><em>{gpsErr ? "—" : gsReal.key === "live" ? "live" : gsReal.key === "proxy" ? "proxy Admin" : gsReal.key === "stale" ? "belum live" : "belum ada data"}</em></div>
             <div className="dg-well"><i className={"dg-dot dg-dot-" + (!lowTank ? "none" : lowTank.pct! < 15 ? "bad" : lowTank.pct! < 30 ? "warn" : "ok")} /><span>Tangki terendah</span><em>{lowTank ? `${lowTank.label} ${lowTank.pct}%` : "—"}</em></div>
             <div className="dg-well"><i className={"dg-dot dg-dot-" + (counts.faults == null ? "none" : counts.faults > 0 ? "bad" : "info")} /><span>Kerusakan terbuka</span><em>{counts.faults == null ? "—" : counts.faults === 0 ? "tidak ada laporan" : fmtInt(counts.faults)}</em></div>
             <div className="dg-well"><i className="dg-dot dg-dot-info" /><span>Lingkungan</span><em>{envLabel}</em></div>

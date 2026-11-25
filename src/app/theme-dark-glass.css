@@ -229,3 +229,39 @@ html body:before,html body:after{display:none}
 @media(prefers-reduced-transparency:reduce){.dg-glass,.loginbox{-webkit-backdrop-filter:none;backdrop-filter:none;background:#0C1626}}
 .dg-status .dg-well>span{font-size:13.5px;color:var(--dg-ink)}
 @media(max-width:640px){.dg-kpi{flex:1 1 calc(50% - 8px);padding:14px}.dg-kpi>b{font-size:28px}}
+
+/* ---------- integrated 3D ---------- */
+.dg-3d-section{gap:14px}
+.dg-identity .v3d-root.dg-3d,.dg-3d-section .v3d-root.dg-3d{height:clamp(440px,62vh,660px);border-radius:14px;border-color:var(--dg-line)}
+.dg-identity .v3d-root.dg-3d{height:clamp(380px,52vh,560px)}
+.dg-3d-loading{display:grid;place-items:center;height:clamp(380px,52vh,560px);border-radius:14px;background:rgba(0,0,0,.25);color:var(--dg-dim);font-size:13.5px}
+.dg-hint{font-size:12.5px;color:var(--dg-dim);align-self:center}
+.dg-pill-demo{color:#CDBEFF;background:rgba(185,163,255,.12);border-color:rgba(185,163,255,.35)}
+.dg-btn-stop{border-color:rgba(255,90,95,.45);color:#FFB3B5}
+.dg-btn-stop:hover{background:rgba(255,90,95,.14);color:#fff}
+.dg-btn-row{display:flex;gap:8px;flex-wrap:wrap}.dg-btn-row>*{flex:1 1 140px}
+.dg-navctl{display:flex;flex-direction:column;gap:8px}
+.dg-navctl-row{display:flex;align-items:center;gap:10px}
+.dg-navctl-row>div{flex:1;min-width:0}
+.dg-navctl-row b{display:block;font-size:13.5px;font-weight:600}
+.dg-navctl-row small{display:block;font-size:12px;color:var(--dg-dim);line-height:1.4}
+.dg-err{color:#FFB3B5}
+.dg-running{display:flex;gap:6px;flex-wrap:wrap}
+.dg-run-chip{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 4px 0 10px;border-radius:999px;font-size:12.5px;font-weight:600;color:#A9CCF0;background:rgba(127,178,229,.12);border:1px solid rgba(127,178,229,.35)}
+.dg-run-chip i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:dg-pulse 1.6s ease-in-out infinite}
+.dg-run-chip.is-demo{color:#CDBEFF;background:rgba(185,163,255,.12);border-color:rgba(185,163,255,.35)}
+.dg-run-chip.is-err{color:#F5C46B;background:rgba(245,181,68,.12);border-color:rgba(245,181,68,.3)}
+.dg-run-chip button{min-height:28px;padding:0 10px;border-radius:999px;border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:12px;cursor:pointer}
+.dg-run-chip button:hover{background:rgba(255,90,95,.35)}
+@keyframes dg-pulse{50%{opacity:.35}}
+.dg-modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(2,6,12,.7)}
+.dg-modal-card{box-sizing:border-box;width:min(980px,100%);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--dg-radius);background:linear-gradient(180deg,#0E1A2B,#09121F);border:1px solid var(--dg-line-2);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.dg-map{width:100%;height:min(62dvh,560px);border:0;border-radius:12px;background:#0B1524}
+.dg-map-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;font-size:13px;color:var(--dg-muted)}
+.dg-map-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dg-login-ship{display:block;width:100%;max-width:420px;height:120px;margin:14px auto 4px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(120,170,230,.25))}
+@media(max-width:640px){
+  .dg-identity .v3d-root.dg-3d,.dg-3d-section .v3d-root.dg-3d{height:min(620px,calc(100dvh - 120px))}
+  .dg-header-tools{flex-wrap:wrap}.dg-running{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.dg-run-chip i{animation:none}}

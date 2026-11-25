@@ -45,3 +45,17 @@ Needs WebGL2 (all current desktop and mobile browsers). Without it the module sh
 
 ## Catatan integrasi CSS
 `globals.css` memberi gaya ke `.shell nav` dan `.shell aside` (sidebar aplikasi). Karena modul ini dirender di dalam `.shell`, bar tampilan dan panel memakai `<div role="navigation">` / `<div role="complementary">`, bukan `<nav>`/`<aside>`, agar tidak ikut tergaya sebagai sidebar.
+
+## Penempatan terintegrasi (menggantikan menu MODEL 3D)
+Menu terpisah **MODEL 3D** dan **Telemetri** dihapus. `VesselModel3D` sekarang ditanam di modul yang membutuhkannya, dengan prop `modes` untuk membatasi tampilan:
+
+| Modul | Tampilan 3D | Fungsi |
+|---|---|---|
+| Dashboard | Status, Telemetri | Warna status sistem; kapal diputar menurut COG (live/proxy/DEMO). Klik sistem yang tampilannya ada di modul lain membuka modul itu (`onExternalMode`), mis. kerusakan → Maintenance dengan bagian kapal terpilih. |
+| Maintenance | Kerusakan, Geladak | Lapor/ubah status kerusakan per bagian kapal; di Geladak, Admin/Komandan memilih ruangan untuk mengisi `location_label` aset (`onRoomPick`). |
+| Stock | Tangki | Sounding BBM/Air Tawar (khusus Admin). Kelas lain tanpa 3D karena lokasi simpan tidak tercatat. |
+| Logbook PHST | Jaga, Putar ulang, Latihan | Pos jaga hari ini, jejak GPS per tanggal bersama logbook, latihan peran (tidak disimpan). Tombol peta juga di sini. |
+| Personel, Archive, Administrasi | — | Datanya tidak terkait posisi di kapal. |
+
+## Master GPS & simulasi (NavRuntime)
+`src/app/NavRuntime.tsx` dipasang di shell aplikasi, sehingga Master GPS (perangkat Admin → `/api/gps`, sumber `admin_device_gps`) dan simulasi DEMO tetap berjalan saat pindah modul sampai dihentikan. Header menampilkan chip status dengan tombol **Hentikan**. Simulasi hanya di memori dan tidak pernah dikirim ke `/api/gps`. `VesselStatus.tsx` dihapus; fungsinya pindah ke NavRuntime, kartu Telemetri Dashboard, dan `NavMap.tsx` (peta OpenStreetMap).
