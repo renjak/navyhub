@@ -8,7 +8,8 @@ const stamp=(v:string)=>new Date(v).toLocaleString("id-ID",{timeZone:"Asia/Jakar
 export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  const [gps,setGps]=useState<any>(null),[weather,setWeather]=useState<any>(null),[marine,setMarine]=useState<any>(null);
  const [loading,setLoading]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[mapOpen,setMapOpen]=useState(false);
- const [tracking,setTracking]=useState(false),[trackingStatus,setTrackingStatus]=useState("STOPPED"),[lastSentAt,setLastSentAt]=useState<string|null>(null);\n const [simMode,setSimMode]=useState(false),[simGps,setSimGps]=useState<any>({latitude:1.08000,longitude:104.22000,speed_knots:8.2,course_degrees:62,position_at:new Date().toISOString(),source:"SIMULATION"}),[simHeading,setSimHeading]=useState(64);
+ const [tracking,setTracking]=useState(false),[trackingStatus,setTrackingStatus]=useState("STOPPED"),[lastSentAt,setLastSentAt]=useState<string|null>(null);
+ const [simMode,setSimMode]=useState(false),[simGps,setSimGps]=useState<any>({latitude:1.08000,longitude:104.22000,speed_knots:8.2,course_degrees:62,position_at:new Date().toISOString(),source:"SIMULATION"}),[simHeading,setSimHeading]=useState(64);
  const trackingTimer=useRef<number|null>(null),trackingEnabled=useRef(false),requestPending=useRef(false);
  const load=useCallback(async()=>{
   if(!unitId){setLoading(false);return}setLoading(true);setError("");
