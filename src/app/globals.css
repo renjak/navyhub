@@ -1033,3 +1033,47 @@ tbody tr:hover{background:rgba(160,196,222,.08)}
 .navy-gyro-dial>i{position:absolute;left:50%;top:12px;width:2px;height:29px;background:linear-gradient(#ff9b67,#4db7ec);transform-origin:50% 27px;z-index:3;border-radius:3px}
 .navy-gyro-dial>b{position:absolute;width:7px;height:7px;left:calc(50% - 3.5px);top:calc(50% - 3.5px);border-radius:50%;background:#d9f2ff;z-index:4;box-shadow:0 0 8px #67c7ff}
 .navy-gyro-readout>strong{font-size:24px;font-variant-numeric:tabular-nums;color:#e2f3ff}
+
+
+/* ALNAV DMS UI refinement — compact COG and clean welcome hero */
+.navy-telemetry-grid{
+ grid-template-columns:minmax(145px,.52fr) minmax(0,1.48fr);
+ align-items:stretch;
+}
+.navy-telemetry-compass{
+ justify-content:center;
+ align-self:stretch;
+ min-height:0;
+ padding:14px 12px;
+}
+.navy-compass-dial{
+ width:min(100%,124px);
+ margin:10px auto 7px;
+}
+.navy-compass-needle i{border-bottom-width:32px;border-left-width:6px;border-right-width:6px}
+.navy-compass-needle b{border-top-width:32px;border-left-width:6px;border-right-width:6px}
+.navy-telemetry-compass>strong{font-size:20px;line-height:1.2}
+.navy-telemetry-readouts{
+ grid-template-rows:repeat(3,minmax(82px,1fr));
+ gap:10px;
+}
+.navy-telemetry-value{min-height:82px}
+.hero{
+ justify-content:flex-start;
+ gap:clamp(18px,3vw,42px);
+ min-height:unset;
+}
+.hero>div:first-child{flex:0 1 auto;min-width:0}
+.hero-orb{margin-left:0;flex:0 0 auto}
+@media(max-width:1000px){
+ .navy-telemetry-grid{grid-template-columns:minmax(130px,.48fr) minmax(0,1.52fr)}
+ .navy-telemetry-readouts{grid-column:auto;grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(78px,auto))}
+}
+@media(max-width:650px){
+ .navy-telemetry-grid{grid-template-columns:minmax(0,1fr)}
+ .navy-telemetry-compass{min-height:unset;max-width:none}
+ .navy-compass-dial{width:124px}
+ .navy-telemetry-readouts{grid-column:auto;grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(78px,auto))}
+ .hero{gap:14px;align-items:center}
+ .hero-orb{margin-left:auto}
+}

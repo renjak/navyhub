@@ -129,11 +129,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
      <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{shownGps?.speed_knots!=null?fmt(shownGps.speed_knots,1)+" kn":"—"}</b></article>
      <article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{shownGps?Number(shownGps.latitude).toFixed(5)+"°, "+Number(shownGps.longitude).toFixed(5)+"°":"—"}</b><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>
     </div>
-    <div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
-     <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{shownGps?.fix_quality||"—"}</b><span>{shownGps?.satellites!=null?shownGps.satellites+" satelit":"—"}</span></article>
-     <article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{shownGps?.accuracy_m!=null?fmt(shownGps.accuracy_m,1)+" m":"—"}</b></article>
-     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gps?gpsSourceLabel(gps.source):"—"}</b><span>{shownGps?.position_at?stamp(shownGps.position_at):"—"}</span></article>
-    </div>
+
    </div>
    <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading simulasi ditampilkan terpisah sebagai demonstrasi gyro 360° dan tidak dianggap data gyro onboard. Matikan simulasi untuk kembali ke data GPS aktual.</span></div>
   </section>
