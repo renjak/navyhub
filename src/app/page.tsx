@@ -3,6 +3,7 @@ import {useCallback,useEffect,useMemo,useState} from "react";
 import {createClient,type User} from "@supabase/supabase-js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import DigitalLogbook from "./DigitalLogbook";
+import PHSTManager from "./PHSTManager";
 import DailyWatchArchive from "./DailyWatchArchive";
 import VesselStatus from "./VesselStatus";
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
@@ -552,6 +553,7 @@ export default function Home(){
 }</>
 }</section>
 
+<PHSTManager supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer}/>
 <DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip LOGBOOK"/>
 <section className="panel data-panel">
 <div className="panelhead">
