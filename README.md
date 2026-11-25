@@ -15,9 +15,11 @@ Other navigation modules remain visible while their workflows are implemented.
 - One current position is retained per unit in `public.vessel_gps_positions`.
 - The database has a unique index on `unit_id`; each incoming fix replaces the previous row.
 - The onboard gateway posts to `POST /api/gps` every 60 seconds.
-- The gateway sends `Authorization: Bearer <VESSEL_GPS_INGEST_TOKEN>`.
+- The gateway sends `Authorization: Bearer <VESSEL_GPS_INGEST_TOKEN>`. Only this hardware-authenticated path may publish the `onboard_gps` source label.
 - The token is stored only as a server-side Vercel environment variable and is never exposed to browser code.
-- Admin users can also enable device geolocation or submit a manual coordinate from the GPS screen.
+- Admin users can explicitly submit a one-time device/browser location from the GPS screen; it is always labeled `admin_device_gps` and is never represented as onboard GPS.
+- Only requests authenticated with the server-side `VESSEL_GPS_INGEST_TOKEN` are labeled `onboard_gps`; the API enforces this source label server-side.
+- Browser/device geolocation is not collected or published automatically.
 - Other authenticated users can view the latest position for their own unit.
 - Preview deployments are read-only and GPS ingest is disabled there.
 
