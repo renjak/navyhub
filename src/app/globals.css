@@ -628,3 +628,15 @@ body:before{content:none!important;display:none!important}
 .pwa-install-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.pwa-install-copy strong{font-size:13px;letter-spacing:.08em}.pwa-install-copy span{font-size:11px;line-height:1.45;color:#bdcddd}.pwa-install-copy .pwa-ios-help{margin-top:5px;color:#e0edf7}
 .pwa-install-actions{display:flex;align-items:center;gap:8px}.pwa-install-actions button{border:1px solid rgba(123,196,225,.6);border-radius:10px;padding:10px 12px;background:#17435c;color:#f3fbff;font-size:10px;font-weight:850;letter-spacing:.1em;cursor:pointer}.pwa-install-actions .pwa-dismiss{width:30px;height:30px;padding:0;border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.07);font-size:20px;letter-spacing:0}
 @media(max-width:560px){.pwa-install-card{right:10px;bottom:calc(10px + env(safe-area-inset-bottom));width:calc(100vw - 20px);gap:9px;padding:12px}.pwa-install-actions button{padding:9px 10px}}
+
+/* Admin-controlled device GPS proxy */
+.navy-gps-admin{padding:14px 16px}
+.navy-gps-admin-main{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.navy-gps-admin-main>div{display:grid;gap:5px;min-width:0}
+.navy-gps-admin-main small,.navy-gps-source-warning{font-size:10px;line-height:1.55;color:var(--muted-foreground,#9bb0bf)}
+.navy-gps-compact-state.is-active{color:#7be0b2}
+.navy-gps-admin-main button{border:1px solid rgba(116,207,234,.36);border-radius:10px;padding:11px 16px;background:rgba(50,153,190,.16);color:#dff8ff;font-size:10px;font-weight:800;letter-spacing:.08em}
+.navy-gps-admin-main button.stop{border-color:rgba(235,130,130,.38);background:rgba(177,56,56,.13);color:#ffc1c1}
+.navy-gps-source-warning{margin:10px 0 0}
+.navy-info-meta{flex-wrap:wrap}
+@media(max-width:650px){.navy-gps-admin-main{align-items:stretch;flex-direction:column}.navy-gps-admin-main button{width:100%}}
