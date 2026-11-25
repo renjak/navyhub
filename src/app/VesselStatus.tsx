@@ -8,7 +8,7 @@ const stamp=(v:string)=>new Date(v).toLocaleString("id-ID",{timeZone:"Asia/Jakar
 export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  const [gps,setGps]=useState<any>(null),[weather,setWeather]=useState<any>(null),[marine,setMarine]=useState<any>(null);
  const [loading,setLoading]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[mapOpen,setMapOpen]=useState(false);
- const [tracking,setTracking]=useState(false),[trackingStatus,setTrackingStatus]=useState("STOPPED"),[lastSentAt,setLastSentAt]=useState<string|null>(null);
+ const [tracking,setTracking]=useState(false),[trackingStatus,setTrackingStatus]=useState("STOPPED"),[lastSentAt,setLastSentAt]=useState<string|null>(null);\n const [simMode,setSimMode]=useState(false),[simGps,setSimGps]=useState<any>({latitude:1.08000,longitude:104.22000,speed_knots:8.2,course_degrees:62,position_at:new Date().toISOString(),source:"SIMULATION"}),[simHeading,setSimHeading]=useState(64);
  const trackingTimer=useRef<number|null>(null),trackingEnabled=useRef(false),requestPending=useRef(false);
  const load=useCallback(async()=>{
   if(!unitId){setLoading(false);return}setLoading(true);setError("");
@@ -80,6 +80,23 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  useEffect(()=>()=>{trackingEnabled.current=false;if(trackingTimer.current!==null)window.clearInterval(trackingTimer.current)},[]);
  const gpsSourceLabel=(source:string|null|undefined)=>source==="onboard_gps"?"GPS onboard (gateway)":source==="admin_device_gps"?"Lokasi perangkat Admin":source==="KRI_ALAMANG_644_MASTER_GPS"?"Data lama · sumber perangkat belum terverifikasi":source||"Sumber posisi tidak diketahui";
  const current=weather?.current,mc=marine?.current;
+ const shownGps=simMode?simGps:gps;
+ useEffect(()=>{
+  if(!simMode)return;
+  const timer=window.setInterval(()=>{
+   setSimGps((p:any)=>{
+    const nextHeading=(Number(p.course_degrees)+((Math.sin(Date.now()/11000)*2.8)+360))%360;
+    const speed=8.2+Math.sin(Date.now()/9000)*0.7;
+    const distanceNm=speed*(2/3600);
+    const rad=nextHeading*Math.PI/180;
+    const lat=p.latitude+(distanceNm/60)*Math.cos(rad);
+    const lon=p.longitude+(distanceNm/(60*Math.max(0.2,Math.cos(p.latitude*Math.PI/180))))*Math.sin(rad);
+    return {latitude:lat,longitude:lon,speed_knots:speed,course_degrees:nextHeading,position_at:new Date().toISOString(),source:"SIMULATION"};
+   });
+   setSimHeading((h:number)=>((h+((Math.sin(Date.now()/7000))*1.6)+360)%360));
+  },2000);
+  return ()=>window.clearInterval(timer);
+ },[simMode]);
  const hourly=(marine?.hourly?.sea_level_height_msl||[]).filter((v:any)=>typeof v==="number"&&Number.isFinite(v));
  const low=hourly.length?Math.min(...hourly):null,high=hourly.length?Math.max(...hourly):null;
  const stale=gps?Date.now()-new Date(gps.position_at).getTime()>(gps.source==="admin_device_gps"?2:15)*60*1000:false;
@@ -107,16 +124,16 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
      <div className="navy-telemetry-label">COURSE OVER GROUND <span>COG</span></div>
      <div className="navy-compass-dial">
       <span className="navy-compass-n">N</span><span className="navy-compass-e">E</span><span className="navy-compass-s">S</span><span className="navy-compass-w">W</span>
-      <div className="navy-compass-needle" style={{transform:"rotate("+(gps?.course_degrees==null?0:Number(gps.course_degrees))+"deg)"}}><i/><b/></div>
+      <div className="navy-compass-needle" style={{transform:"rotate("+(shownGps?.course_degrees==null?0:Number(shownGps.course_degrees))+"deg)"}}><i/><b/></div>
       <div className="navy-compass-center"/>
      </div>
-     <strong>{gps?.course_degrees==null?"—":fmt(gps.course_degrees,0)+"°"}</strong>
-     <small>{gps?.course_degrees==null?"Arah gerak belum tersedia":"Arah pergerakan terhadap permukaan bumi"}</small>
+     <strong>{shownGps?.course_degrees==null?"—":fmt(shownGps.course_degrees,0)+"°"}</strong>
+     <small>{shownGps?.course_degrees==null?"Arah gerak belum tersedia":simMode?"SIMULASI · Arah gerak (COG)":"Arah pergerakan terhadap permukaan bumi"}</small>
     </article>
     <div className="navy-telemetry-readouts">
-     <article className="navy-telemetry-value"><small>SHIP HEADING</small><b>—</b><span>Belum ada data gyro / kompas kapal</span></article>
-     <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{gps?.speed_knots==null?"—":fmt(gps.speed_knots,1)} <em>kn</em></b><span>Kecepatan terhadap permukaan bumi</span></article>
-     <article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"—"}</b><span>{gps?gpsSourceLabel(gps.source):"Menunggu posisi GPS"}</span><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>
+     <article className="navy-telemetry-value"><small>SHIP HEADING · GYRO 360°</small><b>{simMode?fmt(simHeading,0)+"°":"—"}</b><span>{simMode?"SIMULASI GYRO · Haluan sintetis 000°–359°":"Belum ada data gyro / kompas kapal"}</span></article>
+     <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{shownGps?.speed_knots==null?"—":fmt(shownGps.speed_knots,1)} <em>kn</em></b><span>Kecepatan terhadap permukaan bumi</span></article>
+     <article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{shownGps?Number(shownGps.latitude).toFixed(5)+"°, "+Number(shownGps.longitude).toFixed(5)+"°":"—"}</b><span>{simMode?"SIMULASI LINTASAN · TIDAK DITULIS KE DATABASE":gps?gpsSourceLabel(gps.source):"Menunggu posisi GPS"}</span><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>
     </div>
     <div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
      <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{gps?.fix_quality||"—"}</b><span>{gps?.satellites==null?"Jumlah satelit tidak tersedia":gps.satellites+" satelit terdeteksi"}</span></article>
@@ -124,13 +141,13 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
      <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{gps?gpsSourceLabel(gps.source):"—"}</b><span>Position time: {gps?stamp(gps.position_at):"—"}</span><span>Received: {gps?.received_at?stamp(gps.received_at):"—"}</span></article>
     </div>
    </div>
-   <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading kapal memerlukan data kompas/gyro/AHRS onboard. Sistem tidak mengganti nilai yang belum tersedia dengan angka perkiraan.</span></div>
+   <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading simulasi ditampilkan terpisah sebagai demonstrasi gyro 360° dan tidak dianggap data gyro onboard. Matikan simulasi untuk kembali ke data GPS aktual.</span></div>
   </section>
   <div className="navy-maritime-cards">
    <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat posisi terakhir"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
-  {canManage&&<div className="navy-gps-admin"><div className="navy-gps-admin-main"><div><span className={"navy-gps-compact-state"+(tracking?" is-active":"")}>{tracking?"MASTER GPS AKTIF":"MASTER GPS TIDAK AKTIF"}</span><small>{trackingStatus==="ACTIVE"?"Perangkat Admin mengirim posisi":trackingStatus==="ACQUIRING"?"Mengambil posisi GPS perangkat":trackingStatus==="ERROR"?"Periksa izin/koneksi GPS":trackingStatus==="UNAVAILABLE"?"GPS perangkat tidak tersedia":"Sumber posisi belum diaktifkan"}{lastSentAt?" · terakhir dikirim "+stamp(lastSentAt):""}</small></div><button type="button" className={tracking?"stop":"start"} onClick={tracking?stopMasterGps:startMasterGps}>{tracking?"HENTIKAN MASTER GPS":"AKTIFKAN MASTER GPS"}</button></div><p className="navy-gps-source-warning">Sumber: GPS perangkat Admin sebagai proksi posisi kapal. Pertahankan halaman ALNAV DMS tetap terbuka; browser iOS dapat menunda pembaruan ketika aplikasi berada di latar atau layar terkunci. Heading kompas tidak tersedia dari sumber ini; Course (COG) hanya tampil bila perangkat memberikannya.</p></div>}
+  {canManage&&<div className="navy-gps-admin"><div className="navy-gps-admin-main"><div><span className="navy-gps-compact-state">DEMO NAVIGATION</span><small>Lintasan sintetis untuk uji gerak GPS dan gyro 360°. Tidak mengubah posisi GPS produksi.</small></div><button type="button" className={simMode?"stop":"start"} onClick={()=>setSimMode(v=>!v)}>{simMode?"HENTIKAN SIMULASI":"JALANKAN SIMULASI GPS + GYRO"}</button></div><div className="navy-gps-admin-main"><div><span className={"navy-gps-compact-state"+(tracking?" is-active":"")}>{tracking?"MASTER GPS AKTIF":"MASTER GPS TIDAK AKTIF"}</span><small>{trackingStatus==="ACTIVE"?"Perangkat Admin mengirim posisi":trackingStatus==="ACQUIRING"?"Mengambil posisi GPS perangkat":trackingStatus==="ERROR"?"Periksa izin/koneksi GPS":trackingStatus==="UNAVAILABLE"?"GPS perangkat tidak tersedia":"Sumber posisi belum diaktifkan"}{lastSentAt?" · terakhir dikirim "+stamp(lastSentAt):""}</small></div><button type="button" className={tracking?"stop":"start"} onClick={tracking?stopMasterGps:startMasterGps}>{tracking?"HENTIKAN MASTER GPS":"AKTIFKAN MASTER GPS"}</button></div><p className="navy-gps-source-warning">Sumber: GPS perangkat Admin sebagai proksi posisi kapal. Pertahankan halaman ALNAV DMS tetap terbuka; browser iOS dapat menunda pembaruan ketika aplikasi berada di latar atau layar terkunci. Heading kompas tidak tersedia dari sumber ini; Course (COG) hanya tampil bila perangkat memberikannya.</p></div>}
   {error&&<div className="navy-status-error">{error}</div>}{notice&&<div className="navy-status-notice">{notice}</div>}
  </section>
 }
