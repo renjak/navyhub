@@ -640,3 +640,45 @@ body:before{content:none!important;display:none!important}
 .navy-gps-source-warning{margin:10px 0 0}
 .navy-info-meta{flex-wrap:wrap}
 @media(max-width:650px){.navy-gps-admin-main{align-items:stretch;flex-direction:column}.navy-gps-admin-main button{width:100%}}
+
+/* ALNAV DMS — class-based naval logistics inventory */
+.stock-class-workspace{display:grid;gap:16px;margin:18px 0 22px}
+.stock-class-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:18px 20px;border:1px solid rgba(130,171,198,.19);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.02))}
+.stock-class-heading small,.stock-class-detail-head small{font-size:9px;letter-spacing:.16em;font-weight:800;color:#7fd3ee}
+.stock-class-heading h3{margin:7px 0;font:800 19px Manrope,sans-serif;letter-spacing:.05em}
+.stock-class-heading p{max-width:720px;margin:0;color:#9fb2bf;font-size:11px;line-height:1.6}
+.stock-class-live{white-space:nowrap;border:1px solid rgba(94,199,159,.3);border-radius:20px;padding:7px 10px;color:#8adab7;font-size:8px;letter-spacing:.1em;font-weight:800}
+.stock-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stock-class-card{min-width:0;border:1px solid rgba(130,171,198,.18);border-radius:15px;background:linear-gradient(145deg,rgba(19,43,64,.72),rgba(8,22,37,.74));overflow:hidden}
+.stock-class-card.expanded{border-color:rgba(109,203,234,.48);box-shadow:0 14px 36px rgba(0,0,0,.22)}
+.stock-class-trigger{display:grid;grid-template-columns:46px minmax(0,1fr) 90px 22px;align-items:center;gap:12px;width:100%;min-height:112px;padding:16px;border:0;background:transparent;text-align:left}
+.stock-class-number{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:rgba(68,157,191,.14);border:1px solid rgba(99,190,220,.25);color:#8ce0f5;font:800 15px Manrope}
+.stock-class-copy{display:grid;gap:4px;min-width:0}
+.stock-class-copy small{color:#83cce2;font-size:8px;letter-spacing:.14em;font-weight:800}
+.stock-class-copy b{font:800 13px Manrope;color:#eef7fb;letter-spacing:.04em}
+.stock-class-copy i{font-style:normal;font-size:10px;line-height:1.45;color:#94a9b8}
+.stock-class-metrics{display:grid;justify-items:end;gap:3px}
+.stock-class-metrics>b{font:800 19px Manrope;color:#f0f8fb}
+.stock-class-metrics>small{font-size:8px;letter-spacing:.12em;color:#88a4b5}
+.stock-class-metrics em{font-style:normal;font-size:7px;letter-spacing:.07em;font-weight:800;color:#a8bbc7}
+.stock-class-metrics em.ready{color:#80d7b1}.stock-class-metrics em.critical{color:#ffb36f}
+.stock-class-chevron{font-size:20px;color:#81d3eb}
+.stock-class-detail{border-top:1px solid rgba(130,171,198,.17);padding:15px 16px 17px;background:rgba(1,9,17,.22)}
+.stock-class-detail-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:12px}
+.stock-class-detail-head p{margin:5px 0 0;color:#91a7b5;font-size:9px;line-height:1.5}
+.stock-class-detail-head button{border:1px solid rgba(106,194,225,.32);border-radius:9px;background:rgba(46,139,174,.13);color:#a8e8fa;padding:9px 12px;font-size:9px;font-weight:800;white-space:nowrap}
+.stock-class-empty,.stock-class-restricted{display:grid;gap:5px;padding:16px;border:1px dashed rgba(135,169,189,.23);border-radius:10px;color:#d8e8ef;font-size:10px}
+.stock-class-empty span,.stock-class-restricted span{color:#92a9b8;line-height:1.55}
+.stock-class-restricted{border-color:rgba(224,172,102,.3);background:rgba(165,108,36,.06)}
+.stock-class-restricted>b{color:#edc17f;letter-spacing:.1em;font-size:9px}
+.stock-class-table-wrap{width:100%;overflow-x:auto}
+.stock-class-table-wrap table{width:100%;border-collapse:collapse;min-width:760px;text-align:left}
+.stock-class-table-wrap th{padding:9px 10px;color:#8eacbd;font-size:8px;letter-spacing:.09em;border-bottom:1px solid rgba(130,171,198,.15)}
+.stock-class-table-wrap td{padding:11px 10px;border-bottom:1px solid rgba(130,171,198,.1);font-size:10px;color:#cbdce5;white-space:nowrap}
+.stock-class-table-wrap td:nth-child(2){white-space:normal;min-width:190px}
+.stock-class-table-wrap td:nth-child(2) b,.stock-class-table-wrap td:nth-child(2) small{display:block}
+.stock-class-table-wrap td:nth-child(2) small{margin-top:3px;color:#819bac;font-size:8px}
+.stock-item-status{font-size:8px;letter-spacing:.08em;color:#8ddab8;font-weight:800}
+.stock-item-status.critical{color:#ffb574}
+.stock-class-note{margin:0;color:#879dac;font-size:9px;line-height:1.6}
+@media(max-width:760px){.stock-class-heading{flex-direction:column}.stock-class-grid{grid-template-columns:1fr}.stock-class-trigger{grid-template-columns:42px minmax(0,1fr) 78px 18px;gap:9px;min-height:102px;padding:12px}.stock-class-number{width:40px;height:40px}.stock-class-copy b{font-size:12px}.stock-class-metrics>b{font-size:17px}.stock-class-detail-head{align-items:flex-start;flex-direction:column}.stock-class-detail-head button{width:100%}}
