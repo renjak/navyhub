@@ -67,3 +67,24 @@ The active Supabase project is currently the live data-bearing project. Its avai
 
 ## 9. Exact next implementation action
 Create a verified data-bearing Supabase development project/restore, then implement the department scope migration and RLS policy tests against that copy. Once the matrix passes, integrate an ADMINISTRATION workspace for account invitation, department assignment, head designation, deactivation, and audit history.
+
+## Implementation status — 25 November 2026
+
+### Applied database foundation
+- Departments table: OPS, SIN, EKA, LOG per unit.
+- Profiles: department_code, is_department_head, can_access_class_v.
+- Department ownership columns on activity_logs, inventory_items, maintenance_assets, maintenance_records, checklists, checklist_runs, daily_watch_reports and personnel.
+- Inventory supply_class check: I, III, IV, V, VIII, IX.
+- Existing known stock mapping: Air Tawar -> I/LOG; BBM -> III/LOG; Amunisi -> V/SIN.
+- Class V SELECT protection enforced by restrictive RLS on inventory_items and stock_movements.
+
+### Account administration
+- Admin can assign department, head designation and Class V entitlement to existing profiles.
+- Admin can invite new personnel by email through the JWT-protected `admin-invite-user` Edge Function. It validates the caller's active Admin profile, restricts account roles to officer/operator/viewer, creates the Auth invitation, updates the profile, and writes an audit event.
+
+### Not yet complete
+- Department-specific write policies and test matrix across operational modules.
+- Automated invitation acceptance/login QA.
+- Account deactivation/revocation workflow and full role change audit.
+- Column-level protection for sensitive personnel fields and document confidentiality controls.
+- Existing legacy records with unknown department ownership must be reviewed before assigning department codes.
