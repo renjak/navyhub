@@ -682,3 +682,30 @@ body:before{content:none!important;display:none!important}
 .stock-item-status.critical{color:#ffb574}
 .stock-class-note{margin:0;color:#879dac;font-size:9px;line-height:1.6}
 @media(max-width:760px){.stock-class-heading{flex-direction:column}.stock-class-grid{grid-template-columns:1fr}.stock-class-trigger{grid-template-columns:42px minmax(0,1fr) 78px 18px;gap:9px;min-height:102px;padding:12px}.stock-class-number{width:40px;height:40px}.stock-class-copy b{font-size:12px}.stock-class-metrics>b{font-size:17px}.stock-class-detail-head{align-items:flex-start;flex-direction:column}.stock-class-detail-head button{width:100%}}
+
+/* ALNAV DMS — administration and departmental access directory */
+.admin-access-board{display:grid;gap:16px;margin:18px 0}
+.admin-access-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px;border:1px solid rgba(130,171,198,.2);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.02))}
+.admin-access-heading small,.admin-access-roadmap>div:first-child>small{font-size:9px;font-weight:800;letter-spacing:.15em;color:#84d6ee}
+.admin-access-heading h1{margin:7px 0;font:800 22px Manrope;letter-spacing:.05em}
+.admin-access-heading p,.admin-access-roadmap p{margin:0;color:#9fb2bf;font-size:11px;line-height:1.6}
+.admin-access-heading>span{white-space:nowrap;border:1px solid rgba(94,199,159,.3);border-radius:20px;padding:8px 11px;color:#8adab7;font-size:8px;font-weight:800;letter-spacing:.1em}
+.admin-access-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.admin-access-summary article{display:grid;gap:6px;padding:17px;border:1px solid rgba(130,171,198,.18);border-radius:14px;background:rgba(16,37,56,.65)}
+.admin-access-summary small{color:#8ba8b9;font-size:8px;letter-spacing:.1em;font-weight:800}
+.admin-access-summary b{font:800 21px Manrope;color:#f0f7fb}
+.admin-access-summary span{color:#91a7b6;font-size:9px}
+.admin-account-panel{margin:0}
+.admin-role-chip,.admin-scope-pending{display:inline-flex;border:1px solid rgba(100,185,220,.25);border-radius:20px;padding:5px 8px;font-size:8px;font-weight:800;letter-spacing:.07em;color:#a8dff0}
+.admin-scope-pending{border-color:rgba(226,174,102,.28);color:#e5bf82}
+.admin-access-roadmap{display:grid;gap:15px;padding:19px;border:1px solid rgba(130,171,198,.18);border-radius:15px;background:rgba(14,32,49,.55)}
+.admin-access-roadmap h3{margin:7px 0}
+.admin-department-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.admin-department-grid article{display:grid;gap:5px;padding:13px;border:1px solid rgba(130,171,198,.16);border-radius:12px;background:rgba(255,255,255,.025)}
+.admin-department-grid b{font:800 16px Manrope;color:#8ddcf0}
+.admin-department-grid span{font-size:10px;font-weight:800;color:#e8f3f8}
+.admin-department-grid small{font-size:7px;letter-spacing:.08em;color:#899eac;line-height:1.4}
+.admin-access-warning{display:grid;gap:5px;padding:13px 15px;border:1px solid rgba(228,174,92,.3);border-radius:11px;background:rgba(150,94,24,.07);font-size:10px}
+.admin-access-warning b{color:#e9c58d}
+.admin-access-warning span{color:#aab8c1;line-height:1.6}
+@media(max-width:760px){.admin-access-heading{flex-direction:column}.admin-access-summary{grid-template-columns:1fr}.admin-department-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
