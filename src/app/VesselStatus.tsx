@@ -123,7 +123,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
     <span className={"navy-telemetry-freshness " + (simMode ? "is-live" : gps ? (stale ? "is-stale" : "is-live") : "is-offline")}><i/>{simMode?"SIMULATION ACTIVE":gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
    </div>
    <div className="navy-telemetry-grid">
-    <article className="navy-telemetry-compass"><div className="navy-telemetry-label">COURSE OVER GROUND <span>COG</span></div><div className="navy-compass-dial"><span className="navy-compass-n">N</span><span className="navy-compass-e">E</span><span className="navy-compass-s">S</span><span className="navy-compass-w">W</span><div className="navy-compass-needle" style={{transform:"rotate("+Number(shownGps.course_degrees)+"deg)"}}><i/><b/></div><div className="navy-compass-center"/></div><strong>{shownGps?.course_degrees!=null?fmt(shownGps.course_degrees,0)+"°":"—"}</strong></article>
+    <article className="navy-telemetry-compass"><div className="navy-telemetry-label">COURSE OVER GROUND <span>COG</span></div><div className="navy-compass-dial"><span className="navy-compass-n">N</span><span className="navy-compass-e">E</span><span className="navy-compass-s">S</span><span className="navy-compass-w">W</span><div className="navy-compass-needle" style={{transform:"rotate("+Number(shownGps?.course_degrees||0)+"deg)"}}><i/><b/></div><div className="navy-compass-center"/></div><strong>{shownGps?.course_degrees!=null?fmt(shownGps.course_degrees,0)+"°":"—"}</strong></article>
     <div className="navy-telemetry-readouts">
      <article className="navy-telemetry-value"><small>SHIP HEADING · GYRO 360°</small><div className="navy-gyro-readout"><div className="navy-gyro-dial"><span>N</span><i style={{transform:"rotate("+simHeading+"deg)"}}/><b/></div><strong>{simMode?fmt(simHeading,0).padStart(3,"0")+"°":"—"}</strong></div></article>
      <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{shownGps?.speed_knots!=null?fmt(shownGps.speed_knots,1)+" kn":"—"}</b></article>
@@ -132,8 +132,8 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
     <div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
      <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{shownGps?.fix_quality||"—"}</b><span>{shownGps?.satellites!=null?shownGps.satellites+" satelit":"—"}</span></article>
      <article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{shownGps?.accuracy_m!=null?fmt(shownGps.accuracy_m,1)+" m":"—"}</b></article>
-     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gpsSourceLabel(gps.source)}</b><span>{stamp(shownGps.position_at)}</span></article>
-    </div>}
+     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gps?gpsSourceLabel(gps.source):"—"}</b><span>{shownGps?.position_at?stamp(shownGps.position_at):"—"}</span></article>
+    </div>
    </div>
    <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading simulasi ditampilkan terpisah sebagai demonstrasi gyro 360° dan tidak dianggap data gyro onboard. Matikan simulasi untuk kembali ke data GPS aktual.</span></div>
   </section>
