@@ -14,14 +14,8 @@ const fmtDate=(d:string)=>new Date(d+"T00:00:00+07:00").toLocaleDateString("id-I
 const hh=(t:string)=>String(t||"").slice(0,5);
 const pct=(n:number,d:number)=>d?Math.round(n/d*100):0;
 const ZONE:any={jaga:"Geladak Kerja",mesin:"Kamar Mesin",bekal:"Geladak Kerja · Gudang Logistik",masak:"Dapur & Gudang",elektronik:"Anjungan / Navigasi",bilga:"Kamar Mesin",opname:"Gudang Logistik",rekap:"Anjungan / Ruang Komando"};
-export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase:any;unitId:string;userId:string;viewer:boolean}){
+export default function DigitalLogbook({supabase,unitId,userId,viewer,onChange}:{supabase:any;unitId:string;userId:string;viewer:boolean;onChange?:()=>void}){
  const [clock,setClock]=useState(localTime()),[today,setToday]=useState(localDate()),[checklists,setChecklists]=useState<Checklist[]>([]),[items,setItems]=useState<Item[]>([]),[runs,setRuns]=useState<Run[]>([]),[responses,setResponses]=useState<Response[]>([]),[assignment,setAssignment]=useState<any>(null),[personnel,setPersonnel]=useState<any[]>([]),[watchType,setWatchType]=useState("Jaga Laut"),[oldWatchId,setOldWatchId]=useState(""),[newWatchId,setNewWatchId]=useState(""),[handoverNotes,setHandoverNotes]=useState(""),[role,setRole]=useState<Role|null>(null),[active,setActive]=useState<string|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[tab,setTab]=useState<"ceklist"|"riwayat"|"pengawasan">("ceklist"),[failItem,setFailItem]=useState<string|null>(null),[failNote,setFailNote]=useState(""),[dailyReport,setDailyReport]=useState<any>(null),[approvalError,setApprovalError]=useState("");
- const simStops=[{time:"05:30",title:"Persiapan dan apel personel",zone:"Geladak Kerja",icon:"♟"},{time:"06:15",title:"Pemeriksaan kamar mesin",zone:"Kamar Mesin",icon:"⚙"},{time:"07:00",title:"Pemeriksaan anjungan dan navigasi",zone:"Anjungan / Navigasi",icon:"⌁"},{time:"08:00",title:"Penerimaan bekal logistik",zone:"Gudang Logistik",icon:"▦"},{time:"09:00",title:"Penyiapan konsumsi",zone:"Dapur & Konsumsi",icon:"♨"},{time:"10:00",title:"Pemeriksaan akomodasi",zone:"Akomodasi",icon:"▤"},{time:"11:00",title:"Pemeriksaan tangki dan utilitas",zone:"Tangki Air & BBM",icon:"◉"}];
- const [simIndex,setSimIndex]=useState(0),[simPlaying,setSimPlaying]=useState(false),[simSpeed,setSimSpeed]=useState(1),[simLoop,setSimLoop]=useState(true),[vesselImageFailed,setVesselImageFailed]=useState(false);
- const simCurrent=simStops[simIndex];
- const simPosition=({"Geladak Kerja":{left:"20%",top:"52%"},"Anjungan / Navigasi":{left:"66%",top:"46%"},"Kamar Mesin":{left:"21%",top:"77%"},"Gudang Logistik":{left:"36%",top:"77%"},"Dapur & Konsumsi":{left:"50%",top:"77%"},"Akomodasi":{left:"64%",top:"77%"},"Tangki Air & BBM":{left:"78%",top:"77%"}} as Record<string,{left:string;top:string}>)[simCurrent.zone]||{left:"50%",top:"65%"};
- useEffect(()=>{if(!simPlaying)return;const timer=window.setInterval(()=>setSimIndex(i=>i>=simStops.length-1?(simLoop?0:i):i+1),Math.max(1200,3600/simSpeed));return()=>window.clearInterval(timer)},[simPlaying,simSpeed,simLoop,simStops.length]);
- useEffect(()=>{if(simPlaying&&!simLoop&&simIndex===simStops.length-1)setSimPlaying(false)},[simPlaying,simLoop,simIndex,simStops.length]);
  const nowMin=Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
  const handover=checklists.find(c=>c.sequence_no===1);
  const handoverRun=handover?runs.find(r=>r.checklist_id===handover.id&&r.duty_date===today&&r.duty_role==="Perwira Jaga"):undefined;
@@ -72,7 +66,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   const {data,error}=await supabase.from("checklist_responses").insert({run_id:run.id,checklist_item_id:item.id,result,notes:result==="fail"?failNote.trim()||"Temuan perlu ditindaklanjuti.":null}).select("id,run_id,checklist_item_id,result,notes,created_at").single();
   if(error){setNotice("Gagal menyimpan hasil pemeriksaan: "+error.message);setBusy(false);return}
   const next=[...responses,data as Response];setResponses(next);await finishIfComplete(run,c,next);
-  setFailItem(null);setFailNote("");setNotice(result==="pass"?"Pemeriksaan berhasil dicatat.":"Temuan berhasil dicatat dan masuk pengawasan.");
+  setFailItem(null);setFailNote("");setNotice(result==="pass"?"Pemeriksaan berhasil dicatat.":"Temuan berhasil dicatat dan masuk pengawasan.");onChange?.();
   setBusy(false);
  };
  const saveWatchAssignment=async()=>{
@@ -85,7 +79,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
   const payload={unit_id:unitId,duty_date:today,duty_role:"Perwira Jaga",selected_by:userId,watch_type:watchType,old_watch_personnel_id:oldPerson.id,new_watch_personnel_id:newPerson.id,old_watch_name:oldPerson.full_name,old_watch_rank:oldPerson.rank_title,old_watch_nrp:oldPerson.nrp,new_watch_name:newPerson.full_name,new_watch_rank:newPerson.rank_title,new_watch_nrp:newPerson.nrp,handover_notes:handoverNotes.trim()};
   const {data,error}=await supabase.from("daily_watch_assignments").insert(payload).select("*").single();
   if(error){const {data:existing}=await supabase.from("daily_watch_assignments").select("*").eq("unit_id",unitId).eq("duty_date",today).maybeSingle();if(existing){setAssignment(existing);setRole("Perwira Jaga");setNotice("Penetapan jaga hari ini sudah tersimpan sebelumnya.")}else setNotice("Penetapan jaga gagal: "+error.message)}
-  else{setAssignment(data);setRole("Perwira Jaga");setNotice("Serah terima "+watchType+" tersimpan. Checklist Perwira Jaga telah dibuka.")}
+  else{setAssignment(data);setRole("Perwira Jaga");setNotice("Serah terima "+watchType+" tersimpan. Checklist Perwira Jaga telah dibuka.");onChange?.()}
   setBusy(false);
  };
  const runFor=(c:Checklist)=>runs.find(r=>r.checklist_id===c.id&&r.duty_date===today&&r.duty_role===role);
@@ -95,34 +89,8 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer}:{supabase
  const selectedLabel=role?role:"Belum ditetapkan";
  const current=visible.find(c=>c.id===active)||visible.find(c=>c.scheduled_time<=clock+":00"&&!runFor(c)?.completed_at)||visible[0];
  return <section className="dl-shell">
-  <header className="dl-head"><div><span className="dl-kicker">LOGBOOK / KRI ALAMANG-644</span><h2>Digital Logbook</h2><p>Panduan lokasi dan waktu pemeriksaan harian kapal.</p></div><div className="dl-clock"><b>{clock}</b><small>WAKTU KAPAL · WIB</small><small>{fmtDate(today)}</small></div></header>
+  <header className="dl-head"><div><span className="dl-kicker">Digital Logbook</span><h2>Jaga hari ini</h2><p>Serah terima jaga, penetapan Perwira Jaga, dan checklist harian. Setiap tombol menyimpan hasil ke database.</p></div><div className="dl-clock"><b>{clock}</b><small>WAKTU KAPAL · WIB</small><small>{fmtDate(today)}</small></div></header>
   <div className={"dl-approval-banner "+(approvalError?"unverified":dailyReport?.approved_at||dailyReport?.approval_text==="APPROVED"?"approved":"pending")}><div><small>JURNAL LOGBOOK HARI INI</small><b>{fmtDate(today)}</b></div><strong>{approvalError?"STATUS TIDAK DAPAT DIVERIFIKASI":dailyReport?.approved_at||dailyReport?.approval_text==="APPROVED"?"✓ APPROVED KOMANDAN":"◷ BELUM DI-APPROVED KOMANDAN"}</strong></div>
-  <div className="dl-shipmap">
-   <div className="dl-map-title"><b>KRI ALAMANG-644 · ILUSTRASI TAMPAK SAMPING</b><small>Identifikasi area pemeriksaan di atas kapal</small></div>
-   <div className="dl-vessel-art" role="img" aria-label="Ilustrasi profil samping KRI Alamang-644, kapal cepat berlambung rendah dengan anjungan di bagian tengah dan haluan runcing">
-    <img className="dl-vessel-render" src="/images/navylog-kri-alamang-cutaway.webp" alt="Gambar LOGBOOK KRI Alamang-644 sesuai ilustrasi yang diunggah" loading="eager" fetchPriority="high" onError={()=>setVesselImageFailed(true)} />
-    {vesselImageFailed&&<div className="dl-image-error" role="status">Ilustrasi kapal belum dapat dimuat. Unggah file navylog-kri-alamang-644.jpeg ke src/public/images pada branch perbaikan.</div>}
-    <div className="dl-active-zone" style={simPosition} key={simCurrent.zone}>
-     <span className="dl-active-ring"/><span className="dl-active-tag"><i>{simCurrent.icon}</i><b>{simCurrent.zone}</b></span>
-    </div>
-    <div className="dl-ship-scan" aria-hidden="true"/>
-    <div className="dl-vessel-caption"><span><b>PROFIL SAMPING</b> · KCR-40</span><span>44,00 m LOA · 7,40 m beam</span></div>
-   </div>
-   <div className="dl-zones">{["Geladak Kerja","Anjungan / Navigasi","Kamar Mesin","Gudang Logistik","Dapur & Konsumsi","Akomodasi","Tangki Air & BBM"].map(z=><button key={z} className={simCurrent.zone===z?"active":""} onClick={()=>{const idx=simStops.findIndex(x=>x.zone===z);if(idx>=0){setSimIndex(idx);setSimPlaying(false)}}}>{z}</button>)}</div>
-   <div className="dl-simulator">
-    <div className="dl-sim-top"><div><b>SIMULASI ANIMASI KEGIATAN KAPAL</b><small>Mode demonstrasi visual · tidak menulis ke jurnal operasional</small></div><span className={simPlaying?"live":"idle"}>{simPlaying?"● BERJALAN":"Ⅱ SIAP DIPUTAR"}</span></div>
-    <div className="dl-sim-current" key={simCurrent.time}><div className="dl-sim-pulse">{simCurrent.icon}</div><div><small>TAHAP {String(simIndex+1).padStart(2,"0")} · {simCurrent.time} WIB · {simIndex+1} / {simStops.length}</small><b>{simCurrent.title}</b><span>Area aktif: {simCurrent.zone}</span></div><span className="dl-sim-live-indicator">{simPlaying?"LIVE SIMULATION":"PREVIEW"}</span></div>
-    <div className="dl-sim-progress"><i style={{width:((simIndex+1)/simStops.length*100)+"%"}}/></div>
-    <div className="dl-sim-controls">
-     <button onClick={()=>setSimPlaying(v=>!v)}>{simPlaying?"Ⅱ Jeda":"▶ Putar"}</button>
-     <button onClick={()=>{setSimIndex(0);setSimPlaying(false)}}>↺ Mulai ulang</button>
-     <button onClick={()=>setSimIndex(i=>(i+1)%simStops.length)}>⏭ Berikutnya</button>
-     <label>Kecepatan <select value={simSpeed} onChange={e=>setSimSpeed(Number(e.target.value))}><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label>
-     <label className="dl-sim-loop"><input type="checkbox" checked={simLoop} onChange={e=>setSimLoop(e.target.checked)}/> Ulang otomatis</label>
-    </div>
-    <div className="dl-sim-timeline" aria-label="Urutan simulasi kegiatan kapal">{simStops.map((stop,i)=><button key={stop.time} className={i===simIndex?"selected":i<simIndex?"passed":""} aria-current={i===simIndex?"step":undefined} onClick={()=>{setSimIndex(i);setSimPlaying(false)}}><i/>{stop.time}<small>{stop.zone}</small></button>)}</div>
-   </div>
-  </div>
   <div className="dl-narrative"><b>{current?.title||"Pemeriksaan harian kapal"}</b><p>{current?.instructions||"Pilih petugas jaga setelah serah terima jaga untuk membuka daftar pemeriksaan sesuai tanggung jawab."}</p><small>LOKASI: {current?.location_label||"Seluruh kapal"} · JAM: {current?hh(current.scheduled_time):"07:45"}</small></div>
   <div className="dl-gate">
    <div className="dl-gate-step"><span>07:30</span><div><b>Serah terima jaga</b><small>Konfirmasi pengecekan tali tambat, tangga kapal, cuaca, dan kejadian menonjol.</small></div><strong>{handoverDone?"SELESAI":handoverRun?"BERLANGSUNG":"MENUNGGU"}</strong></div>
