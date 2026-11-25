@@ -118,7 +118,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
   <section className="navy-telemetry-command" aria-label="Telemetri navigasi kapal">
    <div className="navy-telemetry-heading">
     <div><small>ALAMANG NAVAL DATA MANAGEMENT SYSTEM</small><h2>VESSEL NAVIGATION · KRI ALAMANG-644</h2><p>Telemetri posisi dan pergerakan kapal dari sumber yang tercatat</p></div>
-    <span className={"navy-telemetry-freshness "+(gps?(stale?"is-stale":"is-live"):"is-offline")}><i/>{gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
+    <span className={"navy-telemetry-freshness "+((simMode?"is-live":gps?(stale?"is-stale":"is-live"):"is-offline")}><i/>{simMode?"SIMULATION ACTIVE":gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
    </div>
    <div className="navy-telemetry-grid">
     <article className="navy-telemetry-compass">
@@ -139,7 +139,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
     <div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
      <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{gps?.fix_quality||"—"}</b><span>{gps?.satellites==null?"Jumlah satelit tidak tersedia":gps.satellites+" satelit terdeteksi"}</span></article>
      <article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{gps?.accuracy_m==null?"—":fmt(gps.accuracy_m,1)+" m"}</b><span>Estimasi akurasi posisi perangkat/sumber</span></article>
-     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{gps?gpsSourceLabel(gps.source):"—"}</b><span>Position time: {gps?stamp(gps.position_at):"—"}</span><span>Received: {gps?.received_at?stamp(gps.received_at):"—"}</span></article>
+     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gps?gpsSourceLabel(gps.source):"—"}</b><span>Position time: {shownGps?stamp(shownGps.position_at):"—"}</span><span>Received: {simMode?"LOCAL DEMO · NOT STORED":gps?.received_at?stamp(gps.received_at):"—"}</span></article>
     </div>
    </div>
    <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading simulasi ditampilkan terpisah sebagai demonstrasi gyro 360° dan tidak dianggap data gyro onboard. Matikan simulasi untuk kembali ke data GPS aktual.</span></div>
