@@ -358,7 +358,7 @@ export default function Home(){
 <header>
 <div>
 <small>FLEET OPERATIONS / {selected?.label||"DASHBOARD"}</small>
-<h2>{module==="Dashboard"?"Command Center":selected?.label||module}</h2>
+<h2 data-gsap-heading>{module==="Dashboard"?"Command Center":selected?.label||module}</h2>
 </div>
 
 <div className="user">
@@ -377,7 +377,7 @@ export default function Home(){
  <section className="hero">
 <div>
 <small>INTEGRATED SHIP MANAGEMENT</small>
-<h1>Welcome aboard, {(profile.full_name||"Operator").split(" ")[0]}.</h1>
+<h1 data-gsap-heading>Welcome aboard, {(profile.full_name||"Operator").split(" ")[0]}.</h1>
 <p>Operational records, maintenance, logistics and personnel in one command environment.</p>
 </div>
 
@@ -387,7 +387,7 @@ export default function Home(){
 
  
  <div className="section-title">
-<span>LIVE DATABASE OVERVIEW</span>
+<span data-gsap-heading>LIVE DATABASE OVERVIEW</span>
 <small>REAL SUPABASE RECORDS</small>
 </div>
 
@@ -415,7 +415,7 @@ export default function Home(){
  </div>
 
  <div className="section-title">
-<span>SHIP CONSUMABLES</span>
+<span data-gsap-heading>SHIP CONSUMABLES</span>
 <small>LIVE INVENTORY · LITER</small>
 </div>
 
