@@ -167,7 +167,7 @@ export default function Home(){
  const isAdmin=profile?.role==="admin";
  const canManage=profile?.role==="admin"||profile?.role==="commander";
  const canOperate=["admin","commander","officer","operator"].includes(profile?.role||"");
- const visibleMenu=menu.filter(m=>m.id!=="ADMINISTRATION"||isAdmin);
+ const visibleMenu=useMemo(()=>menu.filter(m=>m.id!=="ADMINISTRATION"||isAdmin),[isAdmin]);
  const selected=menu.find(m=>m.id===module);
  useEffect(()=>{if(!visibleMenu.some(m=>m.id===module))setModule("Dashboard")},[visibleMenu,module]);
  useEffect(()=>{if(module!=="ADMINISTRATION"||!isAdmin||!profile?.unit_id)return;let alive=true;setAccountBusy(true);setAccountError("");sb.from("profiles").select("id,full_name,rank_title,role,is_active").eq("unit_id",profile.unit_id).order("full_name",{ascending:true}).then(({data,error})=>{if(!alive)return;if(error){setAccountError("Direktori akun gagal dimuat: "+error.message);setAccountRows([])}else setAccountRows((data||[]) as RowData[]);setAccountBusy(false)});return()=>{alive=false}},[module,isAdmin,profile?.unit_id]);
