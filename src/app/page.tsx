@@ -8,17 +8,17 @@ import VesselStatus from "./VesselStatus";
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 pdfjsLib.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.mjs",import.meta.url).toString();
 const menu=[
- {id:"Dashboard",desc:"Pusat kendali",icon:"⌂"},
- {id:"NAVYLOG",desc:"Jurnal kegiatan & serah terima",icon:"▤",table:"activity_logs"},
- {id:"NAVYMAINT",desc:"Pemeliharaan peralatan",icon:"⚙",table:"maintenance_assets"},
- {id:"NAVYSTOCK",desc:"Persediaan & logistik",icon:"▣",table:"inventory_items"},
- {id:"NAVYCREW",desc:"Personel & jadwal jaga",icon:"♙",table:"personnel"},
- {id:"NAVYDOCS",desc:"Dokumen & arsip",icon:"▧",table:"daily_watch_reports"},
+ {id:"Dashboard",label:"DASHBOARD",desc:"Pusat kendali",icon:"⌂"},
+ {id:"NAVYLOG",label:"LOGBOOK",desc:"Jurnal kegiatan & serah terima",icon:"▤",table:"activity_logs"},
+ {id:"NAVYMAINT",label:"MAINTENANCE",desc:"Pemeliharaan peralatan",icon:"⚙",table:"maintenance_assets"},
+ {id:"NAVYSTOCK",label:"STOCK",desc:"Persediaan & logistik",icon:"▣",table:"inventory_items"},
+ {id:"NAVYCREW",label:"PERSONEL",desc:"Personel & jadwal jaga",icon:"♙",table:"personnel"},
+ {id:"NAVYDOCS",label:"ARCHIVE",desc:"Dokumen & arsip",icon:"▧",table:"daily_watch_reports"},
 ];
 type Profile={id:string;full_name:string;rank_title:string|null;unit_id:string|null;role:string;is_active:boolean};
 type RowData=Record<string,any>;
 type ImportedPlan={activity_date:string;activity_time:string|null;title:string;description:string;category:string};
-const phstSectionOrder=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","E. LAIN-LAIN"];
+const phstSectionOrder=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","F. LAIN-LAIN"];
 const departmentOrder=["OPS","SIN","EKA","LOG"] as const;
 function normalizeDepartment(value:string):typeof departmentOrder[number]|null{const v=value.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();if(/\bOPS\b|OPERASI/.test(v))return "OPS";if(/\bSIN\b|SENJATA/.test(v))return "SIN";if(/\bEKA\b|ELEKTRONIK/.test(v))return "EKA";if(/\bLOG\b|LOGISTIK/.test(v))return "LOG";return null;}
 const monthMap:Record<string,string>={januari:"01",februari:"02",maret:"03",april:"04",mei:"05",juni:"06",juli:"07",agustus:"08",september:"09",oktober:"10",november:"11",desember:"12"};
@@ -72,8 +72,7 @@ function parsePhstLines(lines:string[]):ImportedPlan[]{
   if(/^B\.\s*TUGAS\s+POKOK/i.test(line)){section="B. TUGAS POKOK";inGeneral=false;const val=line.replace(/^B\.\s*TUGAS\s+POKOK\s*:?/i,"").trim();if(val)push(section,"Tugas Pokok",val);continue}
   if(/^C\.\s*UMUM/i.test(line)){section="C. UMUM";inGeneral=true;continue}
   if(/^D\.\s*KHUSUS/i.test(line)){section="D. KHUSUS";inGeneral=false;continue}
-  if(/^E\.\s*LAIN/i.test(line)){section="E. LAIN-LAIN";inGeneral=false;continue}
-  if(/^F\./i.test(line)){section="";inGeneral=false;continue}
+  if(/^(?:E|F)\.\s*LAIN/i.test(line)){section="F. LAIN-LAIN";inGeneral=false;continue}
   if(section==="A. SITUASI"){
    const m=line.match(/^[a-b]\.?\s*([^:|]+?)\s*:\s*(.+)$/i);
    if(m)push(section,m[1].replace(/\s+/g," ").trim(),m[2]);
@@ -104,17 +103,15 @@ function parsePhstLines(lines:string[]):ImportedPlan[]{
    }
    continue;
   }
-  if(section==="E. LAIN-LAIN"){
+  if(section==="F. LAIN-LAIN"){
    const m=line.match(/^[a-z]\.?\s*(.+)$/i);const val=(m?m[1]:line).replace(/^[-•–]\s*/,"").trim();
    if(val)push(section,val);
   }
  }
- const dates=[...new Set(out.map(p=>p.activity_date))];
- for(const activity_date of dates){for(const department of departmentOrder){if(!out.some(p=>p.activity_date===activity_date&&p.category==="D. KHUSUS"&&normalizeDepartment(p.title)===department))out.push({activity_date,activity_time:null,title:department,description:"",category:"D. KHUSUS"});}}
  return out;
 }
 const titles:Record<string,string>={activity_logs:"Jurnal Kegiatan",maintenance_assets:"Daftar Aset",maintenance_records:"Riwayat Pemeliharaan",inventory_items:"Master Persediaan",stock_movements:"Transaksi Persediaan",checklists:"Template Checklist",checklist_items:"Item Checklist",checklist_runs:"Pelaksanaan Checklist",personnel:"Daftar Personel",daily_watch_reports:"Arsip Serah Terima Jaga"};
-const fields:Record<string,string[]>={activity_logs:["activity_date","activity_time","title","category","description","status"],maintenance_assets:["asset_code","asset_name","category","location_label","condition_label","is_active"],maintenance_records:["report_date","issue_description","action_taken","status"],inventory_items:["item_code","item_name","category","unit_of_measure","initial_quantity","stock_ready","stock_unready","minimum_stock","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","manufacture_year","country_of_origin","unit_price","capacity_liters","is_active"],stock_movements:["movement_date","movement_type","quantity","reference_no","condition_status","movement_purpose","notes"],checklists:["title","category","description","is_active"],checklist_items:["item_order","item_label","is_required"],checklist_runs:["performed_at","summary"],personnel:["sequence_no","full_name","rank_title","nrp","position","roster_period","birth_place","birth_date","tmt_entry","tmt_last_promotion","education_general","education_military","education_professional","remarks"]};
+const fields:Record<string,string[]>={activity_logs:["activity_date","activity_time","title","category","description","status"],maintenance_assets:["asset_code","asset_name","category","location_label","condition_label","is_active"],maintenance_records:["report_date","issue_description","action_taken","status"],inventory_items:["item_code","item_name","category","unit_of_measure","initial_quantity","stock_ready","stock_unready","minimum_stock","brand","caliber","caliber_unit","secondary_caliber","ammo_type","lot_no","manufacture_year","country_of_origin","unit_price","capacity_liters","is_active"],stock_movements:["movement_date","movement_type","quantity","reference_no","condition_status","movement_purpose","notes"],checklists:["title","category","description","is_active"],checklist_items:["item_order","item_label","is_required"],checklist_runs:["performed_at","summary"],personnel:["sequence_no","full_name","rank_title","position","roster_period"]};
 const labels:Record<string,string>={activity_date:"Tanggal",activity_time:"Waktu",title:"Judul",category:"Kategori",description:"Uraian",status:"Status",asset_code:"Kode aset",asset_name:"Nama aset",location_label:"Lokasi",condition_label:"Kondisi",is_active:"Aktif",report_date:"Tanggal laporan",issue_description:"Kerusakan",action_taken:"Tindakan",item_code:"Kode barang",item_name:"Nama barang",unit_of_measure:"Satuan",stock_ready:"Stok siap",stock_unready:"Stok tidak siap",minimum_stock:"Stok minimum",brand:"Merek",caliber:"Kaliber",caliber_unit:"Satuan kaliber",secondary_caliber:"Kaliber sekunder",ammo_type:"Jenis amunisi",lot_no:"Nomor lot",manufacture_year:"Tahun produksi",country_of_origin:"Negara asal",unit_price:"Harga satuan",initial_quantity:"Jumlah awal",capacity_liters:"Kapasitas (L)",movement_date:"Tanggal transaksi",movement_type:"Jenis transaksi",quantity:"Jumlah",reference_no:"Nomor referensi",condition_status:"Kondisi",movement_purpose:"Tujuan",notes:"Catatan",item_order:"Urutan",item_label:"Item pemeriksaan",is_required:"Wajib",performed_at:"Waktu pelaksanaan",summary:"Ringkasan",sequence_no:"No.",full_name:"Nama",rank_title:"Pangkat",nrp:"NRP",position:"Jabatan",roster_period:"Periode",remarks:"Keterangan"};
 const fmt=(v:any)=>v===null||v===undefined||v===""?"—":typeof v==="boolean"?(v?"Ya":"Tidak"):typeof v==="object"?JSON.stringify(v):String(v);
 function parseWatchMeta(description?:string){const values:Record<string,string>={};for(const line of (description||"").split("\n")){const i=line.indexOf(":");if(i>0)values[line.slice(0,i)]=line.slice(i+1).trim()}return values}
@@ -160,9 +157,28 @@ export default function Home(){
  async function saveDeptAgenda(){if(!canManage||!profile?.unit_id||!deptEditDraft?.id){setNotice("Hanya Admin atau Komandan yang dapat mengubah kegiatan departemen.");return}const title=normalizeDepartment(String(deptEditDraft.title||""));const description=String(deptEditDraft.description||"").trim();if(!title){setNotice("Departemen harus OPS, SIN, EKA, atau LOG.");return}setDeptEditSaving(true);const payload={title,description,category:"D. KHUSUS"};const result=deptEditDraft.id&&String(deptEditDraft.id).startsWith("dept-")?await sb.from("activity_logs").insert({unit_id:profile.unit_id,created_by:user?.id,activity_date:deptEditDraft.activity_date||tomorrowPlans[0]?.activity_date,activity_time:null,status:"draft",...payload}):await sb.from("activity_logs").update(payload).eq("id",deptEditDraft.id).eq("unit_id",profile.unit_id);if(result.error){setNotice("Kegiatan departemen gagal disimpan: "+result.error.message)}else{setNotice("Kegiatan departemen "+title+" berhasil disimpan.");setDeptEditDraft(null);await loadTomorrowPlans()}setDeptEditSaving(false)}
  useEffect(()=>{if(user&&profile?.unit_id)loadTomorrowPlans()},[user,profile?.unit_id,loadTomorrowPlans]);
  async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{const ext=file.name.toLowerCase();const lines=ext.endsWith(".docx")?await readDocxText(file):ext.endsWith(".pdf")?await readPdfText(file):(()=>{throw new Error("Gunakan dokumen Word (.docx) atau PDF (.pdf).")})();const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Tidak ditemukan bagian A sampai E atau jadwal kegiatan. Periksa format PHST.");const meta=parsePhstHeader(lines);setDocMeta(meta);if(Object.keys(meta).length)parsed.push({activity_date:parsed[0].activity_date,activity_time:null,title:"Petugas dan kesiapan jaga",description:Object.entries(meta).map(([k,v])=>k+": "+v).join("\n"),category:"PHST META"});setDocPlans(parsed);setNotice("Dokumen berhasil dibaca. Periksa hasil ekstraksi sebelum menyimpan ke NAVYLOG.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Dokumen gagal diproses.")}finally{setDocBusy(false);e.target.value=""}}
- async function importPhstPlans(){if(!profile?.unit_id||!user||!docPlans.length){setNotice("Pastikan akun, unit, dan dokumen PHST sudah tersedia.");return;}setBusy(true);setNotice("");const phstCategories=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","E. LAIN-LAIN","PHST META"];const {data:oldRows,error:readOldError}=await sb.from("activity_logs").select("id").eq("unit_id",profile.unit_id).in("category",phstCategories);if(readOldError){setNotice("Agenda lama tidak dapat diverifikasi; tidak ada data yang diubah: "+readOldError.message);setBusy(false);return}const payload=docPlans.map(p=>({unit_id:profile.unit_id,created_by:user.id,activity_date:p.activity_date,activity_time:p.activity_time,title:p.title,description:p.description,category:p.category,status:"draft"}));const {error:insertError}=await sb.from("activity_logs").insert(payload);if(insertError){setNotice("Agenda baru gagal disimpan. Agenda lama tetap aman: "+insertError.message+". Silakan periksa dokumen dan coba lagi.");await loadTomorrowPlans()}else{const oldIds=(oldRows||[]).map(r=>r.id);let cleanupMessage="";if(oldIds.length){const {error:cleanupError}=await sb.from("activity_logs").delete().eq("unit_id",profile.unit_id).in("id",oldIds);if(cleanupError)cleanupMessage=" Agenda lama belum terhapus otomatis dan perlu ditinjau: "+cleanupError.message}setNotice("File PHST terbaru berhasil disimpan. "+docPlans.length+" informasi ditampilkan."+cleanupMessage);setDocPlans([]);setDocMeta({});setDocName("");await loadModule();await loadTomorrowPlans()}setBusy(false)}
+ async function importPhstPlans(){
+  if(!profile?.unit_id||!user||!docPlans.length){setNotice("Pastikan akun, unit, dan dokumen PHST sudah tersedia.");return;}
+  setBusy(true);setNotice("");
+  const phstCategories=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","E. LAIN-LAIN","F. LAIN-LAIN","PHST META"];
+  const {data:existingRows,error:readError}=await sb.from("activity_logs").select("activity_date,activity_time,title,description,category").eq("unit_id",profile.unit_id).in("category",phstCategories);
+  if(readError){setNotice("Riwayat PHST tidak dapat diverifikasi; tidak ada data yang diubah: "+readError.message);setBusy(false);return;}
+  const canonicalCategory=(value:string)=>value==="E. LAIN-LAIN"?"F. LAIN-LAIN":value;
+  const recordKey=(row:any)=>JSON.stringify([row.activity_date,row.activity_time||null,String(row.title||"").trim(),String(row.description||"").trim(),canonicalCategory(String(row.category||""))]);
+  const existingKeys=new Set((existingRows||[]).map(recordKey));
+  const newPlans=docPlans.filter(plan=>{const key=recordKey(plan);if(existingKeys.has(key))return false;existingKeys.add(key);return true;});
+  if(!newPlans.length){setNotice("Seluruh isi PHST sudah tercatat. Tidak ada data yang ditambahkan dan riwayat tetap utuh.");setBusy(false);return;}
+  const payload=newPlans.map(p=>({unit_id:profile.unit_id,created_by:user.id,activity_date:p.activity_date,activity_time:p.activity_time,title:p.title,description:p.description,category:canonicalCategory(p.category),status:"draft"}));
+  const {error:insertError}=await sb.from("activity_logs").insert(payload);
+  if(insertError){setNotice("PHST gagal disimpan. Riwayat lama tetap aman: "+insertError.message);await loadTomorrowPlans();}
+  else{
+   setNotice("PHST berhasil disimpan tanpa menghapus riwayat. "+newPlans.length+" data baru ditambahkan; "+(docPlans.length-newPlans.length)+" data identik dilewati.");
+   setDocPlans([]);setDocMeta({});setDocName("");await loadModule();await loadTomorrowPlans();
+  }
+  setBusy(false);
+ }
  async function savePlan(e:React.FormEvent){e.preventDefault();if(!profile?.unit_id||!user){setNotice("Akun belum terhubung ke unit.");return;}setBusy(true);setNotice("");const details=["RENCANA KEGIATAN: "+planDescription.trim(),"PERALATAN / BAHAN YANG DIGUNAKAN: "+(planResources.trim()||"Belum ditentukan")].join("\n");const {error}=await sb.from("activity_logs").insert({unit_id:profile.unit_id,created_by:user.id,activity_date:planDate,activity_time:planTime||null,title:planTitle.trim(),description:details,category:planCategory,status:"draft"});if(error)setNotice("Rencana belum tersimpan: "+error.message);else{setNotice("Rencana kegiatan berhasil disimpan sebagai draft.");setPlanTitle("");setPlanDescription("");setPlanResources("");await loadModule();await loadTomorrowPlans()}setBusy(false)}
- const loadModule=useCallback(async()=>{if(!selected?.table||!profile?.unit_id)return;setBusy(true);setNotice("");let q=sb.from(selected.table).select("*").eq("unit_id",profile.unit_id).limit(500);if(selected.table==="personnel")q=q.order("sequence_no",{ascending:true});else if(selected.table==="inventory_items")q=q.order("item_name",{ascending:true});else q=q.order("created_at",{ascending:false});const {data,error}=await q;if(error){setNotice("Data tidak dapat dimuat dengan hak akses akun ini: "+error.message);setRows([])}else setRows((data||[]) as RowData[]);if(module==="NAVYSTOCK"){const {data:m,error:me}=await sb.from("stock_movements").select("*").eq("unit_id",profile.unit_id).order("movement_date",{ascending:false}).limit(100);setMovements((m||[]) as RowData[]);if(me)setNotice("Riwayat transaksi tidak dapat dimuat: "+me.message)}else setMovements([]);if(module==="NAVYMAINT"){const {data:m,error:me}=await sb.from("maintenance_records").select("*").eq("unit_id",profile.unit_id).order("report_date",{ascending:false}).limit(200);setMaintenanceRows((m||[]) as RowData[]);if(me)setNotice("Riwayat pemeliharaan tidak dapat dimuat: "+me.message)}else setMaintenanceRows([]);setBusy(false)},[selected,profile?.unit_id,module]);
+ const loadModule=useCallback(async()=>{if(!selected?.table||!profile?.unit_id)return;setBusy(true);setNotice("");let q=selected.table==="personnel"?sb.from("personnel").select("id,unit_id,roster_period,sequence_no,full_name,rank_title,position,created_at,updated_at").eq("unit_id",profile.unit_id).limit(500):sb.from(selected.table).select("*").eq("unit_id",profile.unit_id).limit(500);if(selected.table==="personnel")q=q.order("sequence_no",{ascending:true});else if(selected.table==="inventory_items")q=q.order("item_name",{ascending:true});else q=q.order("created_at",{ascending:false});const {data,error}=await q;if(error){setNotice("Data tidak dapat dimuat dengan hak akses akun ini: "+error.message);setRows([])}else setRows((data||[]) as RowData[]);if(module==="NAVYSTOCK"){const {data:m,error:me}=await sb.from("stock_movements").select("*").eq("unit_id",profile.unit_id).order("movement_date",{ascending:false}).limit(100);setMovements((m||[]) as RowData[]);if(me)setNotice("Riwayat transaksi tidak dapat dimuat: "+me.message)}else setMovements([]);if(module==="NAVYMAINT"){const {data:m,error:me}=await sb.from("maintenance_records").select("*").eq("unit_id",profile.unit_id).order("report_date",{ascending:false}).limit(200);setMaintenanceRows((m||[]) as RowData[]);if(me)setNotice("Riwayat pemeliharaan tidak dapat dimuat: "+me.message)}else setMaintenanceRows([]);setBusy(false)},[selected,profile?.unit_id,module]);
  useEffect(()=>{if(user&&profile?.unit_id&&profile.is_active)loadModule()},[user,profile,loadModule]);
  const saveInlineCell=async(row:RowData,field:string)=>{if(!canManage||!profile?.unit_id||!row.id)return;const numeric=["sequence_no","minimum_stock","initial_quantity","stock_ready","stock_unready","unit_price","capacity_liters","manufacture_year"];const dateFields=["roster_period","birth_date"];let value:any=cellDraft;if(field==="is_active")value=cellDraft==="true";else if(numeric.includes(field))value=cellDraft.trim()===""?null:Number(cellDraft);else if(dateFields.includes(field))value=cellDraft.trim()||null;else value=cellDraft.trim()||null;if(numeric.includes(field)&&value!==null&&(!Number.isFinite(value)||(field==="manufacture_year"&&!Number.isInteger(value)))){setNotice("Nilai harus berupa angka yang valid.");return}setCellSaving(true);const {data,error}=await sb.from(selected?.table||"").update({[field]:value,updated_at:new Date().toISOString()}).eq("id",row.id).eq("unit_id",profile.unit_id).select("id").maybeSingle();if(error)setNotice("Perubahan gagal disimpan: "+error.message);else if(!data)setNotice("Tidak ada baris yang diperbarui. Periksa izin edit dan unit aktif.");else{setRows(old=>old.map(x=>x.id===row.id?{...x,[field]:value}:x));setNotice("Kolom berhasil diperbarui.");}setCellSaving(false);setEditingCell(null)};
  const saveStockItem=async()=>{
@@ -195,12 +211,12 @@ export default function Home(){
    }else{
     result=await sb.from("inventory_items").insert({...payload,unit_id:profile.unit_id}).select("id").single();
    }
-   if(result.error){setNotice("NAVYSTOCK gagal disimpan: "+result.error.message);return}
+   if(result.error){setNotice("STOCK gagal disimpan: "+result.error.message);return}
    setNotice(stockDraft.id?"Perubahan data persediaan berhasil disimpan.":"Barang baru berhasil ditambahkan.");
    setStockDraft(null);
    await loadModule();
   }catch(error:any){
-   setNotice("NAVYSTOCK gagal disimpan: "+(error?.message||"Kesalahan tidak diketahui"));
+   setNotice("STOCK gagal disimpan: "+(error?.message||"Kesalahan tidak diketahui"));
   }finally{
    setStockSaving(false);
   }
@@ -229,23 +245,34 @@ export default function Home(){
  async function saveMaintenance(){if(!profile?.unit_id||!user||!maintenanceDraft){setNotice("Data laporan atau akun belum tersedia.");return;}const issue=String(maintenanceDraft.issue_description||"").trim();if(!issue){setNotice("Uraian kerusakan wajib diisi.");return}setMaintenanceSaving(true);const {error}=await sb.from("maintenance_records").insert({unit_id:profile.unit_id,asset_id:maintenanceDraft.asset_id||null,report_date:maintenanceDraft.report_date||new Date().toISOString().slice(0,10),issue_description:issue,action_taken:String(maintenanceDraft.action_taken||"").trim()||null,status:"reported",reported_by:user.id});setNotice(error?"Laporan pemeliharaan gagal disimpan: "+error.message:"Laporan kerusakan berhasil dicatat.");if(!error){setMaintenanceDraft(null);await loadModule()}setMaintenanceSaving(false)}
  async function updateMaintenanceStatus(row:RowData,status:string){if(!["admin","commander"].includes(profile?.role||"")){setNotice("Hanya pengelola unit yang dapat mengubah status pemeliharaan.");return}const payload:any={status,updated_at:new Date().toISOString()};if(status==="completed")payload.completed_at=new Date().toISOString();const {error}=await sb.from("maintenance_records").update(payload).eq("id",row.id).eq("unit_id",profile?.unit_id);setNotice(error?"Status pemeliharaan gagal diperbarui: "+error.message:"Status pemeliharaan diperbarui.");if(!error)await loadModule()}
  async function saveMovement(){if(!profile?.unit_id||!user||!movementDraft){setNotice("Data transaksi atau akun belum tersedia.");return;}const item=String(movementDraft.item_id||"");const qty=Number(movementDraft.quantity);if(!item||!Number.isFinite(qty)||qty<=0){setNotice("Pilih barang dan masukkan jumlah transaksi lebih dari nol.");return}setMovementSaving(true);const {error}=await sb.from("stock_movements").insert({unit_id:profile.unit_id,item_id:item,movement_type:movementDraft.movement_type,quantity:qty,movement_date:movementDraft.movement_date||new Date().toISOString().slice(0,10),reference_no:String(movementDraft.reference_no||"").trim()||null,condition_status:movementDraft.condition_status||"ready",movement_purpose:String(movementDraft.movement_purpose||"").trim()||null,notes:String(movementDraft.notes||"").trim()||null,recorded_by:user.id});setNotice(error?"Transaksi stok ditolak: "+error.message:"Transaksi berhasil dicatat dan saldo diperbarui oleh database.");if(!error){setMovementDraft(null);await loadModule()}setMovementSaving(false)}
- async function saveCrew(){if(!profile?.unit_id||!crewDraft){setNotice("Data personel atau unit belum tersedia.");return;}const payload:any={};for(const k of ["sequence_no","full_name","birth_place","birth_date","rank_title","nrp","tmt_entry","tmt_last_promotion","position","roster_period","education_general","education_military","education_professional","remarks","source_label"]){const v=crewDraft[k];payload[k]=k==="sequence_no"?(v===""||v==null?null:Number(v)):String(v??"").trim()||null}if(!payload.roster_period)payload.roster_period=new Date().toISOString().slice(0,10);if(!payload.full_name){setNotice("Nama personel wajib diisi.");return}setCrewSaving(true);const result=crewDraft.id?await sb.from("personnel").update(payload).eq("id",crewDraft.id).eq("unit_id",profile.unit_id):await sb.from("personnel").insert({...payload,unit_id:profile.unit_id});setNotice(result.error?"Data personel gagal disimpan: "+result.error.message:"Data personel berhasil disimpan.");if(!result.error){setCrewDraft(null);await loadModule()}setCrewSaving(false)}
+ async function saveCrew(){
+  if(!profile?.unit_id||!crewDraft){setNotice("Data personel atau unit belum tersedia.");return;}
+  const sequence=Number(crewDraft.sequence_no);
+  const fullName=String(crewDraft.full_name||"").trim();
+  if(!fullName||!Number.isInteger(sequence)||sequence<1){setNotice("Nomor urut bilangan bulat positif dan nama personel wajib diisi.");return;}
+  const payload:any={sequence_no:sequence,full_name:fullName,rank_title:String(crewDraft.rank_title||"").trim()||null,position:String(crewDraft.position||"").trim()||null,roster_period:String(crewDraft.roster_period||"").trim()||new Date().toISOString().slice(0,10)};
+  setCrewSaving(true);
+  const result=crewDraft.id?await sb.from("personnel").update(payload).eq("id",crewDraft.id).eq("unit_id",profile.unit_id):await sb.from("personnel").insert({...payload,unit_id:profile.unit_id});
+  setNotice(result.error?"Data personel gagal disimpan: "+result.error.message:"Data personel berhasil disimpan. Kolom pribadi tidak diubah.");
+  if(!result.error){setCrewDraft(null);await loadModule();}
+  setCrewSaving(false);
+ }
  async function login(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");const {error}=await sb.auth.signInWithPassword({email:email.trim(),password});if(error)setError("Login gagal. Periksa email/kata sandi atau hubungi administrator.");setBusy(false)}
  const dashboard=useMemo(()=>({personnel:39,stock:rows.length}),[rows.length]);
  const maintRows=useMemo(()=>module!=="NAVYMAINT"||maintSection==="ALL"?rows:rows.filter(r=>{const c=String(r.category||"").toUpperCase();return maintSection==="PLATFORM"?c.includes("PLATFORM"):c.includes("SEWACO")||(!c.includes("PLATFORM")&&!c.includes("SEWACO"))}),[rows,module,maintSection]);const filtered=useMemo(()=>maintRows.filter(r=>Object.values(r).some(v=>fmt(v).toLowerCase().includes(search.toLowerCase()))),[maintRows,search]);
  const waterItem=supplyRows.find(r=>r.category==="Air Tawar"),fuelItem=supplyRows.find(r=>r.category==="BBM");
  const waterStock=Number(waterItem?.stock_ready||0),waterCapacity=Number(waterItem?.capacity_liters||0),waterPct=waterCapacity>0?Math.min(100,Math.round(waterStock/waterCapacity*100)):0;
  const fuelStock=Number(fuelItem?.stock_ready||0),fuelCapacity=Number(fuelItem?.capacity_liters||0),fuelPct=fuelCapacity>0?Math.min(100,Math.round(fuelStock/fuelCapacity*100)):0;
- if(loading)return <main className="loading"><div className="loaderglass">NAVYHUB <span>INITIALIZING</span></div></main>;
- if(!user)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>SHIP MANAGEMENT SYSTEM</small><h1>NAVYHUB</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke NAVYHUB"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
- if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>ACCOUNT ACCESS</small><h1>NAVYHUB</h1><p>Akun berhasil masuk, tetapi belum diaktifkan atau belum ditautkan ke unit.</p><button onClick={()=>sb.auth.signOut()}>Keluar</button></section></main>;
+ if(loading)return <main className="loading"><div className="loaderglass">ALNAV DMS <span>INITIALIZING</span></div></main>;
+ if(!user)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke ALNAV DMS"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
+ if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Akun berhasil masuk, tetapi belum diaktifkan atau belum ditautkan ke unit.</p><button onClick={()=>sb.auth.signOut()}>Keluar</button></section></main>;
  return <div className="shell">
 <aside>
 <div className="brand">
 <div className="crest smallcrest">N</div>
 
 <div>
-<b>NAVYHUB</b>
+<b>ALNAV DMS</b>
 <small>COMMAND & LOGBOOK SYSTEM</small>
 </div>
 
@@ -258,7 +285,7 @@ export default function Home(){
 <label>COMMAND CENTER</label>{visibleMenu.filter(m=>m.id!=="Dashboard").map(m=>
 <button key={m.id} className={module===m.id?"selected":""} onClick={()=>{setModule(m.id);setSearch("");setNotice("")}}>
 <span className="navicon">{m.icon}</span>
-<span>{m.id}<small>{m.desc}</small>
+<span>{m.label||m.id}<small>{m.desc}</small>
 </span>
 <i>›</i>
 </button>)}</nav>
@@ -270,8 +297,8 @@ export default function Home(){
 <main className="main">
 <header>
 <div>
-<small>FLEET OPERATIONS / {module}</small>
-<h2>{module==="Dashboard"?"Command Center":module}</h2>
+<small>FLEET OPERATIONS / {selected?.label||"DASHBOARD"}</small>
+<h2>{module==="Dashboard"?"Command Center":selected?.label||module}</h2>
 </div>
 
 <div className="user">
@@ -308,12 +335,12 @@ export default function Home(){
   <article>
 <small>PERSONNEL REGISTER</small>
 <b>{dbCounts.personnel}</b>
-<span>Records in NAVYCREW</span>
+<span>Personel terdaftar</span>
 </article>
   <article>
 <small>INVENTORY MASTER</small>
 <b>{dbCounts.inventory}</b>
-<span>Items in NAVYSTOCK</span>
+<span>Item persediaan</span>
 </article>
   <article>
 <small>STOCK MOVEMENTS</small>
@@ -383,7 +410,7 @@ export default function Home(){
 <div className="module-grid">{visibleMenu.filter(m=>m.id!=="Dashboard").map(m=>
 <button key={m.id} onClick={()=>setModule(m.id)}>
 <span>{m.icon}</span>
-<b>{m.id}</b>
+<b>{m.label||m.id}</b>
 <small>{m.desc}</small>
 <i>OPEN ↗</i>
 </button>)}</div>
@@ -400,7 +427,7 @@ export default function Home(){
 {module!=="NAVYLOG"&&module!=="NAVYMAINT"&&<section className="module-hero">
 <div>
 <small>OPERATIONAL MODULE</small>
-<h1>{module}</h1>
+<h1>{selected?.label||module}</h1>
 <p>{selected?.desc||"Operational management"}</p>
 </div>
 
@@ -456,7 +483,7 @@ export default function Home(){
 
 <div className="plan-actions">
 <small>Agenda disimpan sebagai DRAFT. Peralatan hanya ditampilkan bila tertulis di dokumen.</small>
-<button onClick={importPhstPlans} disabled={busy}>{busy?"Menyimpan…":"Simpan agenda ke NAVYLOG"}</button>
+<button onClick={importPhstPlans} disabled={busy}>{busy?"Menyimpan…":"Simpan agenda ke LOGBOOK"}</button>
 </div>
 
 </div>
@@ -465,7 +492,7 @@ export default function Home(){
 }</>
 }</section>
 
-<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip NAVYLOG"/>
+<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip LOGBOOK"/>
 <section className="panel data-panel">
 <div className="panelhead">
 <div>
@@ -489,7 +516,7 @@ export default function Home(){
 
 </div>
 }
-{module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="NAVYDOCS · Pusat Arsip"/>}
+{module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="ARCHIVE · Pusat Arsip"/>}
 {module!=="NAVYLOG"&&module!=="NAVYDOCS"&&<section className="panel data-panel">
 <div className="panelhead">
 <div>
@@ -497,7 +524,7 @@ export default function Home(){
 <p>Live data from Supabase · RLS protected</p>
 </div>
 
-<div className="panelhead-actions">{module==="NAVYSTOCK"&&canOperate&&<button onClick={()=>setMovementDraft({item_id:"",movement_type:"inbound",quantity:"",movement_date:new Date().toISOString().slice(0,10),condition_status:"ready"})}>+ Catat transaksi</button>}{module==="NAVYSTOCK"&&canManage&&<button className="outline" onClick={()=>setStockDraft({item_code:"",item_name:"",category:"Logistik",unit_of_measure:"unit",initial_quantity:0,stock_ready:0,stock_unready:0,minimum_stock:0,is_active:true})}>+ Tambah barang</button>}{module==="NAVYMAINT"&&canOperate&&<button onClick={()=>setMaintenanceDraft({report_date:new Date().toISOString().slice(0,10),asset_id:"",issue_description:"",action_taken:""})}>+ Laporkan kerusakan</button>}{module==="NAVYMAINT"&&canManage&&<button className="outline" onClick={()=>setAssetDraft({asset_code:"",asset_name:"",category:maintSection,location_label:"",condition_label:"Baik",is_active:true})}>+ Tambah aset {maintSection}</button>}{module==="NAVYCREW"&&canManage&&<button onClick={()=>setCrewDraft({sequence_no:"",full_name:"",birth_place:"",birth_date:"",rank_title:"",nrp:"",tmt_entry:"",tmt_last_promotion:"",position:"",roster_period:new Date().toISOString().slice(0,10),education_general:"",education_military:"",education_professional:"",remarks:"",source_label:"NAVYHUB"})}>+ Tambah personel</button>}<button className="outline" onClick={()=>loadModule()} disabled={busy}>{busy?"Loading…":"↻ Refresh"}</button>
+<div className="panelhead-actions">{module==="NAVYSTOCK"&&canOperate&&<button onClick={()=>setMovementDraft({item_id:"",movement_type:"inbound",quantity:"",movement_date:new Date().toISOString().slice(0,10),condition_status:"ready"})}>+ Catat transaksi</button>}{module==="NAVYSTOCK"&&canManage&&<button className="outline" onClick={()=>setStockDraft({item_code:"",item_name:"",category:"Logistik",unit_of_measure:"unit",initial_quantity:0,stock_ready:0,stock_unready:0,minimum_stock:0,is_active:true})}>+ Tambah barang</button>}{module==="NAVYMAINT"&&canOperate&&<button onClick={()=>setMaintenanceDraft({report_date:new Date().toISOString().slice(0,10),asset_id:"",issue_description:"",action_taken:""})}>+ Laporkan kerusakan</button>}{module==="NAVYMAINT"&&canManage&&<button className="outline" onClick={()=>setAssetDraft({asset_code:"",asset_name:"",category:maintSection,location_label:"",condition_label:"Baik",is_active:true})}>+ Tambah aset {maintSection}</button>}{module==="NAVYCREW"&&canManage&&<button onClick={()=>setCrewDraft({sequence_no:"",full_name:"",rank_title:"",position:"",roster_period:new Date().toISOString().slice(0,10)})}>+ Tambah personel</button>}<button className="outline" onClick={()=>loadModule()} disabled={busy}>{busy?"Loading…":"↻ Refresh"}</button>
 </div>
 
 </div>
@@ -509,12 +536,12 @@ export default function Home(){
 {module==="NAVYMAINT"&&maintenanceDraft&&<section className="editor-panel"><h3>Pelaporan kerusakan / pemeliharaan</h3><div className="editor-grid"><label>Aset terkait<select value={maintenanceDraft.asset_id||""} onChange={e=>setMaintenanceDraft((v:any)=>({...v,asset_id:e.target.value}))}><option value="">Pilih aset (opsional)</option>{rows.map(r=><option key={r.id} value={r.id}>{r.asset_code} · {r.asset_name}</option>)}</select></label><label>Tanggal laporan<input type="date" value={maintenanceDraft.report_date||""} onChange={e=>setMaintenanceDraft((v:any)=>({...v,report_date:e.target.value}))}/></label><label className="wide">Uraian kerusakan / temuan<textarea value={maintenanceDraft.issue_description||""} onChange={e=>setMaintenanceDraft((v:any)=>({...v,issue_description:e.target.value}))} rows={3}/></label><label className="wide">Tindakan awal (jika ada)<textarea value={maintenanceDraft.action_taken||""} onChange={e=>setMaintenanceDraft((v:any)=>({...v,action_taken:e.target.value}))} rows={2}/></label></div><div className="editor-actions"><button className="outline" onClick={()=>setMaintenanceDraft(null)}>Batal</button><button disabled={maintenanceSaving} onClick={saveMaintenance}>{maintenanceSaving?"Menyimpan…":"Simpan laporan"}</button></div></section>}
 {module==="NAVYMAINT"&&assetDraft&&<section className="editor-panel"><h3>{assetDraft.id?"Edit aset":"Tambah aset pemeliharaan"}</h3><div className="editor-grid">{[["asset_code","Kode aset"],["asset_name","Nama aset"],["location_label","Lokasi"]].map(([k,l])=><label key={k}>{l}<input value={assetDraft[k]??""} onChange={e=>setAssetDraft((v:any)=>({...v,[k]:e.target.value}))}/></label>)}<label>Sub-sistem<select value={String(assetDraft.category||maintSection).toUpperCase().includes("PLATFORM")?"PLATFORM":"SEWACO"} onChange={e=>setAssetDraft((v:any)=>({...v,category:e.target.value}))}><option value="SEWACO">SEWACO</option><option value="PLATFORM">PLATFORM</option></select></label><label>Kondisi<select value={assetDraft.condition_label||"Baik"} onChange={e=>setAssetDraft((v:any)=>({...v,condition_label:e.target.value}))}>{["Baik","Perlu Perhatian","Rusak Ringan","Rusak Berat"].map(x=><option key={x}>{x}</option>)}</select></label></div><div className="editor-actions"><button className="outline" onClick={()=>setAssetDraft(null)}>Batal</button><button disabled={assetSaving} onClick={saveAsset}>{assetSaving?"Menyimpan…":"Simpan aset"}</button></div></section>}
 {module==="NAVYSTOCK"&&movementDraft&&<section className="editor-panel"><h3>Catat transaksi persediaan</h3><p>Saldo stok dihitung otomatis oleh database. BBM/Air Tawar menggunakan kondisi “Tidak berlaku”; kategori lain memilih stok siap atau tidak siap.</p><div className="editor-grid"><label>Barang<select value={movementDraft.item_id||""} onChange={e=>{const chosen=rows.find(r=>r.id===e.target.value);setMovementDraft((v:any)=>({...v,item_id:e.target.value,condition_status:["BBM","Air Tawar"].includes(chosen?.category)?"not_applicable":"ready"}))}}><option value="">Pilih barang</option>{rows.filter(r=>r.is_active).map(r=><option key={r.id} value={r.id}>{r.item_code} · {r.item_name} ({r.stock_ready} {r.unit_of_measure})</option>)}</select></label><label>Jenis transaksi<select value={movementDraft.movement_type} onChange={e=>setMovementDraft((v:any)=>({...v,movement_type:e.target.value}))}><option value="inbound">Barang masuk</option><option value="outbound">Barang keluar</option></select></label><label>Jumlah<input type="number" min="0.01" step="any" value={movementDraft.quantity} onChange={e=>setMovementDraft((v:any)=>({...v,quantity:e.target.value}))}/></label><label>Tanggal<input type="date" value={movementDraft.movement_date} onChange={e=>setMovementDraft((v:any)=>({...v,movement_date:e.target.value}))}/></label><label>Kondisi stok<select value={movementDraft.condition_status} onChange={e=>setMovementDraft((v:any)=>({...v,condition_status:e.target.value}))}><option value="ready">Siap</option><option value="unready">Tidak siap</option><option value="not_applicable">Tidak berlaku (BBM/Air)</option></select></label><label>No. referensi<input value={movementDraft.reference_no||""} onChange={e=>setMovementDraft((v:any)=>({...v,reference_no:e.target.value}))}/></label><label>Tujuan<input value={movementDraft.movement_purpose||""} onChange={e=>setMovementDraft((v:any)=>({...v,movement_purpose:e.target.value}))}/></label><label>Catatan<input value={movementDraft.notes||""} onChange={e=>setMovementDraft((v:any)=>({...v,notes:e.target.value}))}/></label></div><div className="editor-actions"><button className="outline" onClick={()=>setMovementDraft(null)}>Batal</button><button disabled={movementSaving} onClick={saveMovement}>{movementSaving?"Menyimpan…":"Simpan transaksi"}</button></div></section>}
-{module==="NAVYCREW"&&crewDraft&&<section className="editor-panel"><h3>{crewDraft.id?"Edit personel":"Tambah personel"}</h3><div className="editor-grid">{[["sequence_no","Nomor urut","number"],["full_name","Nama lengkap","text"],["birth_place","Tempat lahir","text"],["birth_date","Tanggal lahir","date"],["rank_title","Pangkat","text"],["nrp","NRP","text"],["tmt_entry","TMT masuk","text"],["tmt_last_promotion","TMT pangkat terakhir","text"],["position","Jabatan","text"],["roster_period","Periode roster","date"],["education_general","Pendidikan umum","text"],["education_military","Pendidikan militer","text"],["education_professional","Pendidikan kejuruan","text"],["remarks","Keterangan","text"]].map(([k,l,t])=><label key={k}>{l}<input type={t} value={crewDraft[k]??""} onChange={e=>setCrewDraft((v:any)=>({...v,[k]:e.target.value}))}/></label>)}</div><div className="editor-actions"><button className="outline" onClick={()=>setCrewDraft(null)}>Batal</button><button disabled={crewSaving} onClick={saveCrew}>{crewSaving?"Menyimpan…":"Simpan personel"}</button></div></section>}
+{module==="NAVYCREW"&&crewDraft&&<section className="editor-panel"><h3>{crewDraft.id?"Edit personel":"Tambah personel"}</h3><div className="editor-grid">{[["sequence_no","Nomor urut","number"],["full_name","Nama lengkap","text"],["rank_title","Pangkat","text"],["position","Jabatan","text"],["roster_period","Periode roster","date"]].map(([k,l,t])=><label key={k}>{l}<input type={t} value={crewDraft[k]??""} onChange={e=>setCrewDraft((v:any)=>({...v,[k]:e.target.value}))}/></label>)}</div><div className="editor-actions"><button className="outline" onClick={()=>setCrewDraft(null)}>Batal</button><button disabled={crewSaving} onClick={saveCrew}>{crewSaving?"Menyimpan…":"Simpan personel"}</button></div></section>}
 {notice&&<div className="notice">{notice}</div>
 }
 {busy?<div className="empty">Loading secured records…</div>:filtered.length>0?<div className={"table-wrap"+(module==="NAVYCREW"?" navycrew-table-wrap":"")}><table className={module==="NAVYCREW"?"navycrew-fit-table":undefined}><thead><tr>{(fields[selected.table]||Object.keys(filtered[0])).map(k=><th key={k}>{labels[k]||k.replaceAll("_"," ")}</th>)}{(module==="NAVYSTOCK"&&canManage||module==="NAVYCREW"&&canManage||module==="NAVYMAINT"&&canManage)&&<th>Aksi</th>}</tr></thead><tbody>{filtered.map((r,i)=><tr key={r.id||i}>{(fields[selected.table]||Object.keys(r)).map(k=><td key={k} className={module==="NAVYSTOCK"&&canManage&&!["initial_quantity","stock_ready","stock_unready"].includes(k)?"editable-stock-cell":""} onClick={()=>{if(module==="NAVYSTOCK"&&canManage&&!cellSaving&&!["initial_quantity","stock_ready","stock_unready"].includes(k)){setEditingCell({id:r.id,field:k});setCellDraft(r[k]===null||r[k]===undefined?"":String(r[k]))}}}>{module==="NAVYSTOCK"&&canManage&&!["initial_quantity","stock_ready","stock_unready"].includes(k)&&editingCell?.id===r.id&&editingCell?.field===k?<input autoFocus type={["minimum_stock","unit_price","capacity_liters","manufacture_year"].includes(k)?"number":"text"} value={cellDraft} disabled={cellSaving} onClick={e=>e.stopPropagation()} onChange={e=>setCellDraft(e.target.value)} onBlur={()=>saveInlineCell(r,k)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur();if(e.key==="Escape")setEditingCell(null)}} aria-label={"Edit "+(labels[k]||k)}/>:fmt(r[k])}</td>)}{module==="NAVYSTOCK"&&canManage&&<td><button className="outline stock-edit-button" onClick={()=>setStockDraft({...r})}>Edit data</button></td>}{module==="NAVYCREW"&&canManage&&<td><button className="outline stock-edit-button" onClick={()=>setCrewDraft({...r})}>Edit</button></td>}{module==="NAVYMAINT"&&canManage&&<td><button className="outline stock-edit-button" onClick={()=>setAssetDraft({...r})}>Edit</button></td>}</tr>)}</tbody></table></div>:<div className="empty">Tidak ada data pada tabel ini atau akun tidak memiliki akses baca.</div>}{module==="NAVYSTOCK"&&canManage&&stockDraft&&<section className="stock-editor">
 <div>
-<small>ADMIN CONTROL · NAVYSTOCK</small>
+<small>ADMIN CONTROL · STOCK</small>
 <h3>{stockDraft.id?"Edit data persediaan":"Tambah data persediaan"}</h3>
 </div>
 
