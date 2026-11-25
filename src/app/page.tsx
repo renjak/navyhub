@@ -719,7 +719,7 @@ export default function Home(){
  </section>
  <section className="admin-access-roadmap"><div><small>DEPARTMENTAL RBAC · NEXT CONTROL LAYER</small><h3>Struktur akses departemen</h3><p>Semua personel aktif dapat membaca informasi kapal yang bersifat umum. Hak input, edit dan persetujuan dibatasi berdasarkan departemen dan tingkat kewenangan.</p></div><div className="admin-department-grid">{[["OPS","OPERASI"],["SIN","SENJATA"],["EKA","ELEKTRONIKA"],["LOG","LOGISTIK"]].map(([code,name])=><article key={code}><b>{code}</b><span>{name}</span><small>KEPALA DEPARTEMEN · AKSES TERTENTU</small></article>)}</div><div className="admin-access-warning"><b>Identitas dan undangan akun sudah tersedia.</b><span>Admin dapat mengundang personel melalui email, menetapkan OPS/SIN/EKA/LOG, menunjuk Kepala Departemen dan memberi otorisasi Class V kepada akun SIN. Pembatasan tulis lintas departemen untuk modul operasional masih menjadi tahap berikutnya; penetapan departemen belum otomatis memberikan hak edit lintas modul.</span></div></section>
 </section>}
-{!selected?.table&&module!=="ADMINISTRATION" && <section className="panel coming">
+{!selected?.table&&module!=="ADMINISTRATION"&&module!=="NAVY3D" && <section className="panel coming">
 <div className="coming-icon">◇</div>
 
 <small>MODULE FOUNDATION</small>

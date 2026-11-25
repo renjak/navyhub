@@ -42,3 +42,6 @@ A fault is linked to a part by the tag at the start of `issue_description`, e.g.
 ## Browser support
 
 Needs WebGL2 (all current desktop and mobile browsers). Without it the module shows a message and the rest of the app is unaffected. Reduced-motion users get no auto-rotation, bobbing or marker pulses.
+
+## Catatan integrasi CSS
+`globals.css` memberi gaya ke `.shell nav` dan `.shell aside` (sidebar aplikasi). Karena modul ini dirender di dalam `.shell`, bar tampilan dan panel memakai `<div role="navigation">` / `<div role="complementary">`, bukan `<nav>`/`<aside>`, agar tidak ikut tergaya sebagai sidebar.

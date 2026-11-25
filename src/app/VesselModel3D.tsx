@@ -69,7 +69,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   const canOperate = ["admin", "commander", "officer", "operator"].includes(role);
 
   const rootRef = useRef<HTMLDivElement>(null), canvasRef = useRef<HTMLCanvasElement>(null), marksRef = useRef<HTMLDivElement>(null);
-  const modesRef = useRef<HTMLElement>(null), panelRef = useRef<HTMLElement>(null), engineRef = useRef<Engine | null>(null);
+  const modesRef = useRef<HTMLDivElement>(null), panelRef = useRef<HTMLDivElement>(null), engineRef = useRef<Engine | null>(null);
   const [glFail, setGlFail] = useState<"" | "nogl" | "lost">("");
   const [narrow, setNarrow] = useState(false);
   useEffect(() => { const el = rootRef.current; if (!el) return; const ro = new ResizeObserver(() => setNarrow(el.clientWidth < 600)); ro.observe(el); return () => ro.disconnect(); }, []);
@@ -495,13 +495,13 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
     {glFail && <div className="v3d-fallback"><p>{glFail === "lost" ? "Tampilan 3D berhenti karena GPU perangkat direset. Buka ulang menu ini untuk memulai lagi." : "Perangkat atau browser ini tidak mendukung WebGL 2, jadi model 3D tidak bisa ditampilkan. Data tetap tersedia di menu lain."}</p></div>}
     {banner && <div className="v3d-banner" style={{ color: banner.col }} role="status">{banner.text}</div>}
 
-    <nav ref={modesRef} className="v3d-modes v3d-glass" aria-label="Tampilan modul 3D">
+    <div ref={modesRef} role="navigation" className="v3d-modes v3d-glass" aria-label="Tampilan modul 3D">
       {MODES.map(([id, label]) => <button type="button" key={id} aria-current={mode === id} title={label} onClick={() => setMode(id)}><Svg>{ICON[id]}</Svg><b>{label}</b></button>)}
       <span className="v3d-tools">
         <button type="button" title="Pusatkan tampilan" aria-label="Pusatkan tampilan" onClick={() => engineRef.current?.view(true)}><Svg><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></Svg></button>
         {fsOk && <button type="button" title="Layar penuh" aria-label="Layar penuh" onClick={toggleFs}><Svg><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></Svg></button>}
       </span>
-    </nav>
+    </div>
 
     {mode === "sambut" ? <div className="v3d-welcome">
       <div className="v3d-wcard v3d-glass">
@@ -510,7 +510,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
         <p>Status sistem, telemetri, kerusakan, tangki, geladak, jaga, putar ulang dan latihan peran dalam satu model kapal.</p>
         <button type="button" className="v3d-btn p" style={{ minWidth: 180 }} onClick={() => setMode("status")}>Masuk</button>
       </div>
-    </div> : <aside ref={panelRef} className={"v3d-panel v3d-glass" + (panelMin ? " min" : "")} aria-live="polite">
+    </div> : <div ref={panelRef} role="complementary" aria-label="Panel informasi model 3D" className={"v3d-panel v3d-glass" + (panelMin ? " min" : "")} aria-live="polite">
       <div className="v3d-ph">
         <div><div className="v3d-kicker">{modeInfo[2]}</div><h2 className="v3d-pt v3d-h">{modeInfo[1]}</h2></div>
         <button type="button" className="v3d-pc" aria-expanded={!panelMin} aria-label={panelMin ? "Buka panel" : "Ciutkan panel"} onClick={() => setPanelMin(v => !v)} style={{ transform: panelMin ? "rotate(180deg)" : undefined }}><Svg><path d="M6 9l6 6 6-6" /></Svg></button>
@@ -520,6 +520,6 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
         {!loaded && <p className="v3d-note">Memuat data kapal…</p>}
         {panelBody()}
       </div>
-    </aside>}
+    </div>}
   </div>;
 }
