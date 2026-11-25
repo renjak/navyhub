@@ -123,15 +123,15 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
     <span className={"navy-telemetry-freshness " + (simMode ? "is-live" : gps ? (stale ? "is-stale" : "is-live") : "is-offline")}><i/>{simMode?"SIMULATION ACTIVE":gps?(stale?"STALE DATA":"DATA RECEIVED"):"NO GPS DATA"}</span>
    </div>
    <div className="navy-telemetry-grid">
-    {shownGps?.course_degrees!=null&&<article className="navy-telemetry-compass"><div className="navy-telemetry-label">COURSE OVER GROUND <span>COG</span></div><div className="navy-compass-dial"><span className="navy-compass-n">N</span><span className="navy-compass-e">E</span><span className="navy-compass-s">S</span><span className="navy-compass-w">W</span><div className="navy-compass-needle" style={{transform:"rotate("+Number(shownGps.course_degrees)+"deg)"}}><i/><b/></div><div className="navy-compass-center"/></div><strong>{fmt(shownGps.course_degrees,0)}°</strong></article>}
+    <article className="navy-telemetry-compass"><div className="navy-telemetry-label">COURSE OVER GROUND <span>COG</span></div><div className="navy-compass-dial"><span className="navy-compass-n">N</span><span className="navy-compass-e">E</span><span className="navy-compass-s">S</span><span className="navy-compass-w">W</span><div className="navy-compass-needle" style={{transform:"rotate("+Number(shownGps.course_degrees)+"deg)"}}><i/><b/></div><div className="navy-compass-center"/></div><strong>{shownGps?.course_degrees!=null?fmt(shownGps.course_degrees,0)+"°":"—"}</strong></article>
     <div className="navy-telemetry-readouts">
-     {simMode&&<article className="navy-telemetry-value"><small>SHIP HEADING · GYRO 360°</small><div className="navy-gyro-readout"><div className="navy-gyro-dial"><span>N</span><i style={{transform:"rotate("+simHeading+"deg)"}}/><b/></div><strong>{fmt(simHeading,0).padStart(3,"0")}°</strong></div></article>}
-     {shownGps?.speed_knots!=null&&<article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{fmt(shownGps.speed_knots,1)} <em>kn</em></b></article>}
-     {shownGps&&<article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{Number(shownGps.latitude).toFixed(5)}°, {Number(shownGps.longitude).toFixed(5)}°</b><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>}
+     <article className="navy-telemetry-value"><small>SHIP HEADING · GYRO 360°</small><div className="navy-gyro-readout"><div className="navy-gyro-dial"><span>N</span><i style={{transform:"rotate("+simHeading+"deg)"}}/><b/></div><strong>{simMode?fmt(simHeading,0).padStart(3,"0")+"°":"—"}</strong></div></article>
+     <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{shownGps?.speed_knots!=null?fmt(shownGps.speed_knots,1)+" kn":"—"}</b></article>
+     <article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{shownGps?Number(shownGps.latitude).toFixed(5)+"°, "+Number(shownGps.longitude).toFixed(5)+"°":"—"}</b><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>
     </div>
-    {shownGps&&<div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
-     <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{shownGps.fix_quality||"—"}</b>{shownGps.satellites!=null&&<span>{shownGps.satellites} satelit</span>}</article>
-     {shownGps.accuracy_m!=null&&<article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{fmt(shownGps.accuracy_m,1)} m</b></article>}
+    <div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
+     <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{shownGps?.fix_quality||"—"}</b><span>{shownGps?.satellites!=null?shownGps.satellites+" satelit":"—"}</span></article>
+     <article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{shownGps?.accuracy_m!=null?fmt(shownGps.accuracy_m,1)+" m":"—"}</b></article>
      <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gpsSourceLabel(gps.source)}</b><span>{stamp(shownGps.position_at)}</span></article>
     </div>}
    </div>
