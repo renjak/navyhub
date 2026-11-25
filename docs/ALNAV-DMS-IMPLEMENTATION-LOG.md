@@ -79,3 +79,11 @@
 7. Execute TypeScript/build, role-based RLS, authenticated E2E and tablet/mobile regression checks.
 
 Production remains unchanged. A preview marked READY is not a production release.
+
+
+### Additional source reconciliation
+- Read the current 10 active checklist templates and all 32 checklist items directly from Supabase.
+- The current templates contain DIKO/scenario-based machinery, radar, bilge, logistics and watch tasks. They are not a faithful date-by-date transcription of the uploaded PHST document. Do not relabel them as PHST or automatically mark them as PHST activities.
+- The source PHST has dated daily events and variable D. KHUSUS department activities; some page-separated entries lack a repeated date. A proper PHST schedule/execution data model is required before linking these records.
+- Added GSAP 3.13.x and Lenis 1.1.x dependencies, a root MotionProvider with ScrollTrigger synchronization, word-by-word heading reveal for marked headings, cleanup and reduced-motion opt-out.
+- Vercel preview for commit `902e2330c5316dc69c892d055f85285c20bed4f1` reached READY. Build logs show successful compilation, type checking, static page generation and optimized build. This does not replace interactive/RLS/E2E QA.
