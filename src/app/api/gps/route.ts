@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   const course = body.course_degrees == null ? null : Number(body.course_degrees);
   const satellites = body.satellites == null ? null : Number(body.satellites);
   const positionAt = typeof body.position_at === "string" ? body.position_at : null;
-  const source = typeof body.source === "string" && body.source.trim() ? body.source.trim().slice(0, 80) : (isHardware ? "onboard_gps" : "admin_device_gps");
+  const source = isHardware ? "onboard_gps" : "admin_device_gps";
 
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
       !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     p_speed_knots: speed,
     p_course_degrees: course,
     p_satellites: satellites,
-    p_fix_quality: typeof body.fix_quality === "string" ? body.fix_quality.slice(0, 80) : null,
+    p_fix_quality: isHardware ? (typeof body.fix_quality === "string" ? body.fix_quality.slice(0, 80) : null) : "Lokasi perangkat Admin; bukan GPS onboard",
     p_position_at: positionAt,
     p_source: source
   });
