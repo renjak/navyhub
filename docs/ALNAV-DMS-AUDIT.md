@@ -128,3 +128,12 @@ The project reports one default Supabase branch with with_data=false; this is no
 - ADMINISTRATION appears only for the Admin account. It displays the live profile directory with name, rank, current role and active status, and makes the missing department assignment explicit. It does not yet create accounts or modify roles.
 - All visible component labels in the Logbook, Archive and PWA manifest have been aligned with ALNAV DMS display naming; stable route/table identifiers and legacy asset filenames are preserved for compatibility.
 - Vercel preview for commit `265599cbfdd1d19d2d3257298165419869978243` is READY. The build log shows successful Next.js compile, type validity, static generation and deployment completion. The preview is not production and no authenticated UI/E2E/RLS workflow validation has yet been completed.
+
+
+## 13. Department foundation — applied 25 November 2026
+- Additive production migration applied successfully: departments master data, profile department/head/Class V entitlements, department_code columns, inventory supply_class, helper functions, and Class V restrictive read policies.
+- Seeded OPS/SIN/EKA/LOG for the active ship unit. Inventory classification verified: Class I / LOG = 1, Class III / LOG = 1, Class V / SIN = 15.
+- Class V row reads are now blocked at the database RLS layer for accounts without command/admin role or explicit can_access_class_v entitlement. The same restriction is applied to stock movement reads linked to Class V items.
+- Deployed Supabase Edge Function `admin-invite-user` (JWT required). It verifies an active Admin profile server-side, sends Auth email invitations, assigns unit/role/department/head/Class V fields, and records an audit event. It does not permit creating Admin or Commander accounts.
+- Admin UI now supports department assignment, head designation, explicit Class V entitlement and email invitation. Profile assignment uses the existing Admin-only profile update policy.
+- Important remaining work: write-side RLS for activity logs, stock transactions, maintenance, checklists, daily reports and personnel must be implemented and tested before department heads can edit their own module data. Legacy record ownership stays NULL until confirmed; no guessed department mapping.
