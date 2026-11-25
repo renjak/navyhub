@@ -132,7 +132,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
      <small>{shownGps?.course_degrees==null?"Arah gerak belum tersedia":simMode?"SIMULASI · Arah gerak (COG)":"Arah pergerakan terhadap permukaan bumi"}</small>
     </article>
     <div className="navy-telemetry-readouts">
-     <article className="navy-telemetry-value"><small>SHIP HEADING · GYRO 360°</small><b>{simMode?fmt(simHeading,0)+"°":"—"}</b><span>{simMode?"SIMULASI GYRO · Haluan sintetis 000°–359°":"Belum ada data gyro / kompas kapal"}</span></article>
+     <article className="navy-telemetry-value"><small>SHIP HEADING · GYRO 360°</small><div className="navy-gyro-readout"><div className="navy-gyro-dial"><span>N</span><i style={{transform:"rotate("+(simMode?simHeading:0)+"deg)"}}/><b/></div><strong>{simMode?fmt(simHeading,0).padStart(3,"0")+"°":"---°"}</strong></div><span>{simMode?"SIMULASI GYRO · Haluan sintetis 000°–359°":"Belum ada data gyro / kompas kapal"}</span></article>
      <article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{shownGps?.speed_knots==null?"—":fmt(shownGps.speed_knots,1)} <em>kn</em></b><span>Kecepatan terhadap permukaan bumi</span></article>
      <article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{shownGps?Number(shownGps.latitude).toFixed(5)+"°, "+Number(shownGps.longitude).toFixed(5)+"°":"—"}</b><span>{simMode?"SIMULASI LINTASAN · TIDAK DITULIS KE DATABASE":gps?gpsSourceLabel(gps.source):"Menunggu posisi GPS"}</span><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>
     </div>
