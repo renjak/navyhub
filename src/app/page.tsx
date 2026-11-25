@@ -4,6 +4,7 @@ import {createClient,type User} from "@supabase/supabase-js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import DigitalLogbook from "./DigitalLogbook";
 import PHSTManager from "./PHSTManager";
+import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
 import VesselStatus from "./VesselStatus";
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
@@ -220,6 +221,17 @@ export default function Home(){
   const newPlans=docPlans.filter(plan=>{const key=recordKey(plan);if(existingKeys.has(key))return false;existingKeys.add(key);return true;});
   if(!newPlans.length){setNotice("Seluruh isi PHST sudah tercatat. Tidak ada data yang ditambahkan dan riwayat tetap utuh.");setBusy(false);return;}
   const payload=newPlans.map(p=>({unit_id:profile.unit_id,created_by:user.id,activity_date:p.activity_date,activity_time:p.activity_time,title:p.title,description:p.description,category:canonicalCategory(p.category),status:"draft"}));
+  // Structured duty roster and Bagian C checklist; header is associated only with the first dated block.
+  const firstDate=docPlans.find(p=>p.category!=="PHST META")?.activity_date;
+  if(firstDate&&Object.keys(docMeta).length){
+   const officer=docMeta["Perwira Jaga"]||"";
+   const officerNrp=(officer.match(/NRP\s*([\w/.-]+)/i)||[])[1]||null;
+   const cleanOfficer=officer.replace(/\s*NRP\s*[\w/.-]+/i,"").trim();
+   const {data:daily,error:dailyError}=await sb.from("phst_daily_orders").upsert({unit_id:profile.unit_id,activity_date:firstDate,duty_officer:cleanOfficer,duty_officer_nrp:officerNrp,duty_division:docMeta["Divisi Jaga"]||"",duty_nco:docMeta["Bintara Jaga"]||"",duty_messenger:docMeta["Caraka"]||"",duty_attire:docMeta["Tenue Jaga"]||"",source_file:docName,source_verified:true},{onConflict:"unit_id,activity_date"}).select("id").single();
+   if(dailyError){setNotice("Data personel PHST gagal disimpan: "+dailyError.message);setBusy(false);return;}
+   const checklist=docPlans.filter(p=>p.activity_date===firstDate&&p.category==="C. UMUM"&&p.activity_time).map((p,i)=>({unit_id:profile.unit_id,daily_order_id:daily.id,sequence_no:i+1,scheduled_time:p.activity_time,activity_text:p.title}));
+   if(checklist.length){const {error:checkError}=await sb.from("phst_checklist_items").upsert(checklist,{onConflict:"daily_order_id,sequence_no"});if(checkError){setNotice("Checklist Bagian C gagal disimpan: "+checkError.message);setBusy(false);return;}}
+  }
   const {error:insertError}=await sb.from("activity_logs").insert(payload);
   if(insertError){setNotice("PHST gagal disimpan. Riwayat lama tetap aman: "+insertError.message);await loadTomorrowPlans();}
   else{
@@ -553,7 +565,7 @@ export default function Home(){
 }</>
 }</section>
 
-<PHSTManager supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer}/>
+<PHSTLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer}/>
 <DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip LOGBOOK"/>
 <section className="panel data-panel">
 <div className="panelhead">
