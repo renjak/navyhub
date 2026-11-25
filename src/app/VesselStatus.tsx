@@ -80,7 +80,9 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
  },[]);
  useEffect(()=>()=>{trackingEnabled.current=false;if(trackingTimer.current!==null)window.clearInterval(trackingTimer.current)},[]);
  const gpsSourceLabel=(source:string|null|undefined)=>source==="onboard_gps"?"GPS onboard (gateway)":source==="admin_device_gps"?"Lokasi perangkat Admin":source==="KRI_ALAMANG_644_MASTER_GPS"?"Data lama · sumber perangkat belum terverifikasi":source||"Sumber posisi tidak diketahui";
- const current=weather?.current,mc=marine?.current;
+ const simEnvironment={temperature_2m:29.4,relative_humidity_2m:78,precipitation:0.2,weather_code:2,wind_speed_10m:11.6,wind_direction_10m:48};
+ const simSea={sea_level_height_msl:0.42,wave_height:0.7,ocean_current_velocity:0.8,ocean_current_direction:125};
+ const current=simMode?simEnvironment:weather?.current,mc=simMode?simSea:marine?.current;
  const shownGps=simMode?simGps:gps;
  useEffect(()=>{
   if(!simMode)return;
@@ -92,18 +94,18 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
     const rad=nextHeading*Math.PI/180;
     const lat=p.latitude+(distanceNm/60)*Math.cos(rad);
     const lon=p.longitude+(distanceNm/(60*Math.max(0.2,Math.cos(p.latitude*Math.PI/180))))*Math.sin(rad);
-    return {latitude:lat,longitude:lon,speed_knots:speed,course_degrees:nextHeading,position_at:new Date().toISOString(),source:"SIMULATION"};
+    return {latitude:lat,longitude:lon,speed_knots:speed,course_degrees:nextHeading,satellites:12,fix_quality:"3D FIX · SIMULATED",accuracy_m:2.4+Math.abs(Math.sin(Date.now()/5000))*0.8,position_at:new Date().toISOString(),source:"SIMULATION"};
    });
    setSimHeading((h:number)=>((h+((Math.sin(Date.now()/7000))*1.6)+360)%360));
   },2000);
   return ()=>window.clearInterval(timer);
  },[simMode]);
  const hourly=(marine?.hourly?.sea_level_height_msl||[]).filter((v:any)=>typeof v==="number"&&Number.isFinite(v));
- const low=hourly.length?Math.min(...hourly):null,high=hourly.length?Math.max(...hourly):null;
+ const low=simMode?0.38:hourly.length?Math.min(...hourly):null,high=simMode?0.46:hourly.length?Math.max(...hourly):null;
  const stale=gps?Date.now()-new Date(gps.position_at).getTime()>(gps.source==="admin_device_gps"?2:15)*60*1000:false;
  const mapSrc=useMemo(()=>{
   const bbox="94.5%2C-11.5%2C141.5%2C6.5";
-  const marker=gps?"&marker="+encodeURIComponent(Number(gps.latitude)+","+Number(gps.longitude)):"";
+  const marker=shownGps?"&marker="+encodeURIComponent(Number(shownGps.latitude)+","+Number(shownGps.longitude)):"";
   return "https://www.openstreetmap.org/export/embed.html?bbox="+bbox+"&layer=mapnik"+marker;
  },[gps?.latitude,gps?.longitude]);
   return <section className="navy-maritime">
@@ -111,7 +113,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
    <div className="navy-map-top"><div><small>FLEET TRACKING · INDONESIAN ARCHIPELAGO</small><h2>Peta Maritim Indonesia</h2><p>Posisi terakhir tercatat KRI Alamang-644</p></div><div className="navy-map-top-actions"><div className={"navy-gps-state "+(gps?(stale?"stale":"live"):"offline")}><i/>{gps?(stale?"GPS DATA AGED":"GPS POSITION AVAILABLE"):"AWAITING GPS DATA"}</div><button type="button" className="navy-map-close" onClick={()=>setMapOpen(false)} aria-label="Tutup peta">✕</button></div></div>
    <div className="navy-map-canvas navy-map-real"><iframe title="Peta geografis Indonesia dengan posisi GPS kapal" src={mapSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen/>
     <div className="navy-map-coords">{gps?Number(gps.latitude).toFixed(5)+"°, "+Number(gps.longitude).toFixed(5)+"°":"MENUNGGU POSISI GPS"}</div>
-    <div className="navy-map-legend"><span><i/> POSISI TERCATAT KRI ALAMANG-644</span><span>OPENSTREETMAP · MAPNIK</span></div>
+    <div className="navy-map-legend"><span><i/> {simMode?"POSISI SIMULASI · BUKAN GPS REAL":"POSISI TERCATAT KRI ALAMANG-644"}</span><span>OPENSTREETMAP · MAPNIK</span></div>
    </div>
    <div className="navy-map-footer"><span>UNIT · KRI ALAMANG-644</span><span>{gps?"Last position: "+stamp(gps.position_at):"Belum ada data posisi kapal"}</span><button onClick={load} disabled={loading}>{loading?"MEMUAT…":"↻ REFRESH"}</button><a href={gps?"https://www.openstreetmap.org/?mlat="+gps.latitude+"&mlon="+gps.longitude+"#map=7/"+gps.latitude+"/"+gps.longitude:"https://www.openstreetmap.org/#map=5/-2.5/118"} target="_blank" rel="noreferrer">BUKA PETA ↗</a></div>
   </div></div></div>}
@@ -127,10 +129,10 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
      {shownGps?.speed_knots!=null&&<article className="navy-telemetry-value"><small>SPEED OVER GROUND</small><b>{fmt(shownGps.speed_knots,1)} <em>kn</em></b></article>}
      {shownGps&&<article className="navy-telemetry-value"><small>GPS COORDINATES</small><b className="navy-telemetry-coordinate">{Number(shownGps.latitude).toFixed(5)}°, {Number(shownGps.longitude).toFixed(5)}°</b><button type="button" onClick={()=>setMapOpen(true)}>BUKA PETA INDONESIA ↗</button></article>}
     </div>
-    {(gps||simMode)&&<div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
-     {(gps?.fix_quality||gps?.satellites!=null)&&<article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{gps?.fix_quality||"—"}</b>{gps?.satellites!=null&&<span>{gps.satellites} satelit</span>}</article>}
-     {gps?.accuracy_m!=null&&<article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{fmt(gps.accuracy_m,1)} m</b></article>}
-     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gpsSourceLabel(gps.source)}</b><span>{shownGps?stamp(shownGps.position_at):""}</span></article>
+    {shownGps&&<div className="navy-telemetry-readouts navy-telemetry-readouts-meta">
+     <article className="navy-telemetry-value"><small>GPS FIX QUALITY</small><b>{shownGps.fix_quality||"—"}</b>{shownGps.satellites!=null&&<span>{shownGps.satellites} satelit</span>}</article>
+     {shownGps.accuracy_m!=null&&<article className="navy-telemetry-value"><small>POSITION ACCURACY</small><b>{fmt(shownGps.accuracy_m,1)} m</b></article>}
+     <article className="navy-telemetry-value"><small>TELEMETRY SOURCE</small><b className="navy-telemetry-source">{simMode?"SIMULATED GPS + GYRO":gpsSourceLabel(gps.source)}</b><span>{stamp(shownGps.position_at)}</span></article>
     </div>}
    </div>
    <div className="navy-telemetry-note"><b>CATATAN NAVIGASI</b><span>COG menunjukkan arah gerak, bukan arah haluan (Heading). Heading simulasi ditampilkan terpisah sebagai demonstrasi gyro 360° dan tidak dianggap data gyro onboard. Matikan simulasi untuk kembali ke data GPS aktual.</span></div>
@@ -139,7 +141,7 @@ export default function VesselStatus({supabase,unitId,userId,canManage}:Props){
    <article className="navy-info-card"><div className="navy-info-head"><span>☼</span><small>WEATHER · VESSEL LOCATION</small></div><b>{current?fmt(current.temperature_2m,0)+"°C":"—"}</b><strong>{current?wx(current.weather_code):"Menunggu koordinat GPS"}</strong><div className="navy-info-meta"><span>Angin <b>{current?fmt(current.wind_speed_10m)+" km/j":"—"}</b></span><span>Hujan <b>{current?fmt(current.precipitation)+" mm":"—"}</b></span></div><small>{current?"Kelembapan "+current.relative_humidity_2m+"% · arah "+current.wind_direction_10m+"°":"Cuaca mengikuti koordinat posisi terakhir"}</small></article>
    <article className="navy-info-card"><div className="navy-info-head"><span>≈</span><small>MARINE · SEA CONDITIONS</small></div><b>{mc?.sea_level_height_msl!=null?fmt(mc.sea_level_height_msl,2)+" m":"—"}</b><strong>Estimasi muka laut terhadap MSL</strong><div className="navy-info-meta"><span>Model tertinggi <b>{high==null?"—":fmt(high,2)+" m"}</b></span><span>Model terendah <b>{low==null?"—":fmt(low,2)+" m"}</b></span></div><small>Gelombang {mc?.wave_height==null?"—":fmt(mc.wave_height)+" m"} · Arus {mc?.ocean_current_velocity==null?"—":fmt(mc.ocean_current_velocity)+" m/s"}</small></article>
   </div>
-  {canManage&&<div className="navy-gps-admin"><div className="navy-gps-admin-main"><div><span className="navy-gps-compact-state">DEMO NAVIGATION</span><small>Lintasan sintetis untuk uji gerak GPS dan gyro 360°. Tidak mengubah posisi GPS produksi.</small></div><button type="button" className={simMode?"stop":"start"} onClick={()=>setSimMode(v=>!v)}>{simMode?"HENTIKAN SIMULASI":"JALANKAN SIMULASI GPS + GYRO"}</button></div><div className="navy-gps-admin-main"><div><span className={"navy-gps-compact-state"+(tracking?" is-active":"")}>{tracking?"MASTER GPS AKTIF":"MASTER GPS TIDAK AKTIF"}</span><small>{trackingStatus==="ACTIVE"?"Perangkat Admin mengirim posisi":trackingStatus==="ACQUIRING"?"Mengambil posisi GPS perangkat":trackingStatus==="ERROR"?"Periksa izin/koneksi GPS":trackingStatus==="UNAVAILABLE"?"GPS perangkat tidak tersedia":"Sumber posisi belum diaktifkan"}{lastSentAt?" · terakhir dikirim "+stamp(lastSentAt):""}</small></div><button type="button" className={tracking?"stop":"start"} onClick={tracking?stopMasterGps:startMasterGps}>{tracking?"HENTIKAN MASTER GPS":"AKTIFKAN MASTER GPS"}</button></div></div>}
+  {canManage&&<div className="navy-gps-admin"><div className="navy-gps-admin-main"><div><span className="navy-gps-compact-state">DEMO NAVIGATION</span><small>Lintasan sintetis untuk uji gerak GPS dan gyro 360°. Tidak mengubah posisi GPS produksi.</small></div><button type="button" className={simMode?"stop":"start"} onClick={()=>setSimMode(v=>!v)}>{simMode?"HENTIKAN SIMULASI":"AKTIFKAN SIMULASI"}</button></div><div className="navy-gps-admin-main"><div><span className={"navy-gps-compact-state"+(tracking?" is-active":"")}>{tracking?"MASTER GPS AKTIF":"MASTER GPS TIDAK AKTIF"}</span><small>{trackingStatus==="ACTIVE"?"Perangkat Admin mengirim posisi":trackingStatus==="ACQUIRING"?"Mengambil posisi GPS perangkat":trackingStatus==="ERROR"?"Periksa izin/koneksi GPS":trackingStatus==="UNAVAILABLE"?"GPS perangkat tidak tersedia":"Sumber posisi belum diaktifkan"}{lastSentAt?" · terakhir dikirim "+stamp(lastSentAt):""}</small></div><button type="button" className={tracking?"stop":"start"} onClick={tracking?stopMasterGps:startMasterGps}>{tracking?"HENTIKAN MASTER GPS":"AKTIFKAN MASTER GPS"}</button></div></div>}
   {error&&<div className="navy-status-error">{error}</div>}{notice&&<div className="navy-status-notice">{notice}</div>}
  </section>
 }
