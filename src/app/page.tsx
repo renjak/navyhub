@@ -14,6 +14,7 @@ const menu=[
  {id:"NAVYSTOCK",label:"STOCK",desc:"Persediaan & logistik",icon:"▣",table:"inventory_items"},
  {id:"NAVYCREW",label:"PERSONEL",desc:"Personel & jadwal jaga",icon:"♙",table:"personnel"},
  {id:"NAVYDOCS",label:"ARCHIVE",desc:"Dokumen & arsip",icon:"▧",table:"daily_watch_reports"},
+ {id:"ADMINISTRATION",label:"ADMINISTRATION",desc:"Akun, departemen & hak akses",icon:"⚿"},
 ];
 type Profile={id:string;full_name:string;rank_title:string|null;unit_id:string|null;role:string;is_active:boolean};
 type RowData=Record<string,any>;
@@ -137,6 +138,7 @@ function parseWatchMeta(description?:string){const values:Record<string,string>=
 export default function Home(){
  const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile|null>(null),[loading,setLoading]=useState(true),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false),[module,setModule]=useState("Dashboard"),[rows,setRows]=useState<RowData[]>([]),[movements,setMovements]=useState<RowData[]>([]),[search,setSearch]=useState(""),[notice,setNotice]=useState("");
  const [dbCounts,setDbCounts]=useState({personnel:"—",inventory:"—",movements:"—",logs:"—"});
+ const [accountRows,setAccountRows]=useState<RowData[]>([]),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
  const [editingCell,setEditingCell]=useState<{id:string;field:string}|null>(null),[cellDraft,setCellDraft]=useState("");
  const [cellSaving,setCellSaving]=useState(false);
  const [supplyRows,setSupplyRows]=useState<RowData[]>([]);
@@ -165,9 +167,10 @@ export default function Home(){
  const isAdmin=profile?.role==="admin";
  const canManage=profile?.role==="admin"||profile?.role==="commander";
  const canOperate=["admin","commander","officer","operator"].includes(profile?.role||"");
- const visibleMenu=menu;
+ const visibleMenu=menu.filter(m=>m.id!=="ADMINISTRATION"||isAdmin);
  const selected=menu.find(m=>m.id===module);
- useEffect(()=>{if(isViewer&&!visibleMenu.some(m=>m.id===module))setModule("Dashboard")},[isViewer,module]);
+ useEffect(()=>{if(!visibleMenu.some(m=>m.id===module))setModule("Dashboard")},[visibleMenu,module]);
+ useEffect(()=>{if(module!=="ADMINISTRATION"||!isAdmin||!profile?.unit_id)return;let alive=true;setAccountBusy(true);setAccountError("");sb.from("profiles").select("id,full_name,rank_title,role,is_active").eq("unit_id",profile.unit_id).order("full_name",{ascending:true}).then(({data,error})=>{if(!alive)return;if(error){setAccountError("Direktori akun gagal dimuat: "+error.message);setAccountRows([])}else setAccountRows((data||[]) as RowData[]);setAccountBusy(false)});return()=>{alive=false}},[module,isAdmin,profile?.unit_id]);
  useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const names=["personnel","inventory_items","stock_movements","activity_logs"];const results=await Promise.all(names.map(table=>sb.from(table).select("*",{count:"exact",head:true}).eq("unit_id",profile.unit_id!)));if(live)setDbCounts({personnel:results[0].error?"—":String(results[0].count??0),inventory:results[1].error?"—":String(results[1].count??0),movements:results[2].error?"—":String(results[2].count??0),logs:results[3].error?"—":String(results[3].count??0)})})();return()=>{live=false}},[profile?.unit_id]);
  useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const {data,error}=await sb.from("inventory_items").select("id,item_name,category,capacity_liters,stock_ready,stock_unready,unit_of_measure").eq("unit_id",profile.unit_id!).eq("is_active",true).in("category",["Air Tawar","BBM"]);if(live)setSupplyRows(error?[]:(data||[]) as RowData[])})();return()=>{live=false}},[profile?.unit_id]);
  const loadTomorrowPlans=useCallback(async()=>{if(!profile?.unit_id)return;const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");const {data,error}=await sb.from("activity_logs").select("id,activity_date,activity_time,title,description,category,status").eq("unit_id",profile.unit_id).gte("activity_date",today).order("activity_date",{ascending:true}).order("activity_time",{ascending:true});if(error){setNotice("Agenda tersimpan tidak dapat dimuat: "+error.message);return}const rows=(data||[]) as RowData[];const nextDate=rows[0]?.activity_date;setTomorrowPlans(nextDate?rows.filter(p=>p.activity_date===nextDate):[])},[profile?.unit_id]);
@@ -629,7 +632,20 @@ export default function Home(){
 }</section>
 }
 </>}
-{!selected?.table && <section className="panel coming">
+{module==="ADMINISTRATION"&&isAdmin&&<section className="admin-access-board">
+ <header className="admin-access-heading"><div><small>SECURITY · IDENTITY · ACCESS GOVERNANCE</small><h1>ADMINISTRATION</h1><p>Direktori akun ALNAV DMS dan kontrol akses unit KRI ALAMANG-644.</p></div><span>ADMIN MASTER CONTROL</span></header>
+ <div className="admin-access-summary">
+  <article><small>ACCOUNT DIRECTORY</small><b>{accountRows.length}</b><span>Akun pada unit aktif</span></article>
+  <article><small>ACTIVE ACCOUNTS</small><b>{accountRows.filter(a=>a.is_active).length}</b><span>Memiliki akses aktif</span></article>
+  <article><small>DEPARTMENT SCOPE</small><b>NOT SET</b><span>Menunggu migrasi departemen + RLS</span></article>
+ </div>
+ <section className="panel data-panel admin-account-panel"><div className="panelhead"><div><h3>Direktori Pengguna</h3><p>Data akun yang benar-benar tersimpan pada Supabase Auth Profile</p></div><span className="glass-chip">ADMIN ONLY</span></div>
+  {accountError&&<div className="notice">{accountError}</div>}
+  {accountBusy?<div className="empty">Memuat direktori akun…</div>:accountRows.length?<div className="table-wrap"><table><thead><tr><th>NAMA</th><th>PANGKAT</th><th>ROLE SAAT INI</th><th>STATUS</th><th>DEPARTEMEN</th></tr></thead><tbody>{accountRows.map(account=><tr key={account.id}><td><b>{account.full_name}</b></td><td>{account.rank_title||"—"}</td><td><span className="admin-role-chip">{String(account.role||"").toUpperCase()}</span></td><td>{account.is_active?"AKTIF":"NONAKTIF"}</td><td><span className="admin-scope-pending">BELUM DITETAPKAN</span></td></tr>)}</tbody></table></div>:<div className="empty">Belum ada akun pada unit ini.</div>}
+ </section>
+ <section className="admin-access-roadmap"><div><small>DEPARTMENTAL RBAC · NEXT CONTROL LAYER</small><h3>Struktur akses departemen</h3><p>Semua personel aktif dapat membaca informasi kapal yang bersifat umum. Hak input, edit dan persetujuan dibatasi berdasarkan departemen dan tingkat kewenangan.</p></div><div className="admin-department-grid">{[["OPS","OPERASI"],["SIN","SENJATA"],["EKA","ELEKTRONIKA"],["LOG","LOGISTIK"]].map(([code,name])=><article key={code}><b>{code}</b><span>{name}</span><small>KEPALA DEPARTEMEN · AKSES TERTENTU</small></article>)}</div><div className="admin-access-warning"><b>Department scope belum diaktifkan.</b><span>Profil Supabase saat ini belum memiliki department_code dan penanda kepala departemen. Penetapan akun belum dapat disimpan secara aman sampai migrasi dan pengujian RLS lintas departemen selesai. Tidak ada hak edit lintas departemen yang dibuka secara sementara.</span></div></section>
+</section>}
+{!selected?.table&&module!=="ADMINISTRATION" && <section className="panel coming">
 <div className="coming-icon">◇</div>
 
 <small>MODULE FOUNDATION</small>
