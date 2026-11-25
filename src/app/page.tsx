@@ -83,6 +83,20 @@ function parsePhstHeader(lines:string[]):Record<string,string>{
  for(const raw of lines){const line=raw.replace(/\s+/g," ").trim();for(const [key,re] of keys){const m=line.match(re);if(m&&!out[key])out[key]=m[1].trim()}}
  return out;
 }
+function parsePhstDailyMeta(lines:string[]):Array<{activity_date:string;meta:Record<string,string>}>{
+ const out:Array<{activity_date:string;meta:Record<string,string>}>=[];let date="",meta:Record<string,string>={},inHeader=false;
+ const flush=()=>{if(date&&Object.keys(meta).length)out.push({activity_date:date,meta:{...meta}})};
+ for(const raw of lines){
+  const line=raw.replace(/\s+/g," ").trim();if(!line)continue;
+  const dm=line.match(/(?:Hari\s*\/\s*tanggal\s*:?\s*)?(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)?\s*,?\s*(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(\d{4})/i);
+  if(dm){flush();date=dm[4]+"-"+monthMap[dm[3].toLowerCase()]+"-"+dm[2].padStart(2,"0");meta={};inHeader=true;continue}
+  if(!date||!inHeader)continue;
+  if(/^A\.\s*SITUASI/i.test(line)){inHeader=false;continue}
+  const labels:[string,RegExp][]=[["Perwira Jaga",/Perwira\s+jaga\s*:?\s*(.+)/i],["Divisi Jaga",/Divisi\s+jaga\s*:?\s*(.+)/i],["Bintara Jaga",/Bintara\s+jaga\s*:?\s*(.+)/i],["Caraka",/Caraka\s*:?\s*(.+)/i],["Tenue Jaga",/Tenue\s+jaga\s*:?\s*(.+)/i]];
+  for(const [key,re] of labels){const m=line.match(re);if(m)meta[key]=m[1].trim()}
+ }
+ flush();return out;
+}
 function parsePhstLines(lines:string[]):ImportedPlan[]{
  const out:ImportedPlan[]=[];let date="";let section="";let inGeneral=false;
  const push=(category:string,title:string,description="",time:string|null=null)=>{if(date&&title.trim())out.push({activity_date:date,activity_time:time,title:title.trim(),description:description.trim(),category})};
@@ -165,6 +179,7 @@ export default function Home(){
  const [deptEditDraft,setDeptEditDraft]=useState<RowData|null>(null),[deptEditSaving,setDeptEditSaving]=useState(false);
  const [docPlans,setDocPlans]=useState<ImportedPlan[]>([]);
  const [docMeta,setDocMeta]=useState<Record<string,string>>({});
+ const [docDailyMeta,setDocDailyMeta]=useState<Array<{activity_date:string;meta:Record<string,string>}>>([]);
  const [docName,setDocName]=useState("");
  const [docBusy,setDocBusy]=useState(false);
  const refreshProfile=useCallback(async(u:User)=>{const {data,error}=await sb.from("profiles").select("id,full_name,rank_title,unit_id,role,is_active,department_code,is_department_head,can_access_class_v").eq("id",u.id).maybeSingle();if(error)throw error;setProfile(data as Profile|null)},[]);
@@ -208,7 +223,7 @@ export default function Home(){
  }
  async function saveDeptAgenda(){if(!canManage||!profile?.unit_id||!deptEditDraft?.id){setNotice("Hanya Admin atau Komandan yang dapat mengubah kegiatan departemen.");return}const title=normalizeDepartment(String(deptEditDraft.title||""));const description=String(deptEditDraft.description||"").trim();if(!title){setNotice("Departemen harus OPS, SIN, EKA, atau LOG.");return}setDeptEditSaving(true);const payload={title,description,category:"D. KHUSUS"};const result=deptEditDraft.id&&String(deptEditDraft.id).startsWith("dept-")?await sb.from("activity_logs").insert({unit_id:profile.unit_id,created_by:user?.id,activity_date:deptEditDraft.activity_date||tomorrowPlans[0]?.activity_date,activity_time:null,status:"draft",...payload}):await sb.from("activity_logs").update(payload).eq("id",deptEditDraft.id).eq("unit_id",profile.unit_id);if(result.error){setNotice("Kegiatan departemen gagal disimpan: "+result.error.message)}else{setNotice("Kegiatan departemen "+title+" berhasil disimpan.");setDeptEditDraft(null);await loadTomorrowPlans()}setDeptEditSaving(false)}
  useEffect(()=>{if(user&&profile?.unit_id)loadTomorrowPlans()},[user,profile?.unit_id,loadTomorrowPlans]);
- async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{const ext=file.name.toLowerCase();const lines=ext.endsWith(".docx")?await readDocxText(file):ext.endsWith(".pdf")?await readPdfText(file):(()=>{throw new Error("Gunakan dokumen Word (.docx) atau PDF (.pdf).")})();const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Tidak ditemukan bagian A sampai E atau jadwal kegiatan. Periksa format PHST.");const meta=parsePhstHeader(lines);setDocMeta(meta);if(Object.keys(meta).length)parsed.push({activity_date:parsed[0].activity_date,activity_time:null,title:"Petugas dan kesiapan jaga",description:Object.entries(meta).map(([k,v])=>k+": "+v).join("\n"),category:"PHST META"});setDocPlans(parsed);setNotice("Dokumen berhasil dibaca. Periksa hasil ekstraksi sebelum menyimpan ke NAVYLOG.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Dokumen gagal diproses.")}finally{setDocBusy(false);e.target.value=""}}
+ async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{const ext=file.name.toLowerCase();const lines=ext.endsWith(".docx")?await readDocxText(file):ext.endsWith(".pdf")?await readPdfText(file):(()=>{throw new Error("Gunakan dokumen Word (.docx) atau PDF (.pdf).")})();const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Tidak ditemukan bagian A sampai E atau jadwal kegiatan. Periksa format PHST.");const meta=parsePhstHeader(lines);setDocMeta(meta);setDocDailyMeta(parsePhstDailyMeta(lines));if(Object.keys(meta).length)parsed.push({activity_date:parsed[0].activity_date,activity_time:null,title:"Petugas dan kesiapan jaga",description:Object.entries(meta).map(([k,v])=>k+": "+v).join("\n"),category:"PHST META"});setDocPlans(parsed);setNotice("Dokumen berhasil dibaca. Periksa hasil ekstraksi sebelum menyimpan ke NAVYLOG.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Dokumen gagal diproses.")}finally{setDocBusy(false);e.target.value=""}}
  async function importPhstPlans(){
   if(!profile?.unit_id||!user||!docPlans.length){setNotice("Pastikan akun, unit, dan dokumen PHST sudah tersedia.");return;}
   setBusy(true);setNotice("");
@@ -221,22 +236,21 @@ export default function Home(){
   const newPlans=docPlans.filter(plan=>{const key=recordKey(plan);if(existingKeys.has(key))return false;existingKeys.add(key);return true;});
   if(!newPlans.length){setNotice("Seluruh isi PHST sudah tercatat. Tidak ada data yang ditambahkan dan riwayat tetap utuh.");setBusy(false);return;}
   const payload=newPlans.map(p=>({unit_id:profile.unit_id,created_by:user.id,activity_date:p.activity_date,activity_time:p.activity_time,title:p.title,description:p.description,category:canonicalCategory(p.category),status:"draft"}));
-  // Structured duty roster and Bagian C checklist; header is associated only with the first dated block.
-  const firstDate=docPlans.find(p=>p.category!=="PHST META")?.activity_date;
-  if(firstDate&&Object.keys(docMeta).length){
-   const officer=docMeta["Perwira Jaga"]||"";
+  // Import every dated duty roster independently; only C. UMUM rows become the officer checklist.
+  for(const dailyMeta of docDailyMeta){
+   const meta=dailyMeta.meta,officer=meta["Perwira Jaga"]||"";
    const officerNrp=(officer.match(/NRP\s*([\w/.-]+)/i)||[])[1]||null;
    const cleanOfficer=officer.replace(/\s*NRP\s*[\w/.-]+/i,"").trim();
-   const {data:daily,error:dailyError}=await sb.from("phst_daily_orders").upsert({unit_id:profile.unit_id,activity_date:firstDate,duty_officer:cleanOfficer,duty_officer_nrp:officerNrp,duty_division:docMeta["Divisi Jaga"]||"",duty_nco:docMeta["Bintara Jaga"]||"",duty_messenger:docMeta["Caraka"]||"",duty_attire:docMeta["Tenue Jaga"]||"",source_file:docName,source_verified:true},{onConflict:"unit_id,activity_date"}).select("id").single();
-   if(dailyError){setNotice("Data personel PHST gagal disimpan: "+dailyError.message);setBusy(false);return;}
-   const checklist=docPlans.filter(p=>p.activity_date===firstDate&&p.category==="C. UMUM"&&p.activity_time).map((p,i)=>({unit_id:profile.unit_id,daily_order_id:daily.id,sequence_no:i+1,scheduled_time:p.activity_time,activity_text:p.title}));
-   if(checklist.length){const {error:checkError}=await sb.from("phst_checklist_items").upsert(checklist,{onConflict:"daily_order_id,sequence_no"});if(checkError){setNotice("Checklist Bagian C gagal disimpan: "+checkError.message);setBusy(false);return;}}
+   const {data:daily,error:dailyError}=await sb.from("phst_daily_orders").upsert({unit_id:profile.unit_id,activity_date:dailyMeta.activity_date,duty_officer:cleanOfficer,duty_officer_nrp:officerNrp,duty_division:meta["Divisi Jaga"]||"",duty_nco:meta["Bintara Jaga"]||"",duty_messenger:meta["Caraka"]||"",duty_attire:meta["Tenue Jaga"]||"",source_file:docName,source_verified:true},{onConflict:"unit_id,activity_date"}).select("id").single();
+   if(dailyError){setNotice("Data personel PHST "+dailyMeta.activity_date+" gagal disimpan: "+dailyError.message);setBusy(false);return;}
+   const checklist=docPlans.filter(p=>p.activity_date===dailyMeta.activity_date&&p.category==="C. UMUM"&&p.activity_time).map((p,i)=>({unit_id:profile.unit_id,daily_order_id:daily.id,sequence_no:i+1,scheduled_time:p.activity_time,activity_text:p.title}));
+   if(checklist.length){const {error:checkError}=await sb.from("phst_checklist_items").upsert(checklist,{onConflict:"daily_order_id,sequence_no"});if(checkError){setNotice("Checklist Bagian C "+dailyMeta.activity_date+" gagal disimpan: "+checkError.message);setBusy(false);return;}}
   }
   const {error:insertError}=await sb.from("activity_logs").insert(payload);
   if(insertError){setNotice("PHST gagal disimpan. Riwayat lama tetap aman: "+insertError.message);await loadTomorrowPlans();}
   else{
    setNotice("PHST berhasil disimpan tanpa menghapus riwayat. "+newPlans.length+" data baru ditambahkan; "+(docPlans.length-newPlans.length)+" data identik dilewati.");
-   setDocPlans([]);setDocMeta({});setDocName("");await loadModule();await loadTomorrowPlans();
+   setDocPlans([]);setDocMeta({});setDocDailyMeta([]);setDocName("");await loadModule();await loadTomorrowPlans();
   }
   setBusy(false);
  }
