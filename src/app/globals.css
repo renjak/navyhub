@@ -961,3 +961,24 @@ tbody tr:hover{background:rgba(160,196,222,.08)}
 @media(prefers-reduced-motion:reduce){
  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+.phst-manager{margin:18px 0;padding:20px}
+.phst-manager-toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:16px 0}
+.phst-manager-toolbar label,.phst-manager-editor label{display:grid;gap:7px;color:var(--muted,#9aadc3);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.phst-manager-toolbar input,.phst-manager-editor input,.phst-manager-editor select,.phst-manager-editor textarea{min-height:42px;padding:10px 12px;border:1px solid rgba(148,177,207,.22);border-radius:10px;background:rgba(8,22,38,.72);color:inherit}
+.phst-manager-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;margin:14px 0;border:1px solid rgba(112,164,205,.2);border-radius:14px;background:rgba(8,24,42,.48)}
+.phst-manager-editor .wide{grid-column:1/-1}
+.phst-manager-editor .editor-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.phst-schedule-row{display:grid;grid-template-columns:66px minmax(0,1fr) auto;gap:14px;align-items:start;padding:16px 0;border-top:1px solid rgba(148,177,207,.14)}
+.phst-schedule-time{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;color:#9bc8ed}
+.phst-schedule-main{display:grid;gap:6px;min-width:0}
+.phst-schedule-main>small,.phst-execution-note small{font-size:10px;color:var(--muted,#9aadc3);letter-spacing:.04em}
+.phst-schedule-main>b{font-size:14px}
+.phst-schedule-main p{margin:0;color:#b8c8d9;font-size:12px;white-space:pre-wrap}
+.phst-state-line{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.phst-state-line span{font-size:9px;letter-spacing:.04em;padding:5px 7px;border-radius:7px;background:rgba(115,153,189,.1);color:#b9cde1}
+.phst-row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.phst-row-actions button,.phst-manager-toolbar button{white-space:nowrap}
+.phst-execution-note{padding:7px 9px;border-left:2px solid #78a9d0;background:rgba(70,120,164,.08)}
+@media(max-width:700px){.phst-manager{padding:14px}.phst-manager-editor{grid-template-columns:1fr}.phst-manager-editor .wide,.phst-manager-editor .editor-actions{grid-column:1}.phst-schedule-row{grid-template-columns:52px minmax(0,1fr)}.phst-row-actions{grid-column:2;justify-content:flex-start}}
