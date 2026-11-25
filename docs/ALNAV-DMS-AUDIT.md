@@ -172,3 +172,9 @@ The project reports one default Supabase branch with with_data=false; this is no
 | Departmental RBAC | PARTIALLY WORKING | Admin identity and Class V access foundation; full department-specific write policies remain. |
 | GSAP/ScrollTrigger/Lenis | NOT IMPLEMENTED | Dependencies are absent from `src/package.json`; motion layer and reduced-motion support remain. |
 | End-to-end QA | NOT VERIFIED | Vercel preview is READY, but authenticated E2E, RLS matrix, responsive and operational regression tests have not been evidenced. |
+
+
+## 11. Checklist source reconciliation — 25 November 2026
+A read-only query of the current 10 active `checklists` and 32 `checklist_items` found that the existing template set includes named tasks such as main-engine/genset inspection, radar/radio checks, bilge-pump checks, food receipt/issue and cold-room stock/temperature checks. Their descriptions refer to a DIKO-based scenario. These are not a direct transcription of the inspected PHST pages and must not be silently presented as today's PHST activities.
+
+The uploaded PHST has date-specific general events (for example 05:30, 07:00, 08:00, 10:00, 10:30, 14:00/16:00, 18:00, 19:00, 20:00, 21:00, 22:00 on the 23 November example) and date-specific D. KHUSUS department activities. Other dated pages vary. Preserve each source date and activity text. The existing checklist templates must remain intact as a separate checklist source until the PHST execution model is migrated and reviewed.
