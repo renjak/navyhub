@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       .eq("id", authData.user.id)
       .maybeSingle();
     if (profileError || !profile || profile.role !== "admin" || !profile.is_active) {
-      return NextResponse.json({ error: "Only an active NAVYHUB admin can submit a manual/device GPS fix." }, { status: 403 });
+      return NextResponse.json({ error: "Only an active ALNAV DMS admin can submit a manual/device GPS fix." }, { status: 403 });
     }
   }
 
