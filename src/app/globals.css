@@ -729,3 +729,11 @@ body:before{content:none!important;display:none!important}
 .admin-account-invite .admin-account-actions{grid-column:1/-1}
 @media(max-width:760px){.admin-account-invite{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.admin-account-invite{grid-template-columns:1fr}.admin-account-invite>div:first-child,.admin-account-invite .admin-account-actions{grid-column:auto}}
+
+/* ALNAV DMS — Dedicated supply sub-dashboards */
+.stock-subdashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:14px 0 18px}
+.stock-subdashboard-grid .supply-card{min-width:0;cursor:default}
+.stock-subdashboard-grid .supply-card h3{font-size:15px;line-height:1.35;margin:12px 0 8px}
+.stock-subdashboard-grid .supply-card .supply-amount{font-size:25px}
+.stock-subdashboard-grid .supply-card .stock-edit-button{margin-top:14px;min-height:34px}
+@media(max-width:700px){.stock-subdashboard-grid{grid-template-columns:1fr}}
