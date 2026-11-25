@@ -122,3 +122,9 @@ The project reports one default Supabase branch with with_data=false; this is no
 - Supabase currently supports only generic roles admin/commander/officer/operator/viewer. The profiles table has no department_code or department-head entitlement. Therefore heads of OPS/SIN/EKA/LOG cannot yet be safely scoped to edit their department. See docs/ALNAV-DMS-DEPARTMENTAL-RBAC.md for the target permission matrix and migration/test sequence.
 - All active personnel should be able to read shared vessel information; writes are scoped to department-owned records and enforced server-side/RLS. Supply class and responsible department are separate dimensions.
 - No department RBAC migration was applied because the only available Supabase branch is empty (with_data=false); production schema was not changed.
+
+
+## 12. Latest implemented UI and preview status
+- ADMINISTRATION appears only for the Admin account. It displays the live profile directory with name, rank, current role and active status, and makes the missing department assignment explicit. It does not yet create accounts or modify roles.
+- All visible component labels in the Logbook, Archive and PWA manifest have been aligned with ALNAV DMS display naming; stable route/table identifiers and legacy asset filenames are preserved for compatibility.
+- Vercel preview for commit `265599cbfdd1d19d2d3257298165419869978243` is READY. The build log shows successful Next.js compile, type validity, static generation and deployment completion. The preview is not production and no authenticated UI/E2E/RLS workflow validation has yet been completed.
