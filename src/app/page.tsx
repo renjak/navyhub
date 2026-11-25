@@ -3,7 +3,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {createClient,type User} from "@supabase/supabase-js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import DigitalLogbook from "./DigitalLogbook";
-import PHSTManager from "./PHSTManager";
+import {LogbookSummary,LogTabs,type LogTab} from "./LogbookParts";
 import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
 import {NavRuntimeProvider,NavRunningChips,useNav} from "./NavRuntime";
@@ -174,7 +174,7 @@ const fields:Record<string,string[]>={activity_logs:["activity_date","activity_t
 const labels:Record<string,string>={activity_date:"Tanggal",activity_time:"Waktu",title:"Judul",category:"Kategori",description:"Uraian",status:"Status",asset_code:"Kode aset",asset_name:"Nama aset",location_label:"Lokasi",condition_label:"Kondisi",is_active:"Aktif",report_date:"Tanggal laporan",issue_description:"Kerusakan",action_taken:"Tindakan",item_code:"Kode barang",item_name:"Nama barang",unit_of_measure:"Satuan",stock_ready:"Stok siap",stock_unready:"Stok tidak siap",minimum_stock:"Stok minimum",brand:"Merek",caliber:"Kaliber",caliber_unit:"Satuan kaliber",secondary_caliber:"Kaliber sekunder",ammo_type:"Jenis amunisi",lot_no:"Nomor lot",manufacture_year:"Tahun produksi",country_of_origin:"Negara asal",unit_price:"Harga satuan",initial_quantity:"Jumlah awal",capacity_liters:"Kapasitas (L)",movement_date:"Tanggal transaksi",movement_type:"Jenis transaksi",quantity:"Jumlah",reference_no:"Nomor referensi",condition_status:"Kondisi",movement_purpose:"Tujuan",notes:"Catatan",item_order:"Urutan",item_label:"Item pemeriksaan",is_required:"Wajib",performed_at:"Waktu pelaksanaan",summary:"Ringkasan",sequence_no:"No.",full_name:"Nama",rank_title:"Pangkat",nrp:"NRP",position:"Jabatan",roster_period:"Periode",remarks:"Keterangan"};
 const fmt=(v:any)=>v===null||v===undefined||v===""?"—":typeof v==="boolean"?(v?"Ya":"Tidak"):typeof v==="object"?JSON.stringify(v):String(v);
 function parseWatchMeta(description?:string){const values:Record<string,string>={};for(const line of (description||"").split("\n")){const i=line.indexOf(":");if(i>0)values[line.slice(0,i)]=line.slice(i+1).trim()}return values}
-function LogShip3D({sb,unitId,userId,role,canAccessClassV}:{sb:any;unitId:string;userId:string;role:string;canAccessClassV:boolean}){const nav=useNav();return <VesselModel3D supabase={sb} unitId={unitId} userId={userId} role={role} canAccessClassV={canAccessClassV} modes={["jaga","putar-ulang","latihan"]} nav={{gps:nav.gps,sim:null}} className="dg-3d"/>}
+function LogShip3D({sb,unitId,userId,role,canAccessClassV,modes}:{sb:any;unitId:string;userId:string;role:string;canAccessClassV:boolean;modes:Array<"jaga"|"putar-ulang"|"latihan">}){const nav=useNav();return <VesselModel3D supabase={sb} unitId={unitId} userId={userId} role={role} canAccessClassV={canAccessClassV} modes={modes} nav={{gps:nav.gps,sim:null}} className="dg-3d"/>}
 export default function Home(){
  const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile|null>(null),[loading,setLoading]=useState(true),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false),[module,setModule]=useState("Dashboard"),[rows,setRows]=useState<RowData[]>([]),[movements,setMovements]=useState<RowData[]>([]),[search,setSearch]=useState(""),[notice,setNotice]=useState("");
  const [dbCounts,setDbCounts]=useState({personnel:"—",inventory:"—",movements:"—",logs:"—"});
@@ -387,6 +387,7 @@ export default function Home(){
  const greetName=cleanName?(profile?.rank_title?profile.rank_title+" ":"")+cleanName.split(" ")[0]:displayName;
  const initials=displayName.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
  const roleLabel=roleNames[profile?.role||""]||profile?.role||"";
+ const [logTab,setLogTab]=useState<LogTab>("jaga"),[logRefresh,setLogRefresh]=useState(0);
  const [focusPart,setFocusPart]=useState<string|undefined>(undefined);
  const pickAssetRoom=useCallback((name:string)=>{setAssetDraft((d:any)=>d?{...d,location_label:name}:{asset_code:"",asset_name:"",category:maintSection,location_label:name,condition_label:"Baik",is_active:true});setNotice("Lokasi aset diisi: "+name+". Lengkapi kode dan nama aset pada formulir di bawah.")},[maintSection]);
  if(loading)return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="Logo ALNAV DMS"/> <span>INITIALIZING</span></div></main>;
@@ -438,16 +439,43 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 {module==="NAVYMAINT"&&<section className="maint-overview"><div className="maint-title"><small>VESSEL ENGINEERING</small><h1>SHIP MAINTENANCE</h1><p>Pengelolaan pemeliharaan dan kesiapan teknis kapal</p></div><div className="maint-overview-cards" aria-label="Ship maintenance categories"><button className={"maint-overview-card "+(maintSection==="SEWACO"?"active":"")} onClick={()=>{setMaintSection("SEWACO");setSearch("")}}><small>SENSOR · WEAPON · COMMAND</small><b>SEWACO</b><span>Sistem senjata, sensor, dan kendali</span><strong>{rows.filter(r=>String(r.category||"").toUpperCase().includes("SEWACO")||(!String(r.category||"").toUpperCase().includes("PLATFORM")&&!String(r.category||"").toUpperCase().includes("SEWACO"))).length} ASET</strong></button><button className={"maint-overview-card "+(maintSection==="PLATFORM"?"active":"")} onClick={()=>{setMaintSection("PLATFORM");setSearch("")}}><small>HULL · PROPULSION · AUXILIARY</small><b>PLATFORM</b><span>Struktur, mesin, dan sistem pendukung kapal</span><strong>{rows.filter(r=>String(r.category||"").toUpperCase().includes("PLATFORM")).length} ASET</strong></button></div></section>}
 {module==="NAVYMAINT"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · kerusakan &amp; denah</div><h2 className="dg-h dg-card-title">Tandai kerusakan di kapal</h2><div className="dg-sub">Pilih bagian kapal untuk melapor atau mengubah status. {canManage?"Di tampilan Geladak, pilih ruangan untuk mengisi lokasi aset.":""}</div></div></div><VesselModel3D supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["kerusakan","geladak"]} key={"maint3d-"+(focusPart||"")} initialPart={focusPart} onDataChange={loadModule} onRoomPick={canManage?pickAssetRoom:undefined} roomPickLabel="Jadikan lokasi aset" className="dg-3d"/></section>}
 {module==="NAVYSTOCK"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · Kelas I &amp; III</div><h2 className="dg-h dg-card-title">Tangki BBM &amp; air tawar</h2><div className="dg-sub">Isi tangki dari persediaan HSD dan Air Tawar. {isAdmin?"Masukkan hasil sounding untuk memperbarui saldo.":"Hanya Admin yang dapat memperbarui sounding."} Letak tangki di model bersifat skematik.</div></div></div><VesselModel3D supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["tangki"]} onDataChange={()=>{void loadModule();setSupplyTick(t=>t+1)}} className="dg-3d"/></section>}
-{module==="NAVYLOG"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · jaga, jejak &amp; latihan</div><h2 className="dg-h dg-card-title">Pos jaga, putar ulang pelayaran &amp; latihan peran</h2><div className="dg-sub">Pos jaga hari ini dari penugasan jaga harian, jejak GPS per tanggal bersama catatan logbook, dan latihan peran (tidak disimpan).</div></div><NavMapButton label="Buka peta"/></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV}/></section>}
-{selected?.table && <>{module==="NAVYLOG"&&<div className="navylog-board">
+{module==="NAVYLOG"&&<div className="dg-logbook">
+<LogbookSummary supabase={sb} unitId={profile.unit_id} onTab={setLogTab} refreshKey={logRefresh}/>
+<LogTabs tab={logTab} onTab={setLogTab}/>
+{logTab==="jaga"&&<div className="dg-log-grid">
+<section className="dg-glass dg-card dg-3d-section dg-log-3d"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · pos jaga</div><h2 className="dg-h dg-card-title">Pos jaga hari ini</h2><div className="dg-sub">Perwira Jaga diambil dari penetapan jaga hari ini. Pos lain tampil “—” sampai datanya tercatat.</div></div></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["jaga"]}/></section>
+<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer} onChange={()=>setLogRefresh(n=>n+1)}/>
+</div>}
+{logTab==="phst"&&<PHSTLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer} onChange={()=>setLogRefresh(n=>n+1)}/>}
+{logTab==="agenda"&&<div className="dg-log-stack">
+<section className="panel data-panel">
+<div className="panelhead">
+<div>
+<h3>Agenda esok hari</h3>
+<p>Rencana kegiatan tersimpan untuk tanggal kegiatan berikutnya</p>
+</div>
+
+<span className="glass-chip">{tomorrowPlans.length} KEGIATAN</span>
+</div>
+
+{Object.keys(agendaDutyMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONEL & POSISI JAGA</small><span>PHST · KESIAGAAN</span></div><div className="agenda-duty-grid">{Object.entries(agendaDutyMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{role}</small><b>{name||"—"}</b></div>)}</div></section>}
+<div className="agenda-list">{agendaVisibleRows.length>0?agendaVisibleRows.map(p=>
+<article className="agenda-card agenda-card-compact" key={p.id}>
+<div className="agenda-time">{p.activity_time?p.activity_time.slice(0,5):"—"}</div>
+<div className="agenda-content"><h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":p.status}</small></div>
+</article>):<div className="empty">Belum ada kegiatan terjadwal sampai pukul 22.00. Unggah dokumen PHST untuk menampilkan agenda.</div>}</div>
+<section className="agenda-departments"><div className="agenda-departments-head"><div><small>KEGIATAN TAMBAHAN</small><h4>Rencana tiap Departemen</h4></div><span>4 DEPARTEMEN</span></div><div className="agenda-department-list">{agendaDeptRows.map(p=><article className="agenda-department-card" key={p.id}><button type="button" className="agenda-department-open" onClick={()=>canManage&&setDeptEditDraft({...p})} disabled={!canManage}><span><small>DEPARTEMEN</small><b>{normalizeDepartment(String(p.title||""))||p.title}</b></span><i>{canManage?"EDIT ↗":"TAMBAHAN"}</i></button>{p.description&&<p>{p.description}</p>}</article>)}</div></section>
+{deptEditDraft&&<section className="agenda-dept-editor"><div className="agenda-dept-editor-head"><div><small>EDIT KEGIATAN DEPARTEMEN</small><h4>{deptEditDraft.title||"Departemen"}</h4></div><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Tutup</button></div><label>Nama departemen<input value={deptEditDraft.title||""} onChange={e=>setDeptEditDraft(v=>v?({...v,title:e.target.value}):v)}/></label><label>Kegiatan tambahan / uraian<textarea rows={4} value={deptEditDraft.description||""} onChange={e=>setDeptEditDraft(v=>v?({...v,description:e.target.value}):v)}/></label><div className="agenda-dept-editor-actions"><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Batal</button><button type="button" onClick={saveDeptAgenda} disabled={deptEditSaving}>{deptEditSaving?"Menyimpan…":"Simpan perubahan"}</button></div></section>}
+
+</section>
 <section className="panel plan-panel">
 <div className="panelhead">
 <div>
-<h3>Agenda Kegiatan Berikutnya</h3>
-<p>Satu tampilan untuk memahami kegiatan, penugasan, dan kesiagaan kapal.</p>
+<h3>Impor dokumen PHST</h3>
+<p>Unggah PHST (.docx/.pdf). Hasil pembacaan ditinjau dulu, lalu disimpan sebagai agenda DRAFT; data lama tidak dihapus.</p>
 </div>
 
-<span className="glass-chip">PHST · AGENDA HARI BERIKUTNYA</span>
+<span className="glass-chip">{isViewer?"Hanya pengelola":"Sumber resmi"}</span>
 </div>
 {!isViewer&&<>
 <div className="phst-upload">
@@ -493,32 +521,11 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 </>
 }</>
 }</section>
-
-<PHSTLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer}/>
-<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer}/> <DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip LOGBOOK"/>
-<section className="panel data-panel">
-<div className="panelhead">
-<div>
-<h3>Agenda esok hari</h3>
-<p>Rencana kegiatan tersimpan untuk tanggal kegiatan berikutnya</p>
-</div>
-
-<span className="glass-chip">{tomorrowPlans.length} KEGIATAN</span>
-</div>
-
-{Object.keys(agendaDutyMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONEL & POSISI JAGA</small><span>PHST · KESIAGAAN</span></div><div className="agenda-duty-grid">{Object.entries(agendaDutyMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{role}</small><b>{name||"—"}</b></div>)}</div></section>}
-<div className="agenda-list">{agendaVisibleRows.length>0?agendaVisibleRows.map(p=>
-<article className="agenda-card agenda-card-compact" key={p.id}>
-<div className="agenda-time">{p.activity_time?p.activity_time.slice(0,5):"—"}</div>
-<div className="agenda-content"><h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":p.status}</small></div>
-</article>):<div className="empty">Belum ada kegiatan terjadwal sampai pukul 22.00. Unggah dokumen PHST untuk menampilkan agenda.</div>}</div>
-<section className="agenda-departments"><div className="agenda-departments-head"><div><small>KEGIATAN TAMBAHAN</small><h4>Rencana tiap Departemen</h4></div><span>4 DEPARTEMEN</span></div><div className="agenda-department-list">{agendaDeptRows.map(p=><article className="agenda-department-card" key={p.id}><button type="button" className="agenda-department-open" onClick={()=>canManage&&setDeptEditDraft({...p})} disabled={!canManage}><span><small>DEPARTEMEN</small><b>{normalizeDepartment(String(p.title||""))||p.title}</b></span><i>{canManage?"EDIT ↗":"TAMBAHAN"}</i></button>{p.description&&<p>{p.description}</p>}</article>)}</div></section>
-{deptEditDraft&&<section className="agenda-dept-editor"><div className="agenda-dept-editor-head"><div><small>EDIT KEGIATAN DEPARTEMEN</small><h4>{deptEditDraft.title||"Departemen"}</h4></div><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Tutup</button></div><label>Nama departemen<input value={deptEditDraft.title||""} onChange={e=>setDeptEditDraft(v=>v?({...v,title:e.target.value}):v)}/></label><label>Kegiatan tambahan / uraian<textarea rows={4} value={deptEditDraft.description||""} onChange={e=>setDeptEditDraft(v=>v?({...v,description:e.target.value}):v)}/></label><div className="agenda-dept-editor-actions"><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Batal</button><button type="button" onClick={saveDeptAgenda} disabled={deptEditSaving}>{deptEditSaving?"Menyimpan…":"Simpan perubahan"}</button></div></section>}
-
-</section>
-
-</div>
-}
+</div>}
+{logTab==="jejak"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · jejak &amp; latihan</div><h2 className="dg-h dg-card-title">Putar ulang pelayaran &amp; latihan peran</h2><div className="dg-sub">Jejak GPS per tanggal bersama catatan logbook pada jam yang sama. Latihan peran hanya di layar ini dan tidak disimpan.</div></div><NavMapButton label="Buka peta"/></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/></section>}
+{logTab==="arsip"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip LOGBOOK"/>}
+</div>}
+{selected?.table && <>
 {module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="ARCHIVE · Pusat Arsip"/>}
 {module!=="NAVYLOG"&&module!=="NAVYDOCS"&&<section className="panel data-panel">
 <div className="panelhead">
