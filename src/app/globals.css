@@ -723,3 +723,9 @@ body:before{content:none!important;display:none!important}
 .admin-account-actions button{min-height:34px;padding:0 11px;font-size:8px}
 @media(max-width:900px){.admin-account-editor{grid-template-columns:1fr 1fr}.admin-account-actions{grid-column:1/-1}}
 @media(max-width:520px){.admin-account-editor{grid-template-columns:1fr}.admin-account-actions{grid-column:auto}.admin-account-editor .admin-access-check{min-height:28px}}
+
+.admin-account-invite{grid-template-columns:repeat(3,minmax(0,1fr))}
+.admin-account-invite>div:first-child{grid-column:1/-1}
+.admin-account-invite .admin-account-actions{grid-column:1/-1}
+@media(max-width:760px){.admin-account-invite{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.admin-account-invite{grid-template-columns:1fr}.admin-account-invite>div:first-child,.admin-account-invite .admin-account-actions{grid-column:auto}}
