@@ -350,13 +350,13 @@ export default function Home(){
  const boatFuelItem=rows.find(r=>r.supply_class==="III"&&/skoci|penyelamat/i.test(String(r.item_name||"")+" "+String(r.category||"")));
  const waterStock=Number(waterItem?.stock_ready||0),waterCapacity=Number(waterItem?.capacity_liters||0),waterPct=waterCapacity>0?Math.min(100,Math.round(waterStock/waterCapacity*100)):0;
  const fuelStock=Number(fuelItem?.stock_ready||0),fuelCapacity=Number(fuelItem?.capacity_liters||0),fuelPct=fuelCapacity>0?Math.min(100,Math.round(fuelStock/fuelCapacity*100)):0;
- if(loading)return <main className="loading"><div className="loaderglass">ALNAV DMS <span>INITIALIZING</span></div></main>;
- if(!user)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke ALNAV DMS"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
- if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><div className="crest">N</div><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Akun berhasil masuk, tetapi belum diaktifkan atau belum ditautkan ke unit.</p><button onClick={()=>sb.auth.signOut()}>Keluar</button></section></main>;
+ if(loading)return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="Logo ALNAV DMS"/> <span>INITIALIZING</span></div></main>;
+ if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS"/><small>SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Email akun terdaftar</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Kata sandi</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Memeriksa…":"Masuk ke ALNAV DMS"}</button></form><footer>Akses terbatas untuk pengguna terotorisasi.</footer></section></main>;
+ if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Akun berhasil masuk, tetapi belum diaktifkan atau belum ditautkan ke unit.</p><button onClick={()=>sb.auth.signOut()}>Keluar</button></section></main>;
  return <div className="shell">
 <aside>
 <div className="brand">
-<div className="crest smallcrest">N</div>
+<img className="alnav-brand-logo alnav-sidebar-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo ALNAV DMS"/>
 
 <div>
 <b>ALNAV DMS</b>
@@ -402,13 +402,13 @@ export default function Home(){
 }
  <VesselStatus supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={isAdmin}/>
  <section className="hero">
-<div>
+<div className="hero-copy">
 <small>INTEGRATED SHIP MANAGEMENT</small>
 <h1 data-gsap-heading>Welcome aboard, {(profile.full_name||"Operator").split(" ")[0]}.</h1>
 <p>Operational records, maintenance, logistics and personnel in one command environment.</p>
 </div>
 
-<div className="hero-orb"><img src="/alamang-emblem.jpg" alt="Emblem KRI Alamang-644"/></div>
+<div className="hero-branding"><div className="hero-logo-panel"><img className="hero-alnav-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS"/></div><div className="hero-orb"><img src="/alamang-emblem.jpg" alt="Emblem KRI Alamang-644"/></div></div>
 
 </section>
 

@@ -1077,3 +1077,50 @@ tbody tr:hover{background:rgba(160,196,222,.08)}
  .hero{gap:14px;align-items:center}
  .hero-orb{margin-left:auto}
 }
+
+/* Brand visibility + intrinsic content sizing pass */
+.alnav-brand-logo{display:block;object-fit:contain;max-width:100%;height:auto}
+.alnav-sidebar-logo{width:100%;max-width:190px;aspect-ratio:3/1;object-fit:contain;background:#f7f8fa;border-radius:10px;padding:7px 9px;flex:0 1 190px}
+.alnav-login-logo{width:min(100%,330px);aspect-ratio:3/1;object-fit:contain;margin:0 auto 18px;background:#f7f8fa;border-radius:14px;padding:12px}
+.loaderglass{display:flex;flex-direction:column;align-items:center;gap:12px;letter-spacing:.18em}
+.loaderglass img{display:block;width:min(72vw,320px);height:auto;aspect-ratio:3/1;object-fit:contain;background:#f7f8fa;border-radius:14px;padding:12px}
+.brand{gap:12px;align-items:center;min-width:0}
+.brand>div:last-child{min-width:0}
+.hero{height:auto;min-height:0;align-items:center;gap:clamp(18px,3vw,42px);padding:clamp(20px,2.5vw,34px)}
+.hero-copy{flex:1 1 420px;min-width:240px}
+.hero-branding{display:flex;align-items:center;justify-content:flex-end;gap:clamp(12px,2vw,24px);flex:0 1 auto;min-width:0}
+.hero-logo-panel{width:clamp(180px,22vw,290px);aspect-ratio:3/1;display:grid;place-items:center;padding:10px;background:rgba(247,248,250,.96);border:1px solid rgba(235,244,251,.55);border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.hero-alnav-logo{display:block;width:100%;height:100%;object-fit:contain}
+.hero-orb{flex:0 0 clamp(64px,7vw,88px);width:clamp(64px,7vw,88px);height:clamp(64px,7vw,88px);margin:0;transform:none}
+.hero-orb img{width:100%;height:100%;object-fit:contain}
+.navy-telemetry-command,.navy-telemetry-grid,.navy-telemetry-readouts,.navy-telemetry-compass,.navy-telemetry-value{min-width:0}
+.navy-telemetry-grid{grid-template-columns:minmax(150px,.42fr) minmax(0,1.58fr);align-items:start}
+.navy-telemetry-compass{height:max-content;min-height:0;align-self:start;padding:16px 12px}
+.navy-compass-dial{width:min(100%,132px);margin:12px auto 8px}
+.navy-compass-needle i{border-bottom-width:34px;border-left-width:6px;border-right-width:6px}
+.navy-compass-needle b{border-top-width:34px;border-left-width:6px;border-right-width:6px}
+.navy-telemetry-compass>strong{font-size:21px}
+.navy-telemetry-readouts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;align-content:start}
+.navy-telemetry-value{min-height:104px;height:auto;overflow-wrap:anywhere}
+.navy-telemetry-value:last-child{grid-column:1/-1}
+.navy-telemetry-note{min-width:0;flex-wrap:wrap}
+@media(max-width:900px){
+ .hero{align-items:flex-start}
+ .hero-branding{flex-direction:column;align-items:flex-end}
+ .hero-logo-panel{width:clamp(150px,26vw,220px)}
+ .navy-telemetry-grid{grid-template-columns:minmax(128px,.42fr) minmax(0,1.58fr)}
+ .navy-telemetry-readouts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ .hero{flex-direction:column;align-items:stretch;gap:18px}
+ .hero-copy{min-width:0}
+ .hero-branding{width:100%;flex-direction:row;justify-content:space-between;align-items:center}
+ .hero-logo-panel{width:min(66%,230px)}
+ .hero-orb{width:64px;height:64px;flex-basis:64px}
+ .navy-telemetry-grid{grid-template-columns:minmax(0,1fr)}
+ .navy-telemetry-compass{width:100%;height:auto;align-self:stretch}
+ .navy-compass-dial{width:124px}
+ .navy-telemetry-readouts{grid-template-columns:minmax(0,1fr)}
+ .navy-telemetry-value:last-child{grid-column:auto}
+ .alnav-sidebar-logo{max-width:140px}
+}
