@@ -709,3 +709,17 @@ body:before{content:none!important;display:none!important}
 .admin-access-warning b{color:#e9c58d}
 .admin-access-warning span{color:#aab8c1;line-height:1.6}
 @media(max-width:760px){.admin-access-heading{flex-direction:column}.admin-access-summary{grid-template-columns:1fr}.admin-department-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ALNAV DMS — Admin department account editor */
+.admin-account-editor{display:grid;grid-template-columns:minmax(160px,1fr) minmax(180px,1fr) repeat(2,minmax(140px,auto)) auto;align-items:end;gap:12px;margin-top:16px;padding:15px;border:1px solid rgba(103,191,220,.24);border-radius:12px;background:rgba(22,53,76,.35)}
+.admin-account-editor>div:first-child{display:grid;gap:5px;align-self:center}
+.admin-account-editor>div:first-child small{font-size:8px;letter-spacing:.12em;color:#85d4ec;font-weight:800}
+.admin-account-editor>div:first-child b{font-size:12px;color:#edf7fb}
+.admin-account-editor>label:not(.admin-access-check){display:grid;gap:6px;color:#9bb0bd;font-size:9px}
+.admin-account-editor select{min-height:36px;border:1px solid rgba(130,171,198,.25);border-radius:8px;background:#10273b;color:#e9f5fa;padding:0 9px;font:inherit}
+.admin-account-editor .admin-access-check{display:flex;align-items:center;gap:7px;color:#c6d8e1;font-size:9px;white-space:nowrap}
+.admin-access-check input{accent-color:#54b6d6;width:15px;height:15px}
+.admin-account-actions{display:flex;gap:7px;justify-content:flex-end}
+.admin-account-actions button{min-height:34px;padding:0 11px;font-size:8px}
+@media(max-width:900px){.admin-account-editor{grid-template-columns:1fr 1fr}.admin-account-actions{grid-column:1/-1}}
+@media(max-width:520px){.admin-account-editor{grid-template-columns:1fr}.admin-account-actions{grid-column:auto}.admin-account-editor .admin-access-check{min-height:28px}}
