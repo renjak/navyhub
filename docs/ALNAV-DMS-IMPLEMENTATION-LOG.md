@@ -34,3 +34,11 @@
 - Updated DigitalLogbook, Archive, PWA manifest and offline message to ALNAV DMS / current display labels.
 - Stock class preview build passed Next.js compilation, lint/type validity and static page generation (Vercel preview READY for commit a1f3f97). Later branding string changes triggered another preview build; verify its newest result separately.
 - No Supabase schema migration, live data writes, production merge or production deployment in this slice.
+
+
+### 25 November 2026 — Administration workspace and preview validation
+- Added an Admin-only ADMINISTRATION navigation item and actual profile directory read from Supabase. Current account names, ranks, roles and active state are displayed; department assignment is explicitly marked pending because the profile schema has no department_code/head designation yet.
+- Added department access overview for OPS/SIN/EKA/LOG without granting any unverified access.
+- Stabilized role-aware navigation filtering with useMemo.
+- Latest Vercel Preview deployment: READY, commit `265599cbfdd1d19d2d3257298165419869978243`, branch `alnav-dms/phase-1-gps-safety`.
+- Build evidence: Next.js compile succeeded; type validity passed; static pages generated; deployment completed; npm audit reported zero vulnerabilities. This confirms build health only, not E2E behavior, logged-in role checks, direct database RLS tests or mobile QA.
