@@ -54,7 +54,7 @@ Deno.serve(async (req: Request) => {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response({ error: "Email tidak valid" }, 400);
     if (fullName.length < 3 || fullName.length > 120) return response({ error: "Nama lengkap wajib diisi (3–120 karakter)" }, 400);
-    if (!["OPS", "SIN", "EKA", "LOG"].includes(departmentCode)) return response({ error: "Departemen tidak valid" }, 400);
+    if (departmentCode && !["OPS", "SIN", "EKA", "LOG"].includes(departmentCode)) return response({ error: "Departemen tidak valid" }, 400);
     if (!["officer", "operator", "viewer"].includes(role)) return response({ error: "Role akun tidak diizinkan" }, 400);
     if (isDepartmentHead && !departmentCode) return response({ error: "Kepala departemen harus memiliki departemen" }, 400);
     if (canAccessClassV && departmentCode !== "OPS") return response({ error: "Class V access can only be given to DEPOPS (Operations) accounts" }, 403);
@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
         rank_title: rankTitle || null,
         unit_id: actorProfile.unit_id,
         role,
-        department_code: departmentCode,
+        department_code: departmentCode || null,
         is_department_head: isDepartmentHead,
         can_access_class_v: canAccessClassV,
         is_active: true,
@@ -96,7 +96,7 @@ Deno.serve(async (req: Request) => {
         email,
         full_name: fullName,
         role,
-        department_code: departmentCode,
+        department_code: departmentCode || null,
         is_department_head: isDepartmentHead,
         can_access_class_v: canAccessClassV,
       },
