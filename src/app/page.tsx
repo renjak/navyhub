@@ -431,7 +431,7 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 <div role="group" aria-label="Jenis jaga" className="dg-seg dg-log-mode">{([["darat","Jaga Darat"],["laut","Jaga Laut"],["arsip","Arsip"]] as const).map(([k,l])=><button type="button" key={k} aria-pressed={logTab===k} onClick={()=>setLogTab(k)}>{l}</button>)}</div>
 {notice&&<p className="dg-note dg-notice" role="status">{notice}</p>}
 {logTab==="darat"&&<JagaDarat supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer} refreshKey={logRefresh} preview={{file:docName,busy:docBusy,saving:busy,plans:docPlans,days:docDailyMeta}} onFile={handlePhstUpload} onImport={importPhstPlans} onCancelPreview={()=>{setDocPlans([]);setDocMeta({});setDocDailyMeta([]);setDocName("")}}/>}
-{logTab==="laut"&&<JagaLaut replay={<LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/>}/>}
+{logTab==="laut"&&<JagaLaut supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} replay={<LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/>}/>}
 {logTab==="arsip"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip Logbook" lang="id"/>}
 </div>}
 {selected?.table && <>
