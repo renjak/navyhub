@@ -820,3 +820,7 @@ body.dg-intro .dg-side,body.dg-intro .dg-header{opacity:0}
   body.dg-arrive .dg-side,body.dg-arrive .dg-header,body.dg-arrive .dg-3d{animation:none}
   body.dg-intro .dg-side,body.dg-intro .dg-header{opacity:1}
 }
+.adm-actions .adm-spacer{flex:1}
+.adm-actions .adm-danger{color:#ffb3b3;border-color:rgba(229,90,90,.45);background:rgba(229,90,90,.08)}
+.adm-actions .adm-danger:hover{background:rgba(229,90,90,.18)}
+@media (max-width:640px){.adm-actions{flex-wrap:wrap}.adm-actions .adm-spacer{display:none}.adm-actions .adm-danger{flex-basis:100%}}

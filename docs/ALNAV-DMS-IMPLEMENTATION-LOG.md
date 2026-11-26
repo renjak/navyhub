@@ -113,3 +113,9 @@ Production remains unchanged. A preview marked READY is not a production release
 - Stock module shows only the classes allowed for the account.
 
 - 2026-11-26 correction: the 16–20 / 04–08 watch is **SH-LM** (not SH-DH); constraint updated by migration `20261126134336_sea_watch_code_sh_lm` (table was empty).
+
+## 2026-11-26 — Admin full account control, simulation banner, Admin-device GPS
+- Bug: saving department/Head/stock classes/active failed with "permission denied for table profiles" (authenticated only has UPDATE(role, updated_at)). Fix: `public.admin_update_account(...)` SECURITY DEFINER (migration `20261126140222_admin_update_account`, applied) — caller must be the active Admin of the same unit; cannot change own/another Admin account or create a second Admin; validates role/department/Head; writes `audit_logs`. Column grants unchanged. Verified with rolled-back tests (admin allowed; self, make-admin, head-without-dept, bad dept, commander, anon denied).
+- Delete account: new edge function `admin-manage-user` (v1 deployed). `delete`: accounts with no linked records are deleted permanently; accounts that appear in operational records are not hard-deleted (history kept) — sign-in is blocked (ban) and the profile is deactivated. `restore`: lifts the block and reactivates. Audited. Re-activating an account in the editor also restores sign-in.
+- Removed the purple "DEMO · simulated telemetry, not saved" banner over the 3D ship during simulation (owner request); simulation stays labelled DEMO in the header chip and telemetry card.
+- Master GPS error "Invalid GPS ingest credential": Admin-device fixes no longer use the onboard hardware token; `/api/gps` writes them with the Admin's own session (RLS: active Admin of the unit, reporter = caller). The hardware path still needs `VESSEL_GPS_INGEST_TOKEN` on Vercel to match `private.vessel_gps_ingest_config` (owner action).

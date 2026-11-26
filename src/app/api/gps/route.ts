@@ -30,17 +30,20 @@ export async function POST(request: NextRequest) {
     global: { headers: isHardware ? {} : { Authorization: `Bearer ${bearer}` } }
   });
 
+  let adminFix: { userId: string; unitId: string } | null = null;
   if (!isHardware) {
     const { data: authData, error: authError } = await userClient.auth.getUser(bearer);
     if (authError || !authData.user) return NextResponse.json({ error: "Invalid session." }, { status: 401 });
     const { data: profile, error: profileError } = await userClient
       .from("profiles")
-      .select("role,is_active")
+      .select("role,is_active,unit_id")
       .eq("id", authData.user.id)
       .maybeSingle();
     if (profileError || !profile || profile.role !== "admin" || !profile.is_active) {
       return NextResponse.json({ error: "Only an active ALNAV DMS admin can submit a manual/device GPS fix." }, { status: 403 });
     }
+    if (!profile.unit_id) return NextResponse.json({ error: "Admin account is not linked to a unit." }, { status: 403 });
+    adminFix = { userId: authData.user.id, unitId: profile.unit_id };
   }
 
   let body: Record<string, unknown>;
@@ -63,6 +66,18 @@ export async function POST(request: NextRequest) {
   if (course !== null && (!Number.isFinite(course) || course < 0 || course > 360)) return NextResponse.json({ error: "Invalid course_degrees." }, { status: 400 });
   if (satellites !== null && (!Number.isInteger(satellites) || satellites < 0)) return NextResponse.json({ error: "Invalid satellites." }, { status: 400 });
   if (positionAt && Number.isNaN(Date.parse(positionAt))) return NextResponse.json({ error: "Invalid position_at timestamp." }, { status: 400 });
+
+  // Admin device position: written with the Admin's own session, so database RLS (active Admin of the
+  // same unit, reporter = caller) is the check. It does not depend on the onboard hardware token.
+  if (adminFix) {
+    const now = new Date().toISOString();
+    const { data, error } = await userClient.from("vessel_gps_positions").upsert({
+      unit_id: adminFix.unitId, position_at: positionAt || now, latitude, longitude, speed_knots: speed, course_degrees: course,
+      satellites, fix_quality: "Admin device location; not onboard GPS", source: "admin_device_gps", received_at: now, reporter_user_id: adminFix.userId
+    }, { onConflict: "unit_id" }).select("id").maybeSingle();
+    if (error) return NextResponse.json({ error: error.message }, { status: error.code === "42501" ? 403 : 400 });
+    return NextResponse.json({ ok: true, result: { ok: true, position_id: data?.id ?? null, unit_id: adminFix.unitId }, received_at: now });
+  }
 
   const rpcClient = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data, error } = await rpcClient.rpc("ingest_vessel_gps", {

@@ -392,7 +392,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   let banner: { text: string; col: string } | null = null;
   if (mode === "latihan") banner = { text: t("DRILL · not saved as a real event"), col: "var(--v3d-bad)" };
   else if (mode === "putar-ulang" && replayDemo) banner = { text: t("DEMO · sample track, not ship data"), col: "var(--v3d-demo)" };
-  else if (mode === "telemetri" && sim) banner = { text: t("DEMO · simulated telemetry, not saved"), col: "var(--v3d-demo)" };
+  // simulation is already labelled DEMO in the header chip and telemetry card; no banner over the ship (owner request)
 
   function panelBody() {
     switch (mode) {

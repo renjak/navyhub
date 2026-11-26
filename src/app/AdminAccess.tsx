@@ -59,16 +59,27 @@ export default function AdminAccess({ sb, meId, unitId }: { sb: any; meId: strin
     if (!edit || !draft) return;
     if (draft.is_department_head && !draft.department_code) { setFormErr("A Head of Department needs a department."); return; }
     setSaving(true); setFormErr("");
-    if (draft.role !== edit.role) {
-      const r = await sb.rpc("admin_set_profile_role", { p_profile_id: edit.id, p_role: draft.role });
-      if (r.error) { setFormErr("Role not changed: " + r.error.message); setSaving(false); return; }
+    // one database call: checks the caller is the unit Admin, validates and writes the audit log
+    const { error } = await sb.rpc("admin_update_account", { p_profile_id: edit.id, p_role: draft.role, p_department_code: draft.department_code || null, p_is_department_head: draft.is_department_head, p_stock_classes: draft.stock_classes, p_is_active: draft.is_active });
+    if (error) { setSaving(false); setFormErr("Not saved: " + error.message); return; }
+    if (!edit.is_active && draft.is_active) {
+      // a removed account also had sign-in blocked; lift that block too
+      const r = await sb.functions.invoke("admin-manage-user", { body: { action: "restore", profile_id: edit.id } });
+      if (r.error || !r.data?.success) { setSaving(false); setFormErr("Saved, but sign-in could not be restored: " + (r.data?.error || r.error?.message || "unknown error")); await load(); return; }
     }
-    const { data, error } = await sb.from("profiles").update({ department_code: draft.department_code || null, is_department_head: !!draft.department_code && draft.is_department_head, stock_classes: draft.stock_classes, is_active: draft.is_active, updated_at: new Date().toISOString() })
-      .eq("id", edit.id).eq("unit_id", unitId).neq("role", "admin").select("id").maybeSingle();
+    setSaving(false); setEdit(null); setDraft(null); setMsg("Saved: " + edit.full_name); await load();
+  };
+
+  const removeAccount = async () => {
+    if (!edit) return;
+    if (!window.confirm("Delete the account of " + edit.full_name + "?\n\nIf this person already has records (logbook, stock, checklists…), the history is kept and only sign-in is removed.")) return;
+    setSaving(true); setFormErr("");
+    const { data, error } = await sb.functions.invoke("admin-manage-user", { body: { action: "delete", profile_id: edit.id } });
     setSaving(false);
-    if (error) { setFormErr("Not saved: " + error.message); return; }
-    if (!data) { setFormErr("Not saved. Only the main Admin can change other accounts."); return; }
-    setEdit(null); setDraft(null); setMsg("Saved: " + edit.full_name); await load();
+    if (error || !data?.success) { setFormErr("Not deleted: " + (data?.error || error?.message || "unknown error")); return; }
+    setEdit(null); setDraft(null);
+    setMsg(data.result === "deleted" ? "Account deleted: " + edit.full_name : "Sign-in removed for " + edit.full_name + ". Their records are kept; the account is inactive and can be restored.");
+    await load();
   };
 
   const sendInvite = async () => {
@@ -117,7 +128,7 @@ export default function AdminAccess({ sb, meId, unitId }: { sb: any; meId: strin
         <ClassPicker value={draft.stock_classes} onChange={v => setDraft(d => d && ({ ...d, stock_classes: v }))} note={seeAll(draft.role) ? "Commanders always see all classes." : undefined} />
         <Switch label="Account active" checked={draft.is_active} hint={draft.is_active ? undefined : "Inactive accounts cannot open any data"} onChange={v => setDraft(d => d && ({ ...d, is_active: v }))} />
         {formErr && <p className="dg-note dg-err" role="alert">{formErr}</p>}
-        <div className="adm-actions"><button type="button" className="dg-btn" onClick={() => setEdit(null)} disabled={saving}>Cancel</button><button type="button" className="dg-btn dg-btn-accent" onClick={saveEdit} disabled={saving}>{saving ? "Saving…" : "Save"}</button></div>
+        <div className="adm-actions"><button type="button" className="dg-btn adm-danger" onClick={removeAccount} disabled={saving}>Delete account</button><span className="adm-spacer" /><button type="button" className="dg-btn" onClick={() => setEdit(null)} disabled={saving}>Cancel</button><button type="button" className="dg-btn dg-btn-accent" onClick={saveEdit} disabled={saving}>{saving ? "Saving…" : "Save"}</button></div>
       </div></div></Portal>}
 
     {invite && <Portal><div className="dg-modal" data-lenis-prevent role="dialog" aria-modal="true" aria-label="New account" onMouseDown={e => { if (e.target === e.currentTarget && !saving) setInvite(null); }}>
