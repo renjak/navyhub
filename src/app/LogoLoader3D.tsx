@@ -14,8 +14,8 @@ function Mark({ navy, red }: { navy: string; red: string }) {
   </svg>;
 }
 
-export default function LogoLoader3D({ label = "INITIALIZING" }: { label?: string }) {
-  return <main className="loading alnav-loader" role="status" aria-live="polite" aria-label={"ALNAV DMS " + label.toLowerCase()}>
+export default function LogoLoader3D({ label = "INITIALIZING", overlay = false, leaving = false }: { label?: string; overlay?: boolean; leaving?: boolean }) {
+  return <main className={"loading alnav-loader" + (overlay ? " is-overlay" : "") + (leaving ? " is-leaving" : "")} role="status" aria-live="polite" aria-hidden={leaving || undefined} aria-label={"ALNAV DMS " + label.toLowerCase()}>
     <div className="alnav-loader-stage">
       <div className="alnav-loader-spin">
         {Array.from({ length: LAYERS }, (_, i) => {

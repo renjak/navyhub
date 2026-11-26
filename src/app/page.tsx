@@ -355,10 +355,16 @@ export default function Home(){
  const [logTab,setLogTab]=useState<"darat"|"laut"|"arsip">("darat"),[logRefresh,setLogRefresh]=useState(0);
  const [focusPart,setFocusPart]=useState<string|undefined>(undefined);
  const pickAssetRoom=useCallback((name:string)=>{setAssetDraft((d:any)=>d?{...d,location_label:name}:{asset_code:"",asset_name:"",category:maintSection,location_label:name,condition_label:"Baik",is_active:true});setNotice("Asset location set: "+name+". Complete the asset code and name in the form below.")},[maintSection]);
- if(loading)return <LogoLoader3D label="INITIALIZING"/>;
- if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><img className="dg-login-ship" src="/images/kri-alamang-644-side.png" alt="KRI ALAMANG-644 line drawing"/><small>Welcome aboard · SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Registered account email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Checking…":"Sign in to ALNAV DMS"}</button></form><footer>Restricted to authorised users.</footer></section></main>;
- if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Signed in, but the account is not activated or not linked to a unit yet.</p><button onClick={()=>sb.auth.signOut()}>Sign out</button></section></main>;
-return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><IntroSplash/><IdleGuard sb={sb} email={user.email||""}/><div className="dg-app">
+ /* The 3D loading mark stays mounted as an overlay and fades out over the next screen (opening globe,
+    login or dashboard) instead of being cut away. Same element in every branch, so it never restarts. */
+ const [loaderPhase,setLoaderPhase]=useState<"on"|"leaving"|"off">("on");
+ useEffect(()=>{if(!loading)setLoaderPhase(p=>p==="on"?"leaving":p)},[loading]);
+ useEffect(()=>{if(loaderPhase!=="leaving")return;const t=window.setTimeout(()=>setLoaderPhase("off"),950);return()=>window.clearTimeout(t)},[loaderPhase]);
+ const withLoader=(content:React.ReactNode)=><>{content}{loaderPhase!=="off"&&<LogoLoader3D label="INITIALIZING" overlay leaving={loaderPhase==="leaving"}/>}</>;
+ if(loading)return withLoader(null);
+ if(!user)return withLoader(<main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><img className="dg-login-ship" src="/images/kri-alamang-644-side.png" alt="KRI ALAMANG-644 line drawing"/><small>Welcome aboard · SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Registered account email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Checking…":"Sign in to ALNAV DMS"}</button></form><footer>Restricted to authorised users.</footer></section></main>);
+ if(!profile?.unit_id||!profile.is_active)return withLoader(<main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Signed in, but the account is not activated or not linked to a unit yet.</p><button onClick={()=>sb.auth.signOut()}>Sign out</button></section></main>);
+return withLoader(<NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><IntroSplash/><IdleGuard sb={sb} email={user.email||""}/><div className="dg-app">
 <aside className="dg-glass dg-side">
 <div className="dg-logo"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV-DMS — Alamang Naval Data Management System"/></div>
 <button type="button" className="dg-ship" onClick={()=>openModule("Dashboard")}><b className="dg-h">KRI ALAMANG-644</b><small>{envName==="production"?"Fast Patrol Craft Unit · Koarmada I":envName==="preview"?"Preview · not production":"Fast Patrol Craft Unit · Koarmada I"}</small></button>
@@ -485,6 +491,6 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 }
 </div>
 </main>
-</div></NavRuntimeProvider>
+</div></NavRuntimeProvider>);
 
 }

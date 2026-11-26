@@ -71,7 +71,7 @@ export default function IntroSplash() {
         const cosc = sl0 * sp + cl0 * cp * cl;
         return [cx + R * cp * Math.sin(l), cy - R * (cl0 * sp - sl0 * cp * cl), cosc > 0];
       };
-      const fadeIn = reduced ? 1 : Math.min(1, (now - t0) / 350);
+      const fadeIn = reduced ? 1 : Math.min(1, (now - t0) / 700);
       ctx.globalAlpha = fadeIn;
       // sphere
       const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
