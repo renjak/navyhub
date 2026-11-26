@@ -4,7 +4,7 @@ import { useNav } from "./NavRuntime";
 import NavMapButton from "./NavMap";
 
 /* Logbook · Jaga Laut. Tiga jaga, masing-masing dua kali sehari (WIB):
-   PH-MH 08–12 & 20–24, PT-DH 12–16 & 00–04, SH-DH 04–08 & 16–20.
+   PH-MH 08–12 & 20–24, PT-DH 12–16 & 00–04, SH-LM 04–08 & 16–20.
    Divisi A/B/C bergilir (pemilik, 26 Nov 2026): Perwira Jaga mengisi pembagian divisi tiap hari
    (tabel sea_watch_rotations, per tanggal WIB); tanpa isian divisi tampil "—". Posisi dari GPS kapal (atau proksi perangkat Admin);
    haluan tetap "—" tanpa gyro. */
@@ -13,7 +13,7 @@ type Watch = { code: string; key: "a" | "b" | "c"; ranges: Array<[number, number
 const WATCHES: Watch[] = [
   { code: "PH-MH", key: "a", ranges: [[8, 12], [20, 24]] },
   { code: "PT-DH", key: "b", ranges: [[12, 16], [0, 4]] },
-  { code: "SH-DH", key: "c", ranges: [[16, 20], [4, 8]] },
+  { code: "SH-LM", key: "c", ranges: [[16, 20], [4, 8]] },
 ];
 const BLOCKS = [0, 4, 8, 12, 16, 20].map(h => ({ start: h, end: h + 4, watch: WATCHES.find(w => w.ranges.some(([s]) => s === h))! }));
 const hh = (h: number) => String(h % 24).padStart(2, "0") + ".00";
@@ -21,7 +21,7 @@ const wibNow = () => { const p = new Intl.DateTimeFormat("en-GB", { timeZone: "A
 const dm = (v: number, pos: string, neg: string) => { const a = Math.abs(v), d = Math.floor(a); return `${d}°${((a - d) * 60).toFixed(2)}′ ${v < 0 ? neg : pos}`; };
 const srcLabel = (s?: string | null) => s === "onboard_gps" ? "GPS kapal" : s === "admin_device_gps" ? "Perangkat Admin (proksi)" : s ? s : "—";
 
-type Code = "PH-MH" | "PT-DH" | "SH-DH";
+type Code = "PH-MH" | "PT-DH" | "SH-LM";
 type Rot = { watch_code: Code; division: string; set_by: string; updated_at: string };
 const todayWib = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
 
@@ -29,14 +29,14 @@ export default function JagaLaut({ replay, supabase, unitId, userId, role, viewe
   const { gps } = useNav();
   const [day, setDay] = useState(todayWib());
   const [rot, setRot] = useState<Record<string, Rot>>({}), [setter, setSetter] = useState("");
-  const [draft, setDraft] = useState<Record<Code, string>>({ "PH-MH": "", "PT-DH": "", "SH-DH": "" });
+  const [draft, setDraft] = useState<Record<Code, string>>({ "PH-MH": "", "PT-DH": "", "SH-LM": "" });
   const [editing, setEditing] = useState(false), [saving, setSaving] = useState(false), [msg, setMsg] = useState("");
   const canSet = !viewer && ["admin", "commander", "officer"].includes(role);
   const load = useCallback(async () => {
     const { data, error } = await supabase.from("sea_watch_rotations").select("watch_code,division,set_by,updated_at").eq("unit_id", unitId).eq("duty_date", day);
     if (error) { setMsg("Pembagian divisi gagal dimuat: " + error.message); return; }
     const m: Record<string, Rot> = {}; for (const r of (data || []) as Rot[]) m[r.watch_code] = r;
-    setRot(m); setDraft({ "PH-MH": m["PH-MH"]?.division || "", "PT-DH": m["PT-DH"]?.division || "", "SH-DH": m["SH-DH"]?.division || "" });
+    setRot(m); setDraft({ "PH-MH": m["PH-MH"]?.division || "", "PT-DH": m["PT-DH"]?.division || "", "SH-LM": m["SH-LM"]?.division || "" });
     const last = (data || []).slice().sort((a: Rot, b: Rot) => b.updated_at.localeCompare(a.updated_at))[0] as Rot | undefined;
     if (last) { const p = await supabase.from("profiles").select("full_name,rank_title").eq("id", last.set_by).maybeSingle(); setSetter(((p.data?.rank_title ? p.data.rank_title + " " : "") + (p.data?.full_name || "")).trim() + " · " + new Date(last.updated_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" }) + " WIB"); } else setSetter("");
   }, [supabase, unitId, day]);
