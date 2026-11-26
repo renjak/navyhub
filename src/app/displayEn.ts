@@ -22,7 +22,7 @@ const VALUES: Record<string, string> = {
   // asset condition
   "Baik": "Good", "Perlu Perhatian": "Needs attention", "Rusak Ringan": "Minor damage", "Rusak Berat": "Major damage",
   // departments
-  "OPERASI": "Operations", "SENJATA": "Weapons", "ELEKTRONIKA": "Electronics", "LOGISTIK": "Logistics",
+  "OPERASI": "Operations", "MESIN": "Engineering", "SENJATA": "Weapons", "ELEKTRONIKA": "Electronics", "LOGISTIK": "Logistics",
   // units, readiness, purposes, countries
   "butir": "rounds", "liter": "litres", "unit": "unit", "Tingkat I": "Level I", "Tingkat II": "Level II", "Tingkat III": "Level III",
   "PENERIMAAN": "RECEIPT", "PENGELUARAN": "ISSUE", "SPANYOL": "SPAIN",
@@ -78,7 +78,7 @@ const VALUES: Record<string, string> = {
   // inventory item names
   "Persediaan Air Tawar Kapal": "Ship fresh water supply", "Persediaan BBM Kapal": "Ship fuel supply", "HAMPA": "BLANK",
   // department names
-  "Operasi": "Operations", "Senjata": "Weapons", "Elektronika": "Electronics",
+  "Operasi": "Operations", "Mesin": "Engineering", "Senjata": "Weapons", "Elektronika": "Electronics",
   // checklist summaries written by the app
   "Pengecekan harian LOGBOOK": "LOGBOOK daily check", "Seluruh item wajib telah diperiksa.": "All required items have been checked.",
   "Petugas dan kesiapan jaga": "Duty officers and watch readiness"

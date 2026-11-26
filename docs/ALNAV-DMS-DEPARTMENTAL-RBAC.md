@@ -7,7 +7,7 @@ ALNAV DMS is one shared ship information system for all active KRI ALAMANG-644 p
 | Code | Department | Ownership examples |
 |---|---|---|
 | OPS | Operasi | Department-owned operational logbook activity, operational checklists and assigned operational records |
-| SIN | Senjata | Department-owned armament accountability records and authorized Class V access |
+| SIN | Mesin (engineering; corrected by owner 26 Nov 2026 — previously mislabelled "Senjata") | Department-owned armament accountability records and authorized Class V access |
 | EKA | Elektronika | Electronics/electrical equipment, electronics maintenance, and linked spare-part accountability |
 | LOG | Logistik | Supply receipt/issue, Class I/III/IV/VIII and general logistics master records |
 
