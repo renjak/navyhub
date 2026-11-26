@@ -51,13 +51,18 @@ Deno.serve(async (req: Request) => {
     const role = String(body.role || "viewer").trim().toLowerCase();
     const isDepartmentHead = body.is_department_head === true;
     const canAccessClassV = body.can_access_class_v === true;
+    // Stock classes the account may see and record (Admin decides per account). Older clients send
+    // only can_access_class_v; then the default classes are used, plus V when that flag is set.
+    const ALL_CLASSES = ["I", "III", "IV", "V", "VIII", "IX"];
+    const requested = Array.isArray(body.stock_classes) ? body.stock_classes.map((c: unknown) => String(c).trim().toUpperCase()) : null;
+    if (requested && requested.some((c: string) => !ALL_CLASSES.includes(c))) return response({ error: "Kelas stok tidak valid" }, 400);
+    const stockClasses = ALL_CLASSES.filter(c => requested ? requested.includes(c) : (c !== "V" || canAccessClassV));
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response({ error: "Email tidak valid" }, 400);
     if (fullName.length < 3 || fullName.length > 120) return response({ error: "Nama lengkap wajib diisi (3–120 karakter)" }, 400);
     if (departmentCode && !["OPS", "SIN", "EKA", "LOG"].includes(departmentCode)) return response({ error: "Departemen tidak valid" }, 400);
     if (!["officer", "operator", "viewer"].includes(role)) return response({ error: "Role akun tidak diizinkan" }, 400);
     if (isDepartmentHead && !departmentCode) return response({ error: "Kepala departemen harus memiliki departemen" }, 400);
-    if (canAccessClassV && departmentCode !== "OPS") return response({ error: "Class V access can only be given to DEPOPS (Operations) accounts" }, 403);
 
     const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
       data: { full_name: fullName, rank_title: rankTitle, unit_id: actorProfile.unit_id },
@@ -73,12 +78,12 @@ Deno.serve(async (req: Request) => {
         role,
         department_code: departmentCode || null,
         is_department_head: isDepartmentHead,
-        can_access_class_v: canAccessClassV,
+        stock_classes: stockClasses,
         is_active: true,
         updated_at: new Date().toISOString(),
       })
       .eq("id", invited.user.id)
-      .select("id,full_name,rank_title,unit_id,role,is_active,department_code,is_department_head,can_access_class_v")
+      .select("id,full_name,rank_title,unit_id,role,is_active,department_code,is_department_head,can_access_class_v,stock_classes")
       .single();
 
     if (saveError || !savedProfile) {
@@ -98,7 +103,7 @@ Deno.serve(async (req: Request) => {
         role,
         department_code: departmentCode || null,
         is_department_head: isDepartmentHead,
-        can_access_class_v: canAccessClassV,
+        stock_classes: stockClasses,
       },
     });
 

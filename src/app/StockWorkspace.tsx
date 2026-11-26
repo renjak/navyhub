@@ -13,7 +13,7 @@ type Row = Record<string, any>;
 type Props = {
   rows: Row[]; movements: Row[]; busy: boolean;
   search: string; setSearch: (v: string) => void;
-  canOperate: boolean; canManage: boolean; canAccessClassV: boolean;
+  canOperate: boolean; canManage: boolean; canAccessClassV: boolean; allowedClasses?: string[];
   selectedClass: string | null; setSelectedClass: (id: string) => void;
   onReload: () => void;
   onNewMovement: (itemId?: string) => void;
@@ -37,17 +37,19 @@ const COND: Record<string, string> = { ready: "Ready", unready: "Not ready", not
 
 export default function StockWorkspace(p: Props) {
   const { rows, movements, canManage, canOperate, canAccessClassV } = p;
+  // classes this account may see (Admin sets them per account; database RLS enforces the same rule)
+  const allowed = (id: string) => canManage || (p.allowedClasses ? p.allowedClasses.includes(id) : (id !== "V" || canAccessClassV));
   const [moveFilter, setMoveFilter] = useState<"all" | "inbound" | "outbound">("all");
   const byClass = useMemo(() => Object.fromEntries(stockClasses.map(c => [c.id, rows.filter(r => itemBelongsToStockClass(r, c.id))])), [rows]);
-  const visibleRows = rows.filter(r => canAccessClassV || !itemBelongsToStockClass(r, "V"));
+  const visibleRows = rows.filter(r => !stockClasses.some(c => !allowed(c.id) && itemBelongsToStockClass(r, c.id)));
   const lowCount = visibleRows.filter(isLow).length;
-  const filled = stockClasses.filter(c => (c.id !== "V" || canAccessClassV) && byClass[c.id].length).length;
+  const filled = stockClasses.filter(c => allowed(c.id) && byClass[c.id].length).length;
   const itemName = useMemo(() => Object.fromEntries(rows.map(r => [r.id, r])), [rows]);
   const month = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date()).slice(0, 7);
   const movesMonth = movements.filter(m => String(m.movement_date || "").startsWith(month)).length;
 
   const cls = stockClasses.find(c => c.id === p.selectedClass) || stockClasses[0];
-  const restricted = cls.id === "V" && !canAccessClassV;
+  const restricted = !allowed(cls.id);
   const items = byClass[cls.id] || [];
   const special = items.filter(r => (cls.id === "I" && isWater(r)) || (cls.id === "III" && (isHsd(r) || isSkiff(r))));
   const q = p.search.trim().toLowerCase();
@@ -83,10 +85,10 @@ export default function StockWorkspace(p: Props) {
     <Portal>{p.editors}</Portal>
 
     <section className="dg-row dg-kpis">
-      <div className="dg-glass dg-card dg-kpi"><span>Active items</span><b className="dg-h">{nf(visibleRows.length)}</b><small>{filled} of {canAccessClassV ? 6 : 5} classes filled</small></div>
+      <div className="dg-glass dg-card dg-kpi"><span>Active items</span><b className="dg-h">{nf(visibleRows.length)}</b><small>{filled} of {stockClasses.filter(c => allowed(c.id)).length} classes filled</small></div>
       <div className={"dg-glass dg-card dg-kpi" + (lowCount ? " is-warn" : "")}><span>Low stock</span><b className="dg-h">{nf(lowCount)}</b><small>ready balance ≤ minimum</small></div>
       <div className="dg-glass dg-card dg-kpi"><span>Transactions this month</span><b className="dg-h">{nf(movesMonth)}</b><small>of the last {nf(movements.length)} transactions</small></div>
-      <div className="dg-glass dg-card dg-kpi"><span>Class V</span><b className="dg-h">{canAccessClassV ? nf(byClass.V.length) : "🔒"}</b><small>{canAccessClassV ? "ammunition items" : "restricted access"}</small></div>
+      <div className="dg-glass dg-card dg-kpi"><span>Class V</span><b className="dg-h">{allowed("V") ? nf(byClass.V.length) : "🔒"}</b><small>{allowed("V") ? "ammunition items" : "restricted access"}</small></div>
     </section>
 
     {p.tank3d}
@@ -95,7 +97,7 @@ export default function StockWorkspace(p: Props) {
       <div className="dg-card-head"><div><div className="dg-eyebrow">Supply classification</div><h2 className="dg-h dg-card-title">Inventory by class</h2></div></div>
       <div className="dg-class-picker" role="tablist" aria-label="Supply classes">
         {stockClasses.map(c => {
-          const lock = c.id === "V" && !canAccessClassV, list = byClass[c.id] || [], low = list.some(isLow);
+          const lock = !allowed(c.id), list = byClass[c.id] || [], low = list.some(isLow);
           return <button type="button" role="tab" key={c.id} aria-selected={cls.id === c.id} onClick={() => p.setSelectedClass(c.id)} className={low && !lock ? "is-warn" : ""}>
             <span className="dg-class-id dg-h">{c.id}</span>
             <span className="dg-class-text"><b>{SHORT[c.id] || c.name}</b><small>{lock ? "Restricted" : list.length ? `${list.length} item${list.length === 1 ? "" : "s"}${low ? " · low stock" : ""}` : "Empty"}</small></span>
@@ -109,7 +111,7 @@ export default function StockWorkspace(p: Props) {
           {canManage && !restricted && <button type="button" className="dg-btn" onClick={() => p.onNewItem({ item_code: "", item_name: "", category: cls.defaultCategory, supply_class: cls.id, department_code: cls.id === "V" ? "OPS" : "LOG", unit_of_measure: cls.id === "I" || cls.id === "III" ? "liter" : "unit", minimum_stock: 0, is_active: true })}>+ Add class {cls.id} item</button>}
         </div>
 
-        {restricted ? <div className="dg-empty"><b>Class V inventory is restricted.</b><span>Details are only for Admin, Commander, or entitled accounts. Contact the Admin to request access.</span></div> : <>
+        {restricted ? <div className="dg-empty"><b>{cls.title} is not available for this account.</b><span>Ask the Admin to add this class to your stock access.</span></div> : <>
           {(cls.id === "I" || cls.id === "III") && <div className="dg-supply-grid">
             {cls.id === "I" && supplyCard(items.find(isWater), "Fresh water", "Subsistence · fresh water", "tank")}
             {cls.id === "III" && supplyCard(items.find(isHsd), "HSD · main fuel", "Fuel · main propulsion", "tank")}
