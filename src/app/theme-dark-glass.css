@@ -448,3 +448,70 @@ html body:before,html body:after{display:none}
 .dg-content .agenda-department-card p{margin:0;padding:0 12px 12px;font-size:13px;line-height:1.5;color:var(--dg-ink-2);white-space:pre-line}
 .dg-content .watch-report-history,.dg-content .watch-report-notes{font-size:12.5px;color:var(--dg-dim);letter-spacing:0;text-transform:none}
 .dg-content .watch-report-details summary{font-size:13px;color:var(--dg-ink-2);cursor:pointer}
+
+/* ================= Stock ================= */
+.dg-stock{display:flex;flex-direction:column;gap:16px;min-width:0}
+.dg-stock-actions{flex:0 1 auto}
+.dg-stock-actions>*{flex:0 0 auto}
+div.dg-kpi{cursor:default}
+.dg-kpi.is-warn>b{color:#F5C46B}
+.dg-class-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.dg-class-picker button{display:flex;align-items:center;gap:10px;min-height:60px;padding:10px 12px;border-radius:12px;border:1px solid transparent;background:var(--dg-well);color:var(--dg-ink);font:inherit;text-align:left;cursor:pointer;min-width:0}
+.dg-class-picker button:hover{background:rgba(255,255,255,.06)}
+.dg-class-picker button[aria-selected=true]{background:var(--dg-accent-soft);border-color:var(--dg-accent-line)}
+.dg-class-picker button:focus-visible{outline:2px solid var(--dg-info);outline-offset:2px}
+.dg-class-id{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:15px;font-weight:700;background:rgba(255,255,255,.07);border:1px solid var(--dg-line)}
+.dg-class-picker button[aria-selected=true] .dg-class-id{background:var(--dg-accent);border-color:var(--dg-accent);color:#fff}
+.dg-class-text{min-width:0}
+.dg-class-text b{display:block;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dg-class-text small{display:block;font-size:12px;color:var(--dg-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dg-class-picker button.is-warn .dg-class-text small{color:#F5C46B}
+.dg-class-detail{display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid var(--dg-line)}
+.dg-class-detail h3.dg-card-title{font-size:16px;font-weight:600;font-family:var(--dg-font);font-stretch:normal;margin-top:2px}
+.dg-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dg-chips span{font-size:12px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--dg-line);color:var(--dg-ink-2)}
+.dg-supply-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.dg-supply{display:flex;flex-direction:column;gap:8px;padding:14px}
+.dg-supply>b{font-size:16px;font-weight:700}
+.dg-supply small{font-size:12px;color:var(--dg-dim)}
+.dg-supply-qty{display:flex;align-items:baseline;gap:6px}
+.dg-supply-qty strong{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.dg-supply .dg-btn{align-self:flex-start;margin-top:2px}
+.dg-stock-search{flex:none;max-width:460px}
+.dg-content .dg-table{border-radius:12px}
+.dg-content .dg-table table{min-width:720px;border-collapse:separate;border-spacing:0}
+.dg-content .dg-table th{padding:10px 12px;position:sticky;top:0;text-align:left}
+.dg-content .dg-table td{padding:10px 12px;vertical-align:top;white-space:normal}
+.dg-content .dg-table td b{display:block;font-weight:600}
+.dg-content .dg-table td small{font-size:12px;color:var(--dg-dim)}
+.dg-content .dg-table td>b+small{display:block;margin-top:2px}
+.dg-content .dg-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dg-content .dg-table .mono{font-variant-numeric:tabular-nums;color:var(--dg-ink-2);white-space:nowrap}
+.dg-content .dg-table tr.is-low td{background:rgba(245,181,68,.05)}
+.dg-content .dg-table tr.is-low td:first-child{box-shadow:inset 3px 0 0 var(--dg-warn)}
+.dg-content .dg-table .dg-pill{font-size:12px;padding:2px 9px;white-space:nowrap}
+.dg-row-actions{white-space:nowrap;text-align:right}
+.dg-content .dg-row-actions .dg-btn{min-height:34px;padding:0 10px;font-size:12.5px;margin-left:4px}
+.dg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.dg-seg-sm button{min-height:34px;font-size:13px}
+/* editors as dialogs */
+.dg-modal-card.dg-editor{width:min(820px,100%);overflow:auto}
+.dg-editor h3{margin:0;font:700 18px var(--dg-display);font-stretch:112%;letter-spacing:0;text-transform:none;color:var(--dg-ink)}
+.dg-editor>p,.dg-editor .wide{font-size:13px;color:var(--dg-muted);margin:0}
+.dg-editor small{font-size:12px;color:var(--dg-dim);letter-spacing:0;text-transform:none}
+.dg-editor .editor-grid,.dg-editor .stock-editor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0}
+.dg-editor .stock-editor-grid .wide,.dg-editor .editor-grid .wide{grid-column:1/-1}
+.dg-editor label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--dg-muted)}
+.dg-editor input,.dg-editor select,.dg-editor textarea{width:100%;box-sizing:border-box;min-height:42px;padding:0 12px;font:inherit;font-size:14px;border-radius:11px;border:1px solid rgba(200,215,235,.16);background:rgba(0,0,0,.25);color:var(--dg-ink)}
+.dg-editor textarea{padding:10px 12px}
+.dg-editor input:focus,.dg-editor select:focus,.dg-editor textarea:focus{outline:none;border-color:var(--dg-line-2);box-shadow:0 0 0 3px rgba(127,178,229,.15)}
+.dg-editor .editor-actions,.dg-editor .stock-editor-actions{display:flex;justify-content:flex-end;gap:8px;margin:0}
+.dg-editor .editor-actions button,.dg-editor .stock-editor-actions button{min-height:42px;padding:0 16px;border-radius:11px;border:0;background:var(--dg-accent);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 8px 22px rgba(231,19,28,.3)}
+.dg-editor .editor-actions button.outline,.dg-editor .stock-editor-actions button.outline{background:rgba(255,255,255,.05);border:1px solid rgba(200,215,235,.18);color:var(--dg-ink-2);box-shadow:none}
+@media(max-width:1100px){.dg-class-picker{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){
+  .dg-class-picker{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dg-stock-actions{width:100%}.dg-stock-actions>*{flex:1 1 auto}
+  .dg-modal{padding:8px;align-items:end}
+  .dg-modal-card.dg-editor{max-height:calc(100dvh - 16px);border-radius:16px 16px 12px 12px}
+}
