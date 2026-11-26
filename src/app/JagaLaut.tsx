@@ -4,15 +4,15 @@ import { useNav } from "./NavRuntime";
 import NavMapButton from "./NavMap";
 
 /* Logbook · Jaga Laut. Tiga divisi jaga bergantian, masing-masing dua kali sehari (WIB):
-   PH-MH 08–12 & 20–24, SH-LM 12–16 & 00–04, SH-DH 04–08 & 16–20.
-   Divisi A/B/C dipasangkan sesuai urutan yang diberikan pemilik: A = PH-MH, B = SH-LM, C = SH-DH.
+   PH-MH 08–12 & 20–24, PT-DH 12–16 & 00–04, SH-DH 04–08 & 16–20.
+   Divisi A/B/C dipasangkan sesuai urutan yang diberikan pemilik: A = PH-MH, B = PT-DH, C = SH-DH.
    Posisi dari GPS kapal (atau proksi perangkat Admin); haluan tetap "—" tanpa gyro. */
 
-type Watch = { code: string; name: string; div: "A" | "B" | "C"; ranges: Array<[number, number]> };
+type Watch = { code: string; div: "A" | "B" | "C"; ranges: Array<[number, number]> };
 const WATCHES: Watch[] = [
-  { code: "PH-MH", name: "Pagi–Malam", div: "A", ranges: [[8, 12], [20, 24]] },
-  { code: "SH-LM", name: "Siang–Larut Malam", div: "B", ranges: [[12, 16], [0, 4]] },
-  { code: "SH-DH", name: "Sore–Dini Hari", div: "C", ranges: [[16, 20], [4, 8]] },
+  { code: "PH-MH", div: "A", ranges: [[8, 12], [20, 24]] },
+  { code: "PT-DH", div: "B", ranges: [[12, 16], [0, 4]] },
+  { code: "SH-DH", div: "C", ranges: [[16, 20], [4, 8]] },
 ];
 const BLOCKS = [0, 4, 8, 12, 16, 20].map(h => ({ start: h, end: h + 4, watch: WATCHES.find(w => w.ranges.some(([s]) => s === h))! }));
 const hh = (h: number) => String(h % 24).padStart(2, "0") + ".00";
@@ -34,7 +34,7 @@ export default function JagaLaut({ replay }: { replay?: React.ReactNode }) {
       <div className="dg-laut-current">
         <div className="dg-laut-div"><span>Divisi</span><b className="dg-h">{cur.watch.div}</b></div>
         <div>
-          <h2 className="dg-h dg-card-title">{cur.watch.code} <small>{cur.watch.name}</small></h2>
+          <h2 className="dg-h dg-card-title">{cur.watch.code}</h2>
           <div className="dg-sub">{hh(cur.start)}–{hh(cur.end)} WIB · sisa {Math.floor(left / 60)} j {left % 60} m</div>
           <i className="dg-laut-bar"><em style={{ width: pct + "%" }} /></i>
           <small className="dg-note">Berikutnya: Divisi {next.watch.div} · {next.watch.code} · {hh(next.start)}–{hh(next.end)} WIB</small>
