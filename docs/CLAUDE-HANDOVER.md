@@ -170,3 +170,5 @@ User's reference direction:
 
 ## 14. Claude initial instruction
 You are continuing an existing live operational application. Start by auditing the current repository and comparing it to this handover. Do not immediately rewrite code. First report: (a) confirmed current branch/commit, (b) package manager and available scripts, (c) latest preview state, (d) exact implementation status of logo, dashboard, GPS/COG/gyro, PHST, stock, personnel privacy, maintenance, archive and RBAC, (e) build/test results, and (f) prioritized next steps. Preserve all data and production boundaries.
+
+- 2026-11-26: `admin-invite-user` v3 deployed (no-department invites allowed; AAL2 required for Admins with verified MFA). Migrations applied: protect_personnel_pii_and_class_v_movements, personnel_directory_include_nrp, require_mfa_when_enrolled.
