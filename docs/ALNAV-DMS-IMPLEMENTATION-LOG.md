@@ -87,3 +87,11 @@ Production remains unchanged. A preview marked READY is not a production release
 - The source PHST has dated daily events and variable D. KHUSUS department activities; some page-separated entries lack a repeated date. A proper PHST schedule/execution data model is required before linking these records.
 - Added GSAP 3.13.x and Lenis 1.1.x dependencies, a root MotionProvider with ScrollTrigger synchronization, word-by-word heading reveal for marked headings, cleanup and reduced-motion opt-out.
 - Vercel preview for commit `902e2330c5316dc69c892d055f85285c20bed4f1` reached READY. Build logs show successful compilation, type checking, static page generation and optimized build. This does not replace interactive/RLS/E2E QA.
+
+## 2026-11-26 — Department correction and Class V ownership (owner-approved)
+- Owner confirmed SIN = Mesin (engineering). UI shows department codes as DEPOPS/DEPSIN/DEPEKA/DEPLOG; stored codes unchanged.
+- Owner decided OPS (DEPOPS) holds Class V. With explicit owner approval ("terapkan migrasi dan deploy fungsi"):
+  - Applied migration 20261126061018_rename_sin_department_to_mesin: departments SIN name Senjata → Mesin.
+  - Applied migration 20261126061025_class_v_owned_by_ops: 15 Class V inventory rows department SIN → OPS (stock total 9,030 unchanged; 2 stock movements unchanged; RLS unchanged).
+  - Deployed admin-invite-user v2 (verify_jwt true): Class V access may only be granted to OPS accounts. Only that line changed versus v1.
+- Verified by read-only queries after apply. No profiles had a department or Class V access at the time, so no account was affected.

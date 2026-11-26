@@ -6,12 +6,13 @@ import DigitalLogbook from "./DigitalLogbook";
 import {LogbookSummary,LogTabs,type LogTab} from "./LogbookParts";
 import {stockClasses,itemBelongsToStockClass} from "./stockClasses";
 import StockWorkspace from "./StockWorkspace";
-import {en,enText} from "./displayEn";
+import {en,enText,depLabel} from "./displayEn";
 import MaintenanceWorkspace from "./MaintenanceWorkspace";
 import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
 import {NavRuntimeProvider,NavRunningChips,useNav} from "./NavRuntime";
 import NavMapButton from "./NavMap";
+import IntroSplash from "./intro/IntroSplash";
 import DashboardHome from "./DashboardHome";
 import dynamic from "next/dynamic";
 const VesselModel3D=dynamic(()=>import("./VesselModel3D"),{ssr:false,loading:()=><div className="dg-3d-loading">Loading 3D model…</div>});
@@ -49,7 +50,7 @@ type RowData=Record<string,any>;
 type ImportedPlan={activity_date:string;activity_time:string|null;title:string;description:string;category:string};
 const phstSectionOrder=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","F. LAIN-LAIN"];
 const departmentOrder=["OPS","SIN","EKA","LOG"] as const;
-function normalizeDepartment(value:string):typeof departmentOrder[number]|null{const v=value.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();if(/\bOPS\b|OPERASI/.test(v))return "OPS";if(/\bSIN\b|SENJATA/.test(v))return "SIN";if(/\bEKA\b|ELEKTRONIK/.test(v))return "EKA";if(/\bLOG\b|LOGISTIK/.test(v))return "LOG";return null;}
+function normalizeDepartment(value:string):typeof departmentOrder[number]|null{const v=value.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();if(/\bOPS\b|DEPOPS|OPERASI/.test(v))return "OPS";if(/\bSIN\b|DEPSIN|MESIN/.test(v))return "SIN";if(/\bEKA\b|DEPEKA|ELEKTRONIK/.test(v))return "EKA";if(/\bLOG\b|DEPLOG|LOGISTIK/.test(v))return "LOG";return null;}
 const monthMap:Record<string,string>={januari:"01",februari:"02",maret:"03",april:"04",mei:"05",juni:"06",juli:"07",agustus:"08",september:"09",oktober:"10",november:"11",desember:"12"};
 async function readPdfText(file:File):Promise<string[]>{
  const data=new Uint8Array(await file.arrayBuffer());
@@ -63,17 +64,17 @@ async function readPdfText(file:File):Promise<string[]>{
   const sorted=[...rows.entries()].sort((a,b)=>b[0]-a[0]);
   for(const [,parts] of sorted){const line=parts.join(" ").replace(/\\s+/g," ").trim();if(line)lines.push(line)}
  }
- if(!lines.length)throw new Error("No PDF text found. A scanned PDF requires OCR.");
+ if(!lines.length)throw new Error("Teks PDF tidak ditemukan. Jika PDF berupa hasil scan, diperlukan OCR.");
  return lines;
 }
 async function readDocxText(file:File):Promise<string[]>{
  const bytes=await file.arrayBuffer(),view=new DataView(bytes);let eocd=-1;
  for(let i=bytes.byteLength-22;i>=Math.max(0,bytes.byteLength-65558);i--){if(view.getUint32(i,true)===0x06054b50){eocd=i;break}}
- if(eocd<0)throw new Error("The file is not a valid DOCX.");
+ if(eocd<0)throw new Error("File bukan DOCX yang valid.");
  const count=view.getUint16(eocd+10,true),central=view.getUint32(eocd+16,true);let off=central,xml="";
- for(let n=0;n<count;n++){if(view.getUint32(off,true)!==0x02014b50)break;const method=view.getUint16(off+10,true),size=view.getUint32(off+20,true),nl=view.getUint16(off+28,true),el=view.getUint16(off+30,true),cl=view.getUint16(off+32,true),local=view.getUint32(off+42,true),name=new TextDecoder().decode(new Uint8Array(bytes,off+46,nl));if(name==="word/document.xml"){const ln=view.getUint16(local+26,true),le=view.getUint16(local+28,true),start=local+30+ln+le,compressed=bytes.slice(start,start+size);if(method===0)xml=new TextDecoder().decode(compressed);else if(method===8){const ds=new DecompressionStream("deflate-raw");xml=await new Response(new Blob([compressed]).stream().pipeThrough(ds)).text()}else throw new Error("DOCX compression format not supported.");break}off+=46+nl+el+cl}
- if(!xml)throw new Error("Word document content not found.");
- const doc=new DOMParser().parseFromString(xml,"application/xml");const body=doc.getElementsByTagName("w:body")[0];if(!body)throw new Error("Word document structure could not be read.");
+ for(let n=0;n<count;n++){if(view.getUint32(off,true)!==0x02014b50)break;const method=view.getUint16(off+10,true),size=view.getUint32(off+20,true),nl=view.getUint16(off+28,true),el=view.getUint16(off+30,true),cl=view.getUint16(off+32,true),local=view.getUint32(off+42,true),name=new TextDecoder().decode(new Uint8Array(bytes,off+46,nl));if(name==="word/document.xml"){const ln=view.getUint16(local+26,true),le=view.getUint16(local+28,true),start=local+30+ln+le,compressed=bytes.slice(start,start+size);if(method===0)xml=new TextDecoder().decode(compressed);else if(method===8){const ds=new DecompressionStream("deflate-raw");xml=await new Response(new Blob([compressed]).stream().pipeThrough(ds)).text()}else throw new Error("Format kompresi DOCX tidak didukung.");break}off+=46+nl+el+cl}
+ if(!xml)throw new Error("Isi dokumen Word tidak ditemukan.");
+ const doc=new DOMParser().parseFromString(xml,"application/xml");const body=doc.getElementsByTagName("w:body")[0];if(!body)throw new Error("Struktur dokumen Word tidak terbaca.");
  const out:string[]=[];for(const node of Array.from(body.children)){if(node.localName==="p")out.push(Array.from(node.getElementsByTagName("w:t")).map(x=>x.textContent||"").join(""));else if(node.localName==="tbl"){for(const tr of Array.from(node.getElementsByTagName("w:tr"))){out.push(Array.from(tr.getElementsByTagName("w:tc")).map(tc=>Array.from(tc.getElementsByTagName("w:t")).map(x=>x.textContent||"").join(" ")).join(" | "))}}}
  return out.map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean)
 }
@@ -158,7 +159,7 @@ const fields:Record<string,string[]>={activity_logs:["activity_date","activity_t
 const labels:Record<string,string>={activity_date:"Date",activity_time:"Time",title:"Title",category:"Category",description:"Description",status:"Status",asset_code:"Asset code",asset_name:"Asset name",location_label:"Location",condition_label:"Condition",is_active:"Active",report_date:"Report date",issue_description:"Fault",action_taken:"Action taken",item_code:"Item code",item_name:"Item name",unit_of_measure:"Unit",stock_ready:"Ready stock",stock_unready:"Not-ready stock",minimum_stock:"Minimum stock",brand:"Brand",caliber:"Calibre",caliber_unit:"Calibre unit",secondary_caliber:"Secondary calibre",ammo_type:"Ammunition type",lot_no:"Lot number",manufacture_year:"Year of manufacture",country_of_origin:"Country of origin",unit_price:"Unit price",initial_quantity:"Initial quantity",capacity_liters:"Capacity (L)",movement_date:"Transaction date",movement_type:"Transaction type",quantity:"Quantity",reference_no:"Reference number",condition_status:"Condition",movement_purpose:"Purpose",notes:"Notes",item_order:"Order",item_label:"Inspection item",is_required:"Required",performed_at:"Performed at",summary:"Summary",sequence_no:"No.",full_name:"Name",rank_title:"Rank",nrp:"NRP",position:"Position",roster_period:"Period",remarks:"Remarks"};
 const fmt=(v:any)=>v===null||v===undefined||v===""?"—":typeof v==="boolean"?(v?"Yes":"No"):typeof v==="object"?JSON.stringify(v):String(v);
 function parseWatchMeta(description?:string){const values:Record<string,string>={};for(const line of (description||"").split("\n")){const i=line.indexOf(":");if(i>0)values[line.slice(0,i)]=line.slice(i+1).trim()}return values}
-function LogShip3D({sb,unitId,userId,role,canAccessClassV,modes}:{sb:any;unitId:string;userId:string;role:string;canAccessClassV:boolean;modes:Array<"jaga"|"putar-ulang"|"latihan">}){const nav=useNav();return <VesselModel3D supabase={sb} unitId={unitId} userId={userId} role={role} canAccessClassV={canAccessClassV} modes={modes} nav={{gps:nav.gps,sim:null}} className="dg-3d"/>}
+function LogShip3D({sb,unitId,userId,role,canAccessClassV,modes}:{sb:any;unitId:string;userId:string;role:string;canAccessClassV:boolean;modes:Array<"jaga"|"putar-ulang"|"latihan">}){const nav=useNav();return <VesselModel3D lang="id" supabase={sb} unitId={unitId} userId={userId} role={role} canAccessClassV={canAccessClassV} modes={modes} nav={{gps:nav.gps,sim:null}} className="dg-3d"/>}
 export default function Home(){
  const [user,setUser]=useState<User|null>(null),[profile,setProfile]=useState<Profile|null>(null),[loading,setLoading]=useState(true),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false),[module,setModule]=useState("Dashboard"),[rows,setRows]=useState<RowData[]>([]),[movements,setMovements]=useState<RowData[]>([]),[search,setSearch]=useState(""),[notice,setNotice]=useState("");
  const [dbCounts,setDbCounts]=useState({personnel:"—",inventory:"—",movements:"—",logs:"—"});
@@ -202,15 +203,16 @@ export default function Home(){
  useEffect(()=>{if(module!=="ADMINISTRATION"||!isAdmin||!profile?.unit_id)return;let alive=true;setAccountBusy(true);setAccountError("");sb.from("profiles").select("id,full_name,rank_title,role,is_active,department_code,is_department_head,can_access_class_v").eq("unit_id",profile.unit_id).order("full_name",{ascending:true}).then(({data,error})=>{if(!alive)return;if(error){setAccountError("Account directory failed to load: "+error.message);setAccountRows([])}else setAccountRows((data||[]) as RowData[]);setAccountBusy(false)});return()=>{alive=false}},[module,isAdmin,profile?.unit_id]);
  useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const names=["personnel","inventory_items","stock_movements","activity_logs"];const results=await Promise.all(names.map(table=>sb.from(table).select("*",{count:"exact",head:true}).eq("unit_id",profile.unit_id!)));if(live)setDbCounts({personnel:results[0].error?"—":String(results[0].count??0),inventory:results[1].error?"—":String(results[1].count??0),movements:results[2].error?"—":String(results[2].count??0),logs:results[3].error?"—":String(results[3].count??0)})})();return()=>{live=false}},[profile?.unit_id]);
  useEffect(()=>{if(!profile?.unit_id)return;let live=true;(async()=>{const {data,error}=await sb.from("inventory_items").select("id,item_name,category,capacity_liters,stock_ready,stock_unready,unit_of_measure").eq("unit_id",profile.unit_id!).eq("is_active",true).in("category",["Air Tawar","BBM"]);if(live)setSupplyRows(error?[]:(data||[]) as RowData[])})();return()=>{live=false}},[profile?.unit_id,supplyTick]);
- const loadTomorrowPlans=useCallback(async()=>{if(!profile?.unit_id)return;const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");const {data,error}=await sb.from("activity_logs").select("id,activity_date,activity_time,title,description,category,status").eq("unit_id",profile.unit_id).gte("activity_date",today).order("activity_date",{ascending:true}).order("activity_time",{ascending:true});if(error){setNotice("Saved agenda could not be loaded: "+error.message);return}const rows=(data||[]) as RowData[];const nextDate=rows[0]?.activity_date;setTomorrowPlans(nextDate?rows.filter(p=>p.activity_date===nextDate):[])},[profile?.unit_id]);
+ const loadTomorrowPlans=useCallback(async()=>{if(!profile?.unit_id)return;const now=new Date();const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");const {data,error}=await sb.from("activity_logs").select("id,activity_date,activity_time,title,description,category,status").eq("unit_id",profile.unit_id).gte("activity_date",today).order("activity_date",{ascending:true}).order("activity_time",{ascending:true});if(error){setNotice("Agenda tersimpan tidak dapat dimuat: "+error.message);return}const rows=(data||[]) as RowData[];const nextDate=rows[0]?.activity_date;setTomorrowPlans(nextDate?rows.filter(p=>p.activity_date===nextDate):[])},[profile?.unit_id]);
  const agendaDutyMeta=useMemo(()=>parseWatchMeta(tomorrowPlans.find(p=>p.category==="PHST META")?.description),[tomorrowPlans]);
  const agendaVisibleRows=useMemo(()=>tomorrowPlans.filter(p=>p.category!=="PHST META"&&p.category!=="D. KHUSUS"&&(!p.activity_time||p.activity_time.slice(0,5)<="22:00")),[tomorrowPlans]);
  const agendaDeptRows=useMemo(()=>departmentOrder.map(code=>tomorrowPlans.find(p=>p.category==="D. KHUSUS"&&normalizeDepartment(String(p.title||""))===code)||{id:"dept-"+code,title:code,description:"",category:"D. KHUSUS",activity_date:tomorrowPlans[0]?.activity_date}),[tomorrowPlans]);
  async function inviteDepartmentAccount(){
   if(!isAdmin||!accountInviteDraft){setNotice("Only the Admin can invite personnel.");return}
   const payload={email:String(accountInviteDraft.email||"").trim(),full_name:String(accountInviteDraft.full_name||"").trim(),rank_title:String(accountInviteDraft.rank_title||"").trim(),role:String(accountInviteDraft.role||"viewer"),department_code:String(accountInviteDraft.department_code||""),is_department_head:!!accountInviteDraft.is_department_head,can_access_class_v:!!accountInviteDraft.can_access_class_v};
-  if(!payload.email||!payload.full_name||!payload.department_code){setNotice("Name, email and department are required.");return}
-  if(payload.can_access_class_v&&payload.department_code!=="SIN"){setNotice("Class V authorisation can only be given to Weapons Department personnel.");return}
+  if(!payload.email||!payload.full_name){setNotice("Name and email are required.");return}
+  if(payload.is_department_head&&!payload.department_code){setNotice("A Head of Department needs a department.");return}
+  if(payload.can_access_class_v&&payload.department_code!=="OPS"){setNotice("Class V authorisation can only be given to DEPOPS accounts.");return}
   setAccountInviteSaving(true);setNotice("");
   const {data,error}=await sb.functions.invoke("admin-invite-user",{body:payload});
   if(error||!data?.success){setNotice("Invitation failed: "+(data?.error||error?.message||"Unknown error"));setAccountInviteSaving(false);return}
@@ -218,8 +220,8 @@ export default function Home(){
  }
  async function saveAccountScope(){
   if(!isAdmin||!profile?.unit_id||!accountEditDraft?.id){setNotice("Only the Admin can assign account departments.");return}
-  if(accountEditDraft.is_department_head&&!accountEditDraft.department_code){setNotice("Select a department before assigning a Head of Department.");return}
-  if(accountEditDraft.can_access_class_v&&accountEditDraft.department_code!=="SIN"){setNotice("Class V authorisation can only be given to the Weapons Department.");return}
+  if(accountEditDraft.is_department_head&&!accountEditDraft.department_code){setNotice("A Head of Department needs a department. Command staff (Commander, Palaksa) have no department.");return}
+  if(accountEditDraft.can_access_class_v&&accountEditDraft.department_code!=="OPS"){setNotice("Class V authorisation can only be given to DEPOPS accounts.");return}
   if(accountEditDraft.id===profile.id){setNotice("The main Admin profile cannot be changed from this directory.");return}
   setAccountEditSaving(true);setNotice("");
   const {data,error}=await sb.from("profiles").update({department_code:accountEditDraft.department_code||null,is_department_head:!!accountEditDraft.is_department_head,can_access_class_v:!!accountEditDraft.can_access_class_v,updated_at:new Date().toISOString()}).eq("id",accountEditDraft.id).eq("unit_id",profile.unit_id).neq("role","admin").select("id,department_code,is_department_head,can_access_class_v").maybeSingle();
@@ -228,20 +230,20 @@ export default function Home(){
   else{setAccountRows(old=>old.map(row=>row.id===data.id?{...row,...data}:row));setNotice("Account department and access rights updated.");setAccountEditDraft(null)}
   setAccountEditSaving(false);
  }
- async function saveDeptAgenda(){if(!canManage||!profile?.unit_id||!deptEditDraft?.id){setNotice("Only the Admin or Commander can edit department activities.");return}const title=normalizeDepartment(String(deptEditDraft.title||""));const description=String(deptEditDraft.description||"").trim();if(!title){setNotice("Department must be OPS, SIN, EKA or LOG.");return}setDeptEditSaving(true);const payload={title,description,category:"D. KHUSUS"};const result=deptEditDraft.id&&String(deptEditDraft.id).startsWith("dept-")?await sb.from("activity_logs").insert({unit_id:profile.unit_id,created_by:user?.id,activity_date:deptEditDraft.activity_date||tomorrowPlans[0]?.activity_date,activity_time:null,status:"draft",...payload}):await sb.from("activity_logs").update(payload).eq("id",deptEditDraft.id).eq("unit_id",profile.unit_id);if(result.error){setNotice("Failed to save department activity: "+result.error.message)}else{setNotice("Department activity "+title+" saved.");setDeptEditDraft(null);await loadTomorrowPlans()}setDeptEditSaving(false)}
+ async function saveDeptAgenda(){if(!canManage||!profile?.unit_id||!deptEditDraft?.id){setNotice("Hanya Admin atau Komandan yang dapat mengubah kegiatan departemen.");return}const title=normalizeDepartment(String(deptEditDraft.title||""));const description=String(deptEditDraft.description||"").trim();if(!title){setNotice("Departemen harus DEPOPS, DEPSIN, DEPEKA, atau DEPLOG.");return}setDeptEditSaving(true);const payload={title,description,category:"D. KHUSUS"};const result=deptEditDraft.id&&String(deptEditDraft.id).startsWith("dept-")?await sb.from("activity_logs").insert({unit_id:profile.unit_id,created_by:user?.id,activity_date:deptEditDraft.activity_date||tomorrowPlans[0]?.activity_date,activity_time:null,status:"draft",...payload}):await sb.from("activity_logs").update(payload).eq("id",deptEditDraft.id).eq("unit_id",profile.unit_id);if(result.error){setNotice("Kegiatan departemen gagal disimpan: "+result.error.message)}else{setNotice("Kegiatan departemen "+title+" berhasil disimpan.");setDeptEditDraft(null);await loadTomorrowPlans()}setDeptEditSaving(false)}
  useEffect(()=>{if(user&&profile?.unit_id)loadTomorrowPlans()},[user,profile?.unit_id,loadTomorrowPlans]);
- async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{const ext=file.name.toLowerCase();const lines=ext.endsWith(".docx")?await readDocxText(file):ext.endsWith(".pdf")?await readPdfText(file):(()=>{throw new Error("Use a Word (.docx) or PDF (.pdf) document.")})();const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Sections A to E or an activity schedule were not found. Check the PHST format.");const meta=parsePhstHeader(lines);setDocMeta(meta);setDocDailyMeta(parsePhstDailyMeta(lines));if(Object.keys(meta).length)parsed.push({activity_date:parsed[0].activity_date,activity_time:null,title:"Petugas dan kesiapan jaga",description:Object.entries(meta).map(([k,v])=>k+": "+v).join("\n"),category:"PHST META"});setDocPlans(parsed);setNotice("Document read. Review the extracted result before saving to the Logbook.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Document processing failed.")}finally{setDocBusy(false);e.target.value=""}}
+ async function handlePhstUpload(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;setDocBusy(true);setNotice("");setDocName(file.name);try{const ext=file.name.toLowerCase();const lines=ext.endsWith(".docx")?await readDocxText(file):ext.endsWith(".pdf")?await readPdfText(file):(()=>{throw new Error("Gunakan dokumen Word (.docx) atau PDF (.pdf).")})();const parsed=parsePhstLines(lines);if(!parsed.length)throw new Error("Tidak ditemukan bagian A sampai E atau jadwal kegiatan. Periksa format PHST.");const meta=parsePhstHeader(lines);setDocMeta(meta);setDocDailyMeta(parsePhstDailyMeta(lines));if(Object.keys(meta).length)parsed.push({activity_date:parsed[0].activity_date,activity_time:null,title:"Petugas dan kesiapan jaga",description:Object.entries(meta).map(([k,v])=>k+": "+v).join("\n"),category:"PHST META"});setDocPlans(parsed);setNotice("Dokumen berhasil dibaca. Periksa hasil ekstraksi sebelum menyimpan ke Logbook.")}catch(err){setDocPlans([]);setNotice(err instanceof Error?err.message:"Dokumen gagal diproses.")}finally{setDocBusy(false);e.target.value=""}}
  async function importPhstPlans(){
-  if(!profile?.unit_id||!user||!docPlans.length){setNotice("Make sure the account, unit and PHST document are available.");return;}
+  if(!profile?.unit_id||!user||!docPlans.length){setNotice("Pastikan akun, unit, dan dokumen PHST sudah tersedia.");return;}
   setBusy(true);setNotice("");
   const phstCategories=["A. SITUASI","B. TUGAS POKOK","C. UMUM","D. KHUSUS","E. LAIN-LAIN","F. LAIN-LAIN","PHST META"];
   const {data:existingRows,error:readError}=await sb.from("activity_logs").select("activity_date,activity_time,title,description,category").eq("unit_id",profile.unit_id).in("category",phstCategories);
-  if(readError){setNotice("PHST history could not be verified; no data was changed: "+readError.message);setBusy(false);return;}
+  if(readError){setNotice("Riwayat PHST tidak dapat diverifikasi; tidak ada data yang diubah: "+readError.message);setBusy(false);return;}
   const canonicalCategory=(value:string)=>value==="E. LAIN-LAIN"?"F. LAIN-LAIN":value;
   const recordKey=(row:any)=>JSON.stringify([row.activity_date,row.activity_time||null,String(row.title||"").trim(),String(row.description||"").trim(),canonicalCategory(String(row.category||""))]);
   const existingKeys=new Set((existingRows||[]).map(recordKey));
   const newPlans=docPlans.filter(plan=>{const key=recordKey(plan);if(existingKeys.has(key))return false;existingKeys.add(key);return true;});
-  if(!newPlans.length){setNotice("All PHST content is already recorded. Nothing was added and history is intact.");setBusy(false);return;}
+  if(!newPlans.length){setNotice("Seluruh isi PHST sudah tercatat. Tidak ada data yang ditambahkan dan riwayat tetap utuh.");setBusy(false);return;}
   const payload=newPlans.map(p=>({unit_id:profile.unit_id,created_by:user.id,activity_date:p.activity_date,activity_time:p.activity_time,title:p.title,description:p.description,category:canonicalCategory(p.category),status:"draft"}));
   // Import every dated duty roster independently; only C. UMUM rows become the officer checklist.
   for(const dailyMeta of docDailyMeta){
@@ -249,14 +251,14 @@ export default function Home(){
    const officerNrp=(officer.match(/NRP\s*([\w/.-]+)/i)||[])[1]||null;
    const cleanOfficer=officer.replace(/\s*NRP\s*[\w/.-]+/i,"").trim();
    const {data:daily,error:dailyError}=await sb.from("phst_daily_orders").upsert({unit_id:profile.unit_id,activity_date:dailyMeta.activity_date,duty_officer:cleanOfficer,duty_officer_nrp:officerNrp,duty_division:meta["Divisi Jaga"]||"",duty_nco:meta["Bintara Jaga"]||"",duty_messenger:meta["Caraka"]||"",duty_attire:meta["Tenue Jaga"]||"",source_file:docName,source_verified:true},{onConflict:"unit_id,activity_date"}).select("id").single();
-   if(dailyError){setNotice("Failed to save PHST personnel for "+dailyMeta.activity_date+": "+dailyError.message);setBusy(false);return;}
+   if(dailyError){setNotice("Data personel PHST "+dailyMeta.activity_date+" gagal disimpan: "+dailyError.message);setBusy(false);return;}
    const checklist=docPlans.filter(p=>p.activity_date===dailyMeta.activity_date&&p.category==="C. UMUM"&&p.activity_time).map((p,i)=>({unit_id:profile.unit_id,daily_order_id:daily.id,sequence_no:i+1,scheduled_time:p.activity_time,activity_text:p.title}));
-   if(checklist.length){const {error:checkError}=await sb.from("phst_checklist_items").upsert(checklist,{onConflict:"daily_order_id,sequence_no"});if(checkError){setNotice("Failed to save Section C checklist for "+dailyMeta.activity_date+": "+checkError.message);setBusy(false);return;}}
+   if(checklist.length){const {error:checkError}=await sb.from("phst_checklist_items").upsert(checklist,{onConflict:"daily_order_id,sequence_no"});if(checkError){setNotice("Checklist Bagian C "+dailyMeta.activity_date+" gagal disimpan: "+checkError.message);setBusy(false);return;}}
   }
   const {error:insertError}=await sb.from("activity_logs").insert(payload);
-  if(insertError){setNotice("Failed to save PHST. Existing history is safe: "+insertError.message);await loadTomorrowPlans();}
+  if(insertError){setNotice("PHST gagal disimpan. Riwayat lama tetap aman: "+insertError.message);await loadTomorrowPlans();}
   else{
-   setNotice("PHST saved without deleting history. "+newPlans.length+" new records added; "+(docPlans.length-newPlans.length)+" identical records skipped.");
+   setNotice("PHST berhasil disimpan tanpa menghapus riwayat. "+newPlans.length+" data baru ditambahkan; "+(docPlans.length-newPlans.length)+" data identik dilewati.");
    setDocPlans([]);setDocMeta({});setDocDailyMeta([]);setDocName("");await loadModule();await loadTomorrowPlans();
   }
   setBusy(false);
@@ -377,7 +379,7 @@ export default function Home(){
  if(loading)return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV DMS logo"/> <span>INITIALIZING</span></div></main>;
  if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><img className="dg-login-ship" src="/images/kri-alamang-644-side.png" alt="KRI ALAMANG-644 line drawing"/><small>Welcome aboard · SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Registered account email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Checking…":"Sign in to ALNAV DMS"}</button></form><footer>Restricted to authorised users.</footer></section></main>;
  if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Signed in, but the account is not activated or not linked to a unit yet.</p><button onClick={()=>sb.auth.signOut()}>Sign out</button></section></main>;
-return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><div className="dg-app">
+return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><IntroSplash/><div className="dg-app">
 <aside className="dg-glass dg-side">
 <div className="dg-logo"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV-DMS — Alamang Naval Data Management System"/></div>
 <button type="button" className="dg-ship" onClick={()=>openModule("Dashboard")}><b className="dg-h">KRI ALAMANG-644</b><small>{envName==="production"?"Fast Patrol Craft Unit · Koarmada I":envName==="preview"?"Preview · not production":"Fast Patrol Craft Unit · Koarmada I"}</small></button>
@@ -408,7 +410,7 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 {module==="Dashboard"&&<DashboardHome supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} greetingName={greetName} isAdmin={isAdmin} canAccessClassV={canAccessClassV} supplyRows={supplyRows} onOpen={(id,partId)=>{setFocusPart(partId);openModule(id)}} onEditSupply={item=>{const cur=Number(item.stock_ready||0);setSupplyDraft({...item,target_stock:String(cur),stock_ready_current:cur})}}/>}
  {isAdmin&&supplyDraft&&<div className="supply-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!supplySaving)setSupplyDraft(null)}}><section className="supply-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="supply-editor-title"><header><div><small>ADMIN CONTROL · SHIP CONSUMABLES</small><h3 id="supply-editor-title">Edit {supplyDraft.category==="Air Tawar"?"fresh water":"HSD"} data</h3><p>Balance changes are recorded as transactions so inventory history stays traceable.</p></div><button type="button" aria-label="Close" disabled={supplySaving} onClick={()=>setSupplyDraft(null)}>×</button></header><div className="supply-modal-grid"><label>Available stock (litres)<input type="number" min="0" step="any" value={supplyDraft.target_stock??""} onChange={e=>setSupplyDraft((v:any)=>({...v,target_stock:e.target.value}))}/><small>Saldo saat ini: {Number(supplyDraft.stock_ready_current||0).toLocaleString("en-GB")} L</small></label><label>Tank capacity (litres)<input type="number" min="0" step="any" value={supplyDraft.capacity_liters??""} onChange={e=>setSupplyDraft((v:any)=>({...v,capacity_liters:e.target.value}))}/></label></div><footer><button className="outline" type="button" disabled={supplySaving} onClick={()=>setSupplyDraft(null)}>Cancel</button><button type="button" disabled={supplySaving} onClick={saveSupplyData}>{supplySaving?"Saving…":"Save changes"}</button></footer></section></div>}
 {module!=="Dashboard" && <div className="module-view">
-{module!=="NAVYLOG"&&module!=="NAVYMAINT"&&module!=="NAVYSTOCK"&&<section className="module-hero">
+{module!=="NAVYLOG"&&module!=="NAVYMAINT"&&module!=="NAVYSTOCK"&&module!=="NAVYDOCS"&&<section className="module-hero">
 <div>
 <small>OPERATIONAL MODULE</small>
 <h1>{selected?.label||module}</h1>
@@ -423,8 +425,9 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 {module==="NAVYLOG"&&<div className="dg-logbook">
 <LogbookSummary supabase={sb} unitId={profile.unit_id} onTab={setLogTab} refreshKey={logRefresh}/>
 <LogTabs tab={logTab} onTab={setLogTab}/>
+{notice&&<p className="dg-note dg-notice" role="status">{notice}</p>}
 {logTab==="jaga"&&<div className="dg-log-grid">
-<section className="dg-glass dg-card dg-3d-section dg-log-3d"><div className="dg-card-head"><div><div className="dg-eyebrow">3D model · watch posts</div><h2 className="dg-h dg-card-title">Today's watch posts</h2><div className="dg-sub">The officer of the watch comes from today's watch assignment. Other posts show “—” until recorded.</div></div></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["jaga"]}/></section>
+<section className="dg-glass dg-card dg-3d-section dg-log-3d"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · pos jaga</div><h2 className="dg-h dg-card-title">Pos jaga hari ini</h2><div className="dg-sub">Perwira Jaga diambil dari penetapan jaga hari ini. Pos lain tampil “—” sampai datanya tercatat.</div></div></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["jaga"]}/></section>
 <DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer} onChange={()=>setLogRefresh(n=>n+1)}/>
 </div>}
 {logTab==="phst"&&<PHSTLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer} onChange={()=>setLogRefresh(n=>n+1)}/>}
@@ -432,51 +435,51 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 <section className="panel data-panel">
 <div className="panelhead">
 <div>
-<h3>Tomorrow's agenda</h3>
-<p>Activities saved for the next activity date</p>
+<h3>Agenda esok hari</h3>
+<p>Rencana kegiatan tersimpan untuk tanggal kegiatan berikutnya</p>
 </div>
 
-<span className="glass-chip">{tomorrowPlans.length} ACTIVITIES</span>
+<span className="glass-chip">{tomorrowPlans.length} KEGIATAN</span>
 </div>
 
-{Object.keys(agendaDutyMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONNEL & WATCH POSITIONS</small><span>PHST · READINESS</span></div><div className="agenda-duty-grid">{Object.entries(agendaDutyMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{en(role)}</small><b>{name||"—"}</b></div>)}</div></section>}
+{Object.keys(agendaDutyMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONEL & POSISI JAGA</small><span>PHST · KESIAGAAN</span></div><div className="agenda-duty-grid">{Object.entries(agendaDutyMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{role}</small><b>{name||"—"}</b></div>)}</div></section>}
 <div className="agenda-list">{agendaVisibleRows.length>0?agendaVisibleRows.map(p=>
 <article className="agenda-card agenda-card-compact" key={p.id}>
 <div className="agenda-time">{p.activity_time?p.activity_time.slice(0,5):"—"}</div>
-<div className="agenda-content"><h4>{enText(p.title)}</h4>{p.description&&<p>{enText(p.description)}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":en(p.status)}</small></div>
-</article>):<div className="empty">No activities scheduled until 22:00. Upload a PHST document to show the agenda.</div>}</div>
-<section className="agenda-departments"><div className="agenda-departments-head"><div><small>ADDITIONAL ACTIVITIES</small><h4>Department plans</h4></div><span>4 DEPARTMENTS</span></div><div className="agenda-department-list">{agendaDeptRows.map(p=><article className="agenda-department-card" key={p.id}><button type="button" className="agenda-department-open" onClick={()=>canManage&&setDeptEditDraft({...p})} disabled={!canManage}><span><small>DEPARTMENT</small><b>{normalizeDepartment(String(p.title||""))||p.title}</b></span><i>{canManage?"EDIT ↗":"TAMBAHAN"}</i></button>{p.description&&<p>{enText(p.description)}</p>}</article>)}</div></section>
-{deptEditDraft&&<section className="agenda-dept-editor"><div className="agenda-dept-editor-head"><div><small>EDIT DEPARTMENT ACTIVITY</small><h4>{deptEditDraft.title||"Department"}</h4></div><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Close</button></div><label>Department name<input value={deptEditDraft.title||""} onChange={e=>setDeptEditDraft(v=>v?({...v,title:e.target.value}):v)}/></label><label>Additional activities / description<textarea rows={4} value={deptEditDraft.description||""} onChange={e=>setDeptEditDraft(v=>v?({...v,description:e.target.value}):v)}/></label><div className="agenda-dept-editor-actions"><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Cancel</button><button type="button" onClick={saveDeptAgenda} disabled={deptEditSaving}>{deptEditSaving?"Saving…":"Save changes"}</button></div></section>}
+<div className="agenda-content"><h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":p.status}</small></div>
+</article>):<div className="empty">Belum ada kegiatan terjadwal sampai pukul 22.00. Unggah dokumen PHST untuk menampilkan agenda.</div>}</div>
+<section className="agenda-departments"><div className="agenda-departments-head"><div><small>KEGIATAN TAMBAHAN</small><h4>Rencana tiap Departemen</h4></div><span>4 DEPARTEMEN</span></div><div className="agenda-department-list">{agendaDeptRows.map(p=><article className="agenda-department-card" key={p.id}><button type="button" className="agenda-department-open" onClick={()=>canManage&&setDeptEditDraft({...p})} disabled={!canManage}><span><small>DEPARTEMEN</small><b>{depLabel(normalizeDepartment(String(p.title||""))||p.title)}</b></span><i>{canManage?"EDIT ↗":"TAMBAHAN"}</i></button>{p.description&&<p>{p.description}</p>}</article>)}</div></section>
+{deptEditDraft&&<section className="agenda-dept-editor"><div className="agenda-dept-editor-head"><div><small>EDIT KEGIATAN DEPARTEMEN</small><h4>{deptEditDraft.title||"Departemen"}</h4></div><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Tutup</button></div><label>Nama departemen<input value={deptEditDraft.title||""} onChange={e=>setDeptEditDraft(v=>v?({...v,title:e.target.value}):v)}/></label><label>Kegiatan tambahan / uraian<textarea rows={4} value={deptEditDraft.description||""} onChange={e=>setDeptEditDraft(v=>v?({...v,description:e.target.value}):v)}/></label><div className="agenda-dept-editor-actions"><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Batal</button><button type="button" onClick={saveDeptAgenda} disabled={deptEditSaving}>{deptEditSaving?"Menyimpan…":"Simpan perubahan"}</button></div></section>}
 
 </section>
 <section className="panel plan-panel">
 <div className="panelhead">
 <div>
-<h3>Import PHST document</h3>
-<p>Upload a PHST (.docx/.pdf). Review the extracted result, then save it as a DRAFT agenda; existing data is never deleted.</p>
+<h3>Impor dokumen PHST</h3>
+<p>Unggah PHST (.docx/.pdf). Hasil pembacaan ditinjau dulu, lalu disimpan sebagai agenda DRAFT; data lama tidak dihapus.</p>
 </div>
 
-<span className="glass-chip">{isViewer?"Managers only":"Official source"}</span>
+<span className="glass-chip">{isViewer?"Hanya pengelola":"Sumber resmi"}</span>
 </div>
 {!isViewer&&<>
 <div className="phst-upload">
-<label className="upload-label">Choose agenda document<input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" onChange={handlePhstUpload}/>
-</label>{docBusy&&<span>Processing document…</span>}
+<label className="upload-label">Pilih dokumen agenda<input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" onChange={handlePhstUpload}/>
+</label>{docBusy&&<span>Memproses dokumen…</span>}
 {docName&&<small>File: {docName}</small>}</div>
 {docPlans.length>0&&<>
 <div className="agenda-preview">
 <div className="agenda-preview-head">
 <div>
-<b>Next-day activity agenda</b>
-<small>Extracted from the document · review before saving</small>
+<b>Agenda kegiatan hari berikutnya</b>
+<small>Hasil pembacaan dokumen · periksa sebelum disimpan</small>
 </div>
 
-<span>{docPlans.length} ACTIVITIES</span>
+<span>{docPlans.length} KEGIATAN</span>
 </div>
 
-{Object.keys(docMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONNEL & WATCH POSITIONS</small><span>PHST · READINESS</span></div><div className="agenda-duty-grid">{Object.entries(docMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{en(role)}</small><b>{name||"—"}</b></div>)}</div></section>}<div className="agenda-sections">{phstSectionOrder.map(section=>{const items=docPlans.filter(p=>p.category===section&&(section!=="C. UMUM"||!p.activity_time||p.activity_time.slice(0,5)<="22:00"));if(!items.length)return null;return <section className={"agenda-section "+section.charAt(0).toLowerCase()} key={section}>
+{Object.keys(docMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONEL & POSISI JAGA</small><span>PHST · KESIAGAAN</span></div><div className="agenda-duty-grid">{Object.entries(docMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{role}</small><b>{name||"—"}</b></div>)}</div></section>}<div className="agenda-sections">{phstSectionOrder.map(section=>{const items=docPlans.filter(p=>p.category===section&&(section!=="C. UMUM"||!p.activity_time||p.activity_time.slice(0,5)<="22:00"));if(!items.length)return null;return <section className={"agenda-section "+section.charAt(0).toLowerCase()} key={section}>
 <div className="agenda-section-title">
-<span>{en(section)}</span>
+<span>{section}</span>
 <small>{items.length} {section==="C. UMUM"?"JADWAL":section==="D. KHUSUS"?"DEPARTEMEN":"INFORMASI"}</small>
 </div>
 
@@ -485,7 +488,7 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 <div className="agenda-time">{p.activity_time||"•"}</div>
 
 <div className="agenda-content">
-<h4>{enText(p.title)}</h4>{p.description&&<p>{enText(p.description)}</p>}</div>
+<h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}</div>
 
 </article>)}</div>
 
@@ -493,8 +496,8 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 })}</div>
 
 <div className="plan-actions">
-<small>The agenda is saved as DRAFT. Equipment is only shown if written in the document.</small>
-<button onClick={importPhstPlans} disabled={busy}>{busy?"Saving…":"Save agenda to Logbook"}</button>
+<small>Agenda disimpan sebagai DRAFT. Peralatan hanya ditampilkan bila tertulis di dokumen.</small>
+<button onClick={importPhstPlans} disabled={busy}>{busy?"Menyimpan…":"Simpan agenda ke LOGBOOK"}</button>
 </div>
 
 </div>
@@ -503,8 +506,8 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 }</>
 }</section>
 </div>}
-{logTab==="jejak"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">3D model · track &amp; drills</div><h2 className="dg-h dg-card-title">Voyage replay &amp; drills</h2><div className="dg-sub">GPS track by date together with logbook entries at the same time. Drills exist only on this screen and are not saved.</div></div><NavMapButton label="Open map"/></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/></section>}
-{logTab==="arsip"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Logbook archive"/>}
+{logTab==="jejak"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · jejak &amp; latihan</div><h2 className="dg-h dg-card-title">Putar ulang pelayaran &amp; latihan peran</h2><div className="dg-sub">Jejak GPS per tanggal bersama catatan logbook pada jam yang sama. Latihan peran hanya di layar ini dan tidak disimpan.</div></div><NavMapButton label="Buka peta" lang="id"/></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/></section>}
+{logTab==="arsip"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip Logbook" lang="id"/>}
 </div>}
 {selected?.table && <>
 {module==="NAVYDOCS"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Archive centre"/>}
@@ -579,11 +582,11 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
  </div>
  <section className="panel data-panel admin-account-panel"><div className="panelhead"><div><h3>User directory & department rights</h3><p>Assign the department, Head of Department status and Class V authorisation for each account.</p></div><button type="button" onClick={()=>setAccountInviteDraft({email:"",full_name:"",rank_title:"",role:"viewer",department_code:"OPS",is_department_head:false,can_access_class_v:false})}>+ INVITE PERSONNEL</button></div>
   {accountError&&<div className="notice">{accountError}</div>}
-  {accountBusy?<div className="empty">Loading account directory…</div>:accountRows.length?<div className="table-wrap"><table><thead><tr><th>NAME</th><th>RANK</th><th>ROLE</th><th>STATUS</th><th>DEPARTMENT</th><th>HEAD OF DEPT.</th><th>CLASS V ACCESS</th><th>ACTION</th></tr></thead><tbody>{accountRows.map(account=><tr key={account.id}><td><b>{account.full_name}</b></td><td>{account.rank_title||"—"}</td><td><span className="admin-role-chip">{String(account.role||"").toUpperCase()}</span></td><td>{account.is_active?"ACTIVE":"INACTIVE"}</td><td>{account.department_code||"NOT ASSIGNED"}</td><td>{account.is_department_head?"YES":"NO"}</td><td>{account.can_access_class_v?"ALLOWED":"NO"}</td><td><button type="button" className="outline stock-edit-button" disabled={account.id===profile?.id||!account.is_active} onClick={()=>setAccountEditDraft({...account})}>MANAGE ACCESS</button></td></tr>)}</tbody></table></div>:<div className="empty">No accounts in this unit yet.</div>}
-  {accountInviteDraft&&<div className="admin-account-editor admin-account-invite"><div><small>NEW ACCOUNT · EMAIL INVITATION</small><b>Invite new personnel</b></div><label>Full name<input value={accountInviteDraft.full_name||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,full_name:e.target.value}):v)} placeholder="Name as in the personnel list"/></label><label>Account email<input type="email" value={accountInviteDraft.email||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,email:e.target.value}):v)} placeholder="name@domain.com"/></label><label>Rank<input value={accountInviteDraft.rank_title||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,rank_title:e.target.value}):v)} placeholder="e.g. LETDA"/></label><label>Account role<select value={accountInviteDraft.role||"viewer"} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,role:e.target.value}):v)}><option value="viewer">Viewer — read information</option><option value="operator">Operator — operational input</option><option value="officer">Officer</option></select></label><label>Department<select value={accountInviteDraft.department_code||"OPS"} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,department_code:e.target.value,can_access_class_v:e.target.value==="SIN"?v.can_access_class_v:false}):v)}><option value="OPS">OPS — Operasi</option><option value="SIN">SIN — Senjata</option><option value="EKA">EKA — Elektronika</option><option value="LOG">LOG — Logistik</option></select></label><label className="admin-access-check"><input type="checkbox" checked={!!accountInviteDraft.is_department_head} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,is_department_head:e.target.checked}):v)}/> Head of Department</label><label className="admin-access-check"><input type="checkbox" checked={!!accountInviteDraft.can_access_class_v} disabled={accountInviteDraft.department_code!=="SIN"} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,can_access_class_v:e.target.checked}):v)}/> Otorisasi Class V</label><div className="admin-account-actions"><button type="button" className="outline" onClick={()=>setAccountInviteDraft(null)} disabled={accountInviteSaving}>CANCEL</button><button type="button" onClick={inviteDepartmentAccount} disabled={accountInviteSaving}>{accountInviteSaving?"SENDING…":"SEND INVITATION"}</button></div></div>}
- {accountEditDraft&&<div className="admin-account-editor"><div><small>ACCOUNT ACCESS CONTROL</small><b>{accountEditDraft.full_name}</b></div><label>Department<select value={accountEditDraft.department_code||""} onChange={e=>setAccountEditDraft((v:any)=>v?({...v,department_code:e.target.value||null,is_department_head:e.target.value? v.is_department_head:false,can_access_class_v:e.target.value==="SIN"?v.can_access_class_v:false}):v)}><option value="">Not assigned</option><option value="OPS">OPS — Operasi</option><option value="SIN">SIN — Senjata</option><option value="EKA">EKA — Elektronika</option><option value="LOG">LOG — Logistik</option></select></label><label className="admin-access-check"><input type="checkbox" checked={!!accountEditDraft.is_department_head} disabled={!accountEditDraft.department_code} onChange={e=>setAccountEditDraft((v:any)=>v?({...v,is_department_head:e.target.checked}):v)}/> Head of Department</label><label className="admin-access-check"><input type="checkbox" checked={!!accountEditDraft.can_access_class_v} disabled={accountEditDraft.department_code!=="SIN"} onChange={e=>setAccountEditDraft((v:any)=>v?({...v,can_access_class_v:e.target.checked}):v)}/> Class V access authorisation</label><div className="admin-account-actions"><button type="button" className="outline" onClick={()=>setAccountEditDraft(null)} disabled={accountEditSaving}>CANCEL</button><button type="button" onClick={saveAccountScope} disabled={accountEditSaving}>{accountEditSaving?"SAVING…":"SAVE ACCESS"}</button></div></div>}
+  {accountBusy?<div className="empty">Loading account directory…</div>:accountRows.length?<div className="table-wrap"><table><thead><tr><th>NAME</th><th>RANK</th><th>ROLE</th><th>STATUS</th><th>DEPARTMENT</th><th>HEAD OF DEPT.</th><th>CLASS V ACCESS</th><th>ACTION</th></tr></thead><tbody>{accountRows.map(account=><tr key={account.id}><td><b>{account.full_name}</b></td><td>{account.rank_title||"—"}</td><td><span className="admin-role-chip">{String(account.role||"").toUpperCase()}</span></td><td>{account.is_active?"ACTIVE":"INACTIVE"}</td><td>{depLabel(account.department_code)||"NO DEPARTMENT"}</td><td>{account.is_department_head?"YES":"NO"}</td><td>{account.can_access_class_v?"ALLOWED":"NO"}</td><td><button type="button" className="outline stock-edit-button" disabled={account.id===profile?.id||!account.is_active} onClick={()=>setAccountEditDraft({...account})}>MANAGE ACCESS</button></td></tr>)}</tbody></table></div>:<div className="empty">No accounts in this unit yet.</div>}
+  {accountInviteDraft&&<div className="admin-account-editor admin-account-invite"><div><small>NEW ACCOUNT · EMAIL INVITATION</small><b>Invite new personnel</b></div><label>Full name<input value={accountInviteDraft.full_name||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,full_name:e.target.value}):v)} placeholder="Name as in the personnel list"/></label><label>Account email<input type="email" value={accountInviteDraft.email||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,email:e.target.value}):v)} placeholder="name@domain.com"/></label><label>Rank<input value={accountInviteDraft.rank_title||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,rank_title:e.target.value}):v)} placeholder="e.g. LETDA"/></label><label>Account role<select value={accountInviteDraft.role||"viewer"} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,role:e.target.value}):v)}><option value="viewer">Viewer — read information</option><option value="operator">Operator — operational input</option><option value="officer">Officer</option></select></label><label>Department<select value={accountInviteDraft.department_code||""} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,department_code:e.target.value,is_department_head:e.target.value?v.is_department_head:false,can_access_class_v:e.target.value==="OPS"?v.can_access_class_v:false}):v)}><option value="">No department — command (Commander, Palaksa)</option><option value="OPS">DEPOPS — Operations (Operasi)</option><option value="SIN">DEPSIN — Engineering (Mesin)</option><option value="EKA">DEPEKA — Electronics (Elektronika)</option><option value="LOG">DEPLOG — Logistics (Logistik)</option></select></label><label className="admin-access-check"><input type="checkbox" checked={!!accountInviteDraft.is_department_head} disabled={!accountInviteDraft.department_code} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,is_department_head:e.target.checked}):v)}/> Head of Department</label><label className="admin-access-check"><input type="checkbox" checked={!!accountInviteDraft.can_access_class_v} disabled={accountInviteDraft.department_code!=="OPS"} onChange={e=>setAccountInviteDraft((v:any)=>v?({...v,can_access_class_v:e.target.checked}):v)}/> Otorisasi Class V</label><div className="admin-account-actions"><button type="button" className="outline" onClick={()=>setAccountInviteDraft(null)} disabled={accountInviteSaving}>CANCEL</button><button type="button" onClick={inviteDepartmentAccount} disabled={accountInviteSaving}>{accountInviteSaving?"SENDING…":"SEND INVITATION"}</button></div></div>}
+ {accountEditDraft&&<div className="admin-account-editor"><div><small>ACCOUNT ACCESS CONTROL</small><b>{accountEditDraft.full_name}</b></div><label>Department<select value={accountEditDraft.department_code||""} onChange={e=>setAccountEditDraft((v:any)=>v?({...v,department_code:e.target.value||null,is_department_head:e.target.value? v.is_department_head:false,can_access_class_v:e.target.value==="OPS"?v.can_access_class_v:false}):v)}><option value="">No department — command (Commander, Palaksa)</option><option value="OPS">DEPOPS — Operations (Operasi)</option><option value="SIN">DEPSIN — Engineering (Mesin)</option><option value="EKA">DEPEKA — Electronics (Elektronika)</option><option value="LOG">DEPLOG — Logistics (Logistik)</option></select></label><label className="admin-access-check"><input type="checkbox" checked={!!accountEditDraft.is_department_head} disabled={!accountEditDraft.department_code} onChange={e=>setAccountEditDraft((v:any)=>v?({...v,is_department_head:e.target.checked}):v)}/> Head of Department</label><label className="admin-access-check"><input type="checkbox" checked={!!accountEditDraft.can_access_class_v} disabled={accountEditDraft.department_code!=="OPS"} onChange={e=>setAccountEditDraft((v:any)=>v?({...v,can_access_class_v:e.target.checked}):v)}/> Class V access authorisation</label><div className="admin-account-actions"><button type="button" className="outline" onClick={()=>setAccountEditDraft(null)} disabled={accountEditSaving}>CANCEL</button><button type="button" onClick={saveAccountScope} disabled={accountEditSaving}>{accountEditSaving?"SAVING…":"SAVE ACCESS"}</button></div></div>}
  </section>
- <section className="admin-access-roadmap"><div><small>DEPARTMENTAL RBAC · NEXT CONTROL LAYER</small><h3>Department access structure</h3><p>All active personnel can read general ship information. Input, edit and approval rights are limited by department and authority level.</p></div><div className="admin-department-grid">{[["OPS","OPERATIONS"],["SIN","WEAPONS"],["EKA","ELECTRONICS"],["LOG","LOGISTICS"]].map(([code,name])=><article key={code}><b>{code}</b><span>{name}</span><small>HEAD OF DEPARTMENT · SPECIFIC ACCESS</small></article>)}</div><div className="admin-access-warning"><b>Account identity and invitations are available.</b><span>The Admin can invite personnel by email, assign OPS/SIN/EKA/LOG, appoint Heads of Department and give Class V authorisation to SIN accounts. Cross-department write restrictions for operational modules are the next stage; a department assignment does not yet grant cross-module edit rights.</span></div></section>
+ <section className="admin-access-roadmap"><div><small>DEPARTMENTAL RBAC · NEXT CONTROL LAYER</small><h3>Department access structure</h3><p>All active personnel can read general ship information. Input, edit and approval rights are limited by department and authority level.</p></div><div className="admin-department-grid">{[["OPS","OPERATIONS"],["SIN","ENGINEERING"],["EKA","ELECTRONICS"],["LOG","LOGISTICS"]].map(([code,name])=><article key={code}><b>{depLabel(code)}</b><span>{name}</span><small>HEAD OF DEPARTMENT · SPECIFIC ACCESS</small></article>)}</div><div className="admin-access-warning"><b>Account identity and invitations are available.</b><span>The Admin can invite personnel by email, assign DEPOPS/DEPSIN/DEPEKA/DEPLOG, appoint Heads of Department and give Class V authorisation to DEPOPS accounts. Cross-department write restrictions for operational modules are the next stage; a department assignment does not yet grant cross-module edit rights.</span></div></section>
 </section>}
 {!selected?.table&&module!=="ADMINISTRATION" && <section className="panel coming">
 <div className="coming-icon">◇</div>

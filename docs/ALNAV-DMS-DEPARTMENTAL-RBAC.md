@@ -6,8 +6,8 @@ ALNAV DMS is one shared ship information system for all active KRI ALAMANG-644 p
 ## 2. Department structure
 | Code | Department | Ownership examples |
 |---|---|---|
-| OPS | Operasi | Department-owned operational logbook activity, operational checklists and assigned operational records |
-| SIN | Senjata | Department-owned armament accountability records and authorized Class V access |
+| OPS | Operasi | Department-owned operational logbook activity, operational checklists, assigned operational records, and Class V (ammunition) accountability with authorised Class V access |
+| SIN | Mesin (engineering; corrected by owner 26 Nov 2026 — previously mislabelled "Senjata") | Engineering/machinery department records. Class V is NOT held by SIN (see OPS). |
 | EKA | Elektronika | Electronics/electrical equipment, electronics maintenance, and linked spare-part accountability |
 | LOG | Logistik | Supply receipt/issue, Class I/III/IV/VIII and general logistics master records |
 
@@ -75,7 +75,9 @@ Create a verified data-bearing Supabase development project/restore, then implem
 - Profiles: department_code, is_department_head, can_access_class_v.
 - Department ownership columns on activity_logs, inventory_items, maintenance_assets, maintenance_records, checklists, checklist_runs, daily_watch_reports and personnel.
 - Inventory supply_class check: I, III, IV, V, VIII, IX.
-- Existing known stock mapping: Air Tawar -> I/LOG; BBM -> III/LOG; Amunisi -> V/SIN.
+- Existing known stock mapping: Air Tawar -> I/LOG; BBM -> III/LOG; Amunisi -> V/OPS (owner decision 26 Nov 2026: OPS holds Class V; migration 20261126061025 moves the 15 rows from SIN).
+- Display labels: department codes are shown as DEPOPS, DEPSIN, DEPEKA, DEPLOG; stored codes remain OPS/SIN/EKA/LOG.
+- Class V authorisation (profiles.can_access_class_v) may only be granted to OPS accounts (app + admin-invite-user function).
 - Class V SELECT protection enforced by restrictive RLS on inventory_items and stock_movements.
 
 ### Account administration

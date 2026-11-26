@@ -1,4 +1,5 @@
 "use client";
+import Portal from "./Portal";
 import { en, enText } from "./displayEn";
 import { useMemo, useState } from "react";
 import { stockClasses, itemBelongsToStockClass } from "./stockClasses";
@@ -73,13 +74,13 @@ export default function StockWorkspace(p: Props) {
       <div><div className="dg-eyebrow">Logistics · KRI ALAMANG-644</div><h1 className="dg-h">Stock &amp; logistics</h1><p>Balances are calculated by the database from inbound/outbound transactions. Data follows this account's access rights.</p></div>
       <div className="dg-btn-row dg-stock-actions">
         {canOperate && <button type="button" className="dg-btn dg-btn-accent" onClick={() => p.onNewMovement()}>+ Record transaction</button>}
-        {canManage && <button type="button" className="dg-btn" onClick={() => p.onNewItem({ item_code: "", item_name: "", category: cls.defaultCategory, supply_class: cls.id, department_code: cls.id === "V" ? "SIN" : "LOG", unit_of_measure: cls.id === "I" || cls.id === "III" ? "liter" : "unit", minimum_stock: 0, is_active: true })}>+ Add item</button>}
+        {canManage && <button type="button" className="dg-btn" onClick={() => p.onNewItem({ item_code: "", item_name: "", category: cls.defaultCategory, supply_class: cls.id, department_code: cls.id === "V" ? "OPS" : "LOG", unit_of_measure: cls.id === "I" || cls.id === "III" ? "liter" : "unit", minimum_stock: 0, is_active: true })}>+ Add item</button>}
         <button type="button" className="dg-btn" onClick={p.onReload} disabled={p.busy}>{p.busy ? "Loading…" : "Reload"}</button>
       </div>
     </section>
 
     {p.notice && <p className="dg-note dg-notice" role="status">{p.notice}</p>}
-    {p.editors}
+    <Portal>{p.editors}</Portal>
 
     <section className="dg-row dg-kpis">
       <div className="dg-glass dg-card dg-kpi"><span>Active items</span><b className="dg-h">{nf(visibleRows.length)}</b><small>{filled} of {canAccessClassV ? 6 : 5} classes filled</small></div>
@@ -102,10 +103,10 @@ export default function StockWorkspace(p: Props) {
         })}
       </div>
 
-      <div className="dg-class-detail">
+      <div className="dg-class-detail" key={cls.id}>
         <div className="dg-card-head">
           <div><div className="dg-eyebrow">{cls.title} · {cls.name}</div><h3 className="dg-h dg-card-title">{cls.description}</h3><div className="dg-chips">{cls.subgroups.map(s => <span key={s}>{s}</span>)}</div></div>
-          {canManage && !restricted && <button type="button" className="dg-btn" onClick={() => p.onNewItem({ item_code: "", item_name: "", category: cls.defaultCategory, supply_class: cls.id, department_code: cls.id === "V" ? "SIN" : "LOG", unit_of_measure: cls.id === "I" || cls.id === "III" ? "liter" : "unit", minimum_stock: 0, is_active: true })}>+ Add class {cls.id} item</button>}
+          {canManage && !restricted && <button type="button" className="dg-btn" onClick={() => p.onNewItem({ item_code: "", item_name: "", category: cls.defaultCategory, supply_class: cls.id, department_code: cls.id === "V" ? "OPS" : "LOG", unit_of_measure: cls.id === "I" || cls.id === "III" ? "liter" : "unit", minimum_stock: 0, is_active: true })}>+ Add class {cls.id} item</button>}
         </div>
 
         {restricted ? <div className="dg-empty"><b>Class V inventory is restricted.</b><span>Details are only for Admin, Commander, or entitled accounts. Contact the Admin to request access.</span></div> : <>

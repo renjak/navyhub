@@ -14,6 +14,8 @@ export type Fix = {
   position_at: string; latitude: number; longitude: number;
   speed_knots: number | null; course_degrees: number | null;
   source: string | null; accuracy_m: number | null;
+  /** Simulation only: synthetic gyro heading (DEMO). Never set for real data. */
+  heading_demo?: number | null;
 };
 export type TrackState = "STOPPED" | "ACQUIRING" | "ACTIVE" | "ERROR" | "UNAVAILABLE";
 type Ctx = {
@@ -111,7 +113,8 @@ export function NavRuntimeProvider({ supabase, unitId, isAdmin, children }: { su
       position_at: new Date().toISOString(),
       latitude: gps?.latitude ?? -6.042, longitude: gps?.longitude ?? 106.887,
       speed_knots: 12, course_degrees: gps?.course_degrees != null ? Math.round(gps.course_degrees) : 55,
-      source: "SIMULATION", accuracy_m: null
+      source: "SIMULATION", accuracy_m: null,
+      heading_demo: gps?.course_degrees != null ? Math.round(gps.course_degrees) : 55
     });
   }, [gps]);
   const stopSim = useCallback(() => setSim(null), []);
@@ -124,8 +127,10 @@ export function NavRuntimeProvider({ supabase, unitId, isAdmin, children }: { su
       const cog = ((Number(p.course_degrees) + Math.sin(now / 11000) * 2.2) % 360 + 360) % 360;
       const sog = 12 + Math.sin(now / 9000) * 1.5;
       const dNm = sog * (2 / 3600), r = (cog * Math.PI) / 180;
+      const drift = Math.sin(now / 13000) * 5 + Math.sin(now / 4100) * 1.2; // synthetic set/leeway, degrees
       return {
         ...p, position_at: new Date(now).toISOString(), speed_knots: Math.round(sog * 10) / 10, course_degrees: cog,
+        heading_demo: ((cog + drift) % 360 + 360) % 360,
         latitude: p.latitude + (dNm / 60) * Math.cos(r),
         longitude: p.longitude + (dNm / (60 * Math.max(0.2, Math.cos((p.latitude * Math.PI) / 180)))) * Math.sin(r)
       };

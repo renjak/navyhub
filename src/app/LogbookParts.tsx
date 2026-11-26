@@ -1,5 +1,4 @@
 "use client";
-import { en } from "./displayEn";
 import { useCallback, useEffect, useState } from "react";
 
 /* Logbook — summary strip and tab bar. Reads today's (WIB) records only;
@@ -7,16 +6,16 @@ import { useCallback, useEffect, useState } from "react";
 
 export type LogTab = "jaga" | "phst" | "agenda" | "jejak" | "arsip";
 export const LOG_TABS: Array<[LogTab, string, string]> = [
-  ["jaga", "Today's watch", "Handover, duty officer & daily checklist"],
-  ["phst", "Daily PHST", "Personnel, situation & Section C checklist"],
-  ["agenda", "Agenda", "Tomorrow's agenda, departments & PHST import"],
-  ["jejak", "Track & drills", "Voyage replay, drills & map"],
-  ["arsip", "Archive", "Handover reports & history"]
+  ["jaga", "Jaga hari ini", "Serah terima, petugas & checklist harian"],
+  ["phst", "PHST harian", "Personel, situasi & checklist Bagian C"],
+  ["agenda", "Agenda", "Agenda esok, departemen & impor PHST"],
+  ["jejak", "Jejak & latihan", "Putar ulang pelayaran, latihan & peta"],
+  ["arsip", "Arsip", "Rekap serah terima & riwayat"]
 ];
 
 const WIB = "Asia/Jakarta";
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: WIB }).format(new Date());
-const longDate = (d: string) => new Date(d + "T00:00:00+07:00").toLocaleDateString("en-GB", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const longDate = (d: string) => new Date(d + "T00:00:00+07:00").toLocaleDateString("id-ID", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
 type Summary = {
   watch: { name: string; type: string | null } | null | undefined;
@@ -58,31 +57,31 @@ export function LogbookSummary({ supabase, unitId, onTab, refreshKey }: { supaba
     </div>
     <div className="dg-log-kpis">
       <button type="button" className="dg-glass dg-log-kpi" onClick={() => onTab("jaga")}>
-        <span>Officer of the watch</span>
-        <b>{s.watch === undefined ? dash : s.watch ? s.watch.name || dash : "Not assigned"}</b>
-        <small>{(s.watch?.type && en(s.watch.type)) || "Assigned at 07:45 WIB"}</small>
+        <span>Perwira Jaga</span>
+        <b>{s.watch === undefined ? dash : s.watch ? s.watch.name || dash : "Belum ditetapkan"}</b>
+        <small>{s.watch?.type || "Penetapan pukul 07.45 WIB"}</small>
       </button>
       <button type="button" className="dg-glass dg-log-kpi" onClick={() => onTab("jaga")}>
-        <span>Daily checklist</span>
+        <span>Checklist harian</span>
         <b>{s.runs ? `${s.runs.done}/${s.runs.total}` : dash}</b>
-        <small>sessions completed today</small>
+        <small>sesi selesai hari ini</small>
       </button>
       <button type="button" className="dg-glass dg-log-kpi" onClick={() => onTab("phst")}>
-        <span>Today's PHST</span>
-        <b>{s.phst === undefined ? dash : s.phst ? `${s.phst.done}/${s.phst.total}` : "None yet"}</b>
-        <small>{s.phst ? `Section C done${s.phst.issues ? ` · ${s.phst.issues} finding${s.phst.issues === 1 ? "" : "s"}` : ""}` : "upload the document in the Agenda tab"}</small>
+        <span>PHST hari ini</span>
+        <b>{s.phst === undefined ? dash : s.phst ? `${s.phst.done}/${s.phst.total}` : "Belum ada"}</b>
+        <small>{s.phst ? `Bagian C terlaksana${s.phst.issues ? ` · ${s.phst.issues} temuan` : ""}` : "unggah dokumen di tab Agenda"}</small>
       </button>
       <button type="button" className={"dg-glass dg-log-kpi" + (s.report?.approved ? " is-ok" : "")} onClick={() => onTab("arsip")}>
-        <span>Commander approval</span>
-        <b>{s.report === undefined ? dash : s.report ? (s.report.approved ? "Approved" : "Pending") : "No report yet"}</b>
-        <small>today's logbook report</small>
+        <span>Persetujuan Komandan</span>
+        <b>{s.report === undefined ? dash : s.report ? (s.report.approved ? "Disetujui" : "Menunggu") : "Belum ada rekap"}</b>
+        <small>rekap logbook hari ini</small>
       </button>
     </div>
   </section>;
 }
 
 export function LogTabs({ tab, onTab }: { tab: LogTab; onTab: (t: LogTab) => void }) {
-  return <div className="dg-glass dg-tabs" role="tablist" aria-label="Logbook sections">
+  return <div className="dg-glass dg-tabs" role="tablist" aria-label="Bagian Logbook">
     {LOG_TABS.map(([id, label, desc]) => <button type="button" role="tab" key={id} aria-selected={tab === id} title={desc} onClick={() => onTab(id)}><b>{label}</b><small>{desc}</small></button>)}
   </div>;
 }
