@@ -11,7 +11,7 @@ import { useNav } from "../NavRuntime";
 
 const KEY = "alnav-intro-seen";
 const DURATION = 1900; // ms before the exit transition starts
-const EXIT = 450;
+const EXIT = 1100; // globe flies in to the ship position while the dashboard assembles behind it
 
 type Geo = typeof import("./geo");
 const D2R = Math.PI / 180;
@@ -24,6 +24,8 @@ export default function IntroSplash() {
   const geoRef = useRef<Geo | null>(null);
   const targetRef = useRef<{ lon: number; lat: number; real: boolean }>({ lon: 118, lat: -2.5, real: false });
   const doneRef = useRef(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const markRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     let seen = false;
@@ -41,9 +43,23 @@ export default function IntroSplash() {
   const finish = () => {
     if (doneRef.current) return;
     doneRef.current = true;
+    // zoom towards the ship marker (or the globe centre when no position is drawn)
+    const o = overlayRef.current, m = markRef.current;
+    if (o) { o.style.setProperty("--ox", (m ? m.x : window.innerWidth / 2) + "px"); o.style.setProperty("--oy", (m ? m.y : window.innerHeight * 0.46) + "px"); }
     setExiting(true);
-    document.body.classList.remove("dg-intro");
-    window.setTimeout(() => setShow(false), EXIT);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // let the dashboard assemble while the globe opens: sidebar, header, then cards in reading order
+    window.setTimeout(() => {
+      const els = Array.from(document.querySelectorAll<HTMLElement>(".dg-reveal.dg-in"))
+        .map(el => ({ el, r: el.getBoundingClientRect() }))
+        .filter(x => x.r.bottom > 0 && x.r.top < window.innerHeight)
+        .sort((a, b) => (Math.round(a.r.top / 40) - Math.round(b.r.top / 40)) || (a.r.left - b.r.left));
+      els.forEach((x, i) => x.el.style.setProperty("--dg-delay", (reduced ? 0 : 160 + Math.min(i, 12) * 75) + "ms"));
+      document.body.classList.add("dg-arrive");
+      document.body.classList.remove("dg-intro");
+      window.setTimeout(() => document.body.classList.remove("dg-arrive"), 2600);
+    }, reduced ? 0 : 280);
+    window.setTimeout(() => setShow(false), reduced ? 300 : EXIT);
   };
 
   useEffect(() => {
@@ -100,6 +116,7 @@ export default function IntroSplash() {
       }
       // ship position
       const [mx, my, mv] = proj(tgt.lon, tgt.lat);
+      markRef.current = mv ? { x: mx, y: my } : null;
       if (mv && k > 0.6) {
         const a = Math.min(1, (k - 0.6) / 0.3), pulse = ((now - t0) % 1600) / 1600;
         ctx.globalAlpha = fadeIn * a;
@@ -119,7 +136,7 @@ export default function IntroSplash() {
   if (!show) return null;
   const real = !!gps && Number.isFinite(gps.latitude) && Number.isFinite(gps.longitude);
   const dm = (v: number, p: string, n: string) => { const a = Math.abs(v), d = Math.floor(a); return `${d}°${((a - d) * 60).toFixed(1)}′ ${v < 0 ? n : p}`; };
-  return <div className={"dg-intro-overlay" + (exiting ? " is-exiting" : "")} role="dialog" aria-modal="true" aria-label="ALNAV DMS opening" data-lenis-prevent>
+  return <div ref={overlayRef} className={"dg-intro-overlay" + (exiting ? " is-exiting" : "")} role="dialog" aria-modal="true" aria-label="ALNAV DMS opening" data-lenis-prevent>
     <canvas ref={canvasRef} className="dg-intro-globe" aria-hidden="true" />
     <div className="dg-intro-center">
       <img className="dg-intro-ship" src="/images/kri-alamang-644-side.png" alt="KRI ALAMANG-644 silhouette" />

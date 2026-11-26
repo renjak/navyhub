@@ -626,7 +626,7 @@ button.dg-kpi:hover,.dg-log-kpi:hover{transform:translateY(-2px);box-shadow:inse
 
 /* ================= Opening sequence ================= */
 .dg-intro-overlay{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;background:radial-gradient(900px 700px at 50% 45%,rgba(37,84,150,.35),transparent 65%),radial-gradient(600px 500px at 50% 110%,rgba(231,19,28,.12),transparent 60%),#050B14;transition:opacity .45s ease,transform .45s var(--dg-ease),filter .45s ease}
-.dg-intro-overlay.is-exiting{opacity:0;transform:scale(1.08);filter:blur(6px);pointer-events:none}
+.dg-intro-overlay.is-exiting{opacity:0;pointer-events:none;transition:opacity .7s cubic-bezier(.4,0,.2,1) .4s}
 .dg-intro-globe{position:absolute;inset:0;width:100%;height:100%}
 .dg-intro-center{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(640px,84vw);margin-top:22vh}
 .dg-intro-ship{width:100%;height:auto;filter:drop-shadow(0 0 18px rgba(120,170,230,.45));clip-path:inset(0 100% 0 0);animation:dg-intro-draw 1s .1s cubic-bezier(.65,0,.35,1) forwards,dg-intro-float 6s 1.1s ease-in-out infinite}
@@ -799,3 +799,24 @@ body.dg-intro{overflow:hidden}
 .alnav-loader.is-leaving .alnav-loader-word{transform:translateY(-10px);opacity:0}
 .alnav-loader.is-leaving .alnav-loader-label{opacity:0}
 @media (prefers-reduced-motion:reduce){.alnav-loader.is-overlay,.alnav-loader.is-overlay *{transition-duration:.2s!important}.alnav-loader.is-leaving .alnav-loader-stage{transform:none;filter:none}}
+
+/* Opening → dashboard: fly into the ship position, then the dashboard assembles */
+.dg-intro-globe{transition:transform 1.05s cubic-bezier(.7,0,.3,1),opacity .9s ease .15s,filter 1s ease}
+.dg-intro-overlay.is-exiting .dg-intro-globe{transform:scale(2.6);transform-origin:var(--ox,50%) var(--oy,46%);opacity:0;filter:blur(2px)}
+.dg-intro-center,.dg-intro-logo{transition:transform .7s cubic-bezier(.4,0,.2,1),opacity .5s ease}
+.dg-intro-overlay.is-exiting .dg-intro-center{transform:translateY(-36px) scale(.92);opacity:0}
+.dg-intro-overlay.is-exiting .dg-intro-logo{transform:translateX(-50%) translateY(-20px);opacity:0}
+.dg-intro-overlay.is-exiting .dg-intro-skip{opacity:0}
+body.dg-arrive .dg-reveal{transition-duration:.75s,.85s}
+body.dg-arrive .dg-side{animation:dg-arrive-left .8s cubic-bezier(.2,.7,.2,1) .1s both}
+body.dg-arrive .dg-header{animation:dg-arrive-top .7s cubic-bezier(.2,.7,.2,1) .2s both}
+body.dg-arrive .dg-3d{animation:dg-arrive-3d 1.1s cubic-bezier(.2,.7,.2,1) .3s both}
+@keyframes dg-arrive-left{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes dg-arrive-top{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+@keyframes dg-arrive-3d{from{opacity:0;transform:scale(1.06);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+body.dg-intro .dg-side,body.dg-intro .dg-header{opacity:0}
+@media (prefers-reduced-motion:reduce){
+  .dg-intro-overlay.is-exiting .dg-intro-globe,.dg-intro-overlay.is-exiting .dg-intro-center{transform:none;filter:none}
+  body.dg-arrive .dg-side,body.dg-arrive .dg-header,body.dg-arrive .dg-3d{animation:none}
+  body.dg-intro .dg-side,body.dg-intro .dg-header{opacity:1}
+}
