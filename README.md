@@ -4,7 +4,7 @@
 The active application for KRI ALAMANG-644, developed from the former NAVYHUB codebase. It remains on the existing Next.js and Supabase infrastructure. Database identifiers and deployment environment-variable names remain unchanged until separately reviewed migrations are approved.
 
 ## Source and release safety
-- Production baseline: feat/navyhub-operational-modules at 49d69aa741181caa22f627be9ed4d5c966d36009.
+- Production baseline: feat/navyhub-operational-modules at 7d36e5933b46e4de1eb599deb086aa121e3fe4ff (deployed to navyhub.app 2026-11-26 as a production redeploy of the branch build; the Vercel production branch is not this branch, so production releases are made by redeploying/promoting with target production). Previous baseline 49d69aa remains available for rollback.
 - Implementation branch: alnav-dms/phase-1-gps-safety.
 - Preview validation is separate from production. No production merge or deployment is authorized by this work.
 - Do not merge divergent feature/rebuild branches without file-by-file reconciliation.
