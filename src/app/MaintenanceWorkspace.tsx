@@ -1,4 +1,5 @@
 "use client";
+import { enText } from "./displayEn";
 import { useMemo, useState } from "react";
 import { PARTS, assetCode } from "./vessel3d/data";
 
@@ -44,7 +45,7 @@ export default function MaintenanceWorkspace(p: Props) {
     const asset = f.asset_id ? assetById[f.asset_id] : undefined;
     const sub: "SEWACO" | "PLATFORM" | null = asset ? subOf(asset.category) : part ? part.cat : null;
     const body = m ? desc.slice(m[0].length) : desc;
-    return { ...f, _text: m && body.includes(" — ") ? body.slice(body.indexOf(" — ") + 3) : body, _part: part, _asset: asset, _sub: sub };
+    return { ...f, _text: enText(m && body.includes(" — ") ? body.slice(body.indexOf(" — ") + 3) : body), _part: part, _asset: asset, _sub: sub };
   }), [faults, assetById]);
 
   const q = p.search.trim().toLowerCase();
@@ -109,7 +110,7 @@ export default function MaintenanceWorkspace(p: Props) {
           </div>
           <b>{f._part ? f._part.n : f._asset ? f._asset.asset_name : "Not linked to a ship part"}</b>
           <p>{f._text || "—"}</p>
-          {(f._asset || f.action_taken || f.completed_at) && <small>{[f._asset && `Asset ${f._asset.asset_code || ""} ${f._asset.asset_name || ""}`.trim(), f.action_taken && "Action: " + f.action_taken, f.completed_at && "Completed " + fmtDate(f.completed_at)].filter(Boolean).join(" · ")}</small>}
+          {(f._asset || f.action_taken || f.completed_at) && <small>{[f._asset && `Asset ${f._asset.asset_code || ""} ${f._asset.asset_name || ""}`.trim(), f.action_taken && "Action: " + enText(f.action_taken), f.completed_at && "Completed " + fmtDate(f.completed_at)].filter(Boolean).join(" · ")}</small>}
         </div>
         <div className="dg-fault-actions">
           {f._part && <button type="button" className="dg-btn" onClick={() => p.onShowOnShip(f._part!.id)}>Show on ship</button>}
