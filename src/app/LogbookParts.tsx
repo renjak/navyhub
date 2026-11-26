@@ -1,4 +1,5 @@
 "use client";
+import { en } from "./displayEn";
 import { useCallback, useEffect, useState } from "react";
 
 /* Logbook — summary strip and tab bar. Reads today's (WIB) records only;
@@ -59,7 +60,7 @@ export function LogbookSummary({ supabase, unitId, onTab, refreshKey }: { supaba
       <button type="button" className="dg-glass dg-log-kpi" onClick={() => onTab("jaga")}>
         <span>Officer of the watch</span>
         <b>{s.watch === undefined ? dash : s.watch ? s.watch.name || dash : "Not assigned"}</b>
-        <small>{s.watch?.type || "Assigned at 07:45 WIB"}</small>
+        <small>{(s.watch?.type && en(s.watch.type)) || "Assigned at 07:45 WIB"}</small>
       </button>
       <button type="button" className="dg-glass dg-log-kpi" onClick={() => onTab("jaga")}>
         <span>Daily checklist</span>

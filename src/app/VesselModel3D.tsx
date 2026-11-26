@@ -1,4 +1,5 @@
 "use client";
+import { en, enText } from "./displayEn";
 
 /* ALNAV DMS — Modul 3D KRI ALAMANG-644.
    The ship model is the interface: nine views over the same hull, all fed by existing tables.
@@ -156,7 +157,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
         const pid = (r.asset_id && assetPart[r.asset_id]) || (m ? CODE2PART[m[1].toUpperCase()] : undefined) || null;
         if (!pid) { if (OPEN.includes(r.status)) unlinked++; continue; }
         const body = m ? desc.slice(m[0].length) : desc, pn = PART[pid]?.n;
-        list.push({ id: r.id, part: pid, text: pn && body.startsWith(pn + " — ") ? body.slice(pn.length + 3) : body, status: r.status, report_date: r.report_date, created_at: r.created_at, completed_at: r.completed_at });
+        list.push({ id: r.id, part: pid, text: m && body.includes(" — ") ? body.slice(body.indexOf(" — ") + 3) : body, status: r.status, report_date: r.report_date, created_at: r.created_at, completed_at: r.completed_at });
       }
       setFaults(list); setUnlinkedOpen(unlinked);
     }
@@ -432,7 +433,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           <h3 className="v3d-sub">Open reports ({openFaults.length})</h3>
           <div className="v3d-list">{openFaults.length ? openFaults.map(f => <div key={f.id} className={"v3d-row" + (f.part === part ? " sel" : "")} style={{ alignItems: "flex-start" }}>
             <span className="v3d-dot" style={{ background: COL.bad, marginTop: 6 }} />
-            <span className="v3d-grow"><button type="button" onClick={() => f.part && setPart(f.part)} style={{ background: "none", border: 0, padding: 0, textAlign: "left", fontWeight: 600, fontSize: 14 }}>{f.part ? PART[f.part]?.n : "—"}</button><small>{f.text}</small><small>{FS[f.status]} · {fmtT(f.created_at)}</small></span>
+            <span className="v3d-grow"><button type="button" onClick={() => f.part && setPart(f.part)} style={{ background: "none", border: 0, padding: 0, textAlign: "left", fontWeight: 600, fontSize: 14 }}>{f.part ? PART[f.part]?.n : "—"}</button><small>{enText(f.text)}</small><small>{FS[f.status]} · {fmtT(f.created_at)}</small></span>
             {canManage && <span className="v3d-actions" style={{ flexDirection: "column" }}>
               {f.status !== "in_progress" && <button type="button" className="v3d-btn s" disabled={busy} onClick={() => setFaultStatus(f, "in_progress")}>Start work</button>}
               <button type="button" className="v3d-btn s" disabled={busy} onClick={() => setFaultStatus(f, "completed")}>Complete</button>
@@ -469,7 +470,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
       }
       case "jaga": return <>
         {errLine("watch")}
-        <span className="v3d-kicker">{new Date().toLocaleDateString("en-GB", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" })}{watch?.watch_type ? " · " + watch.watch_type : ""}</span>
+        <span className="v3d-kicker">{new Date().toLocaleDateString("en-GB", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" })}{watch?.watch_type ? " · " + en(watch.watch_type) : ""}</span>
         <div className="v3d-list">{POSTS.map(p => { const name = p.id === "pj" ? pjName : null; return <div key={p.id} className="v3d-row"><span className="v3d-dot" style={{ background: name ? COL.live : COL.none }} /><span className="v3d-grow"><b>{p.n}</b><small>{p.id === "pj" ? name || "No assignment today" : "— · no data source yet"}</small><small>{p.room ? roomName(p.room) : "Aft deck"}</small></span></div>; })}</div>
         <p className="v3d-note">The officer of the watch comes from the daily watch assignment in the Logbook and is changed there. Other posts are not recorded in the system yet, so they show “—”.</p>
       </>;
@@ -496,7 +497,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           {track.length >= 2 && <>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}><button type="button" className="v3d-btn" style={{ minWidth: 92 }} onClick={() => { if (rf >= 1) setRf(0); setPlaying(p => !p); }}>{playing ? "Pause" : "Play"}</button><input type="range" min={0} max={1000} value={Math.round(rf * 1000)} onChange={e => { setRf(Number(e.target.value) / 1000); setPlaying(false); }} aria-label="Time" /></div>
             <div className="v3d-grid2"><div className="v3d-cell"><small>Time</small><b>{rp ? fmtHM(rp.t) : "—"}</b></div><div className="v3d-cell"><small>SOG · COG</small><b style={{ fontSize: 15 }}>{rp && rp.sog !== null ? rp.sog.toFixed(1) + " kn" : "—"} · {rp && rp.cog !== null ? deg3(rp.cog) : "—"}</b></div></div>
-            {logsOnTrack.length > 0 && <><h3 className="v3d-sub">{replayDemo ? "Sample" : "Logbook"} entries</h3><div className="v3d-list">{logsOnTrack.map((l, i) => <button type="button" key={i} className="v3d-row" style={{ minHeight: 46 }} onClick={() => jumpTo(l.t)}><span className="v3d-dot" style={{ background: replayDemo ? COL.demo : COL.info }} /><span className="v3d-grow"><b>{fmtHM(l.t)}</b><small>{l.title}</small></span></button>)}</div></>}
+            {logsOnTrack.length > 0 && <><h3 className="v3d-sub">{replayDemo ? "Sample" : "Logbook"} entries</h3><div className="v3d-list">{logsOnTrack.map((l, i) => <button type="button" key={i} className="v3d-row" style={{ minHeight: 46 }} onClick={() => jumpTo(l.t)}><span className="v3d-dot" style={{ background: replayDemo ? COL.demo : COL.info }} /><span className="v3d-grow"><b>{fmtHM(l.t)}</b><small>{enText(l.title)}</small></span></button>)}</div></>}
           </>}
           <p className="v3d-note">Track from GPS positions stored on that date. The ship is turned by COG; when COG is not recorded, the direction is calculated from two consecutive positions.</p>
         </>;

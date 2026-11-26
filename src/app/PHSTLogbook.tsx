@@ -1,4 +1,5 @@
 "use client";
+import {en,enText} from "./displayEn";
 import {useCallback,useEffect,useState} from "react";
 
 type DailyOrder={id:string;activity_date:string;duty_officer:string;duty_officer_nrp:string|null;duty_division:string|null;duty_nco:string|null;duty_messenger:string|null;duty_attire:string|null;situation:string|null;readiness_level:string|null;main_task:string|null;source_file:string};
@@ -41,7 +42,7 @@ export default function PHSTLogbook({supabase,unitId,userId,canOperate,canManage
     <div className="dg-well"><span>Messenger</span><b>{order.duty_messenger||"—"}</b></div>
    </div>
    <div className="dg-grid2 dg-phst-context">
-    <div className="dg-well"><span>A. Situation</span><b>{order.situation||"—"}</b><small>Readiness: {order.readiness_level||"—"}</small></div>
+    <div className="dg-well"><span>A. Situation</span><b>{order.situation||"—"}</b><small>Readiness: {en(order.readiness_level)||"—"}</small></div>
     <div className="dg-well"><span>B. Main task</span><b>{order.main_task||"—"}</b></div>
    </div>
    <div className="dg-phst-checkhead">

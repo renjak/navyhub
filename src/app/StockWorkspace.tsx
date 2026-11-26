@@ -1,4 +1,5 @@
 "use client";
+import { en, enText } from "./displayEn";
 import { useMemo, useState } from "react";
 import { stockClasses, itemBelongsToStockClass } from "./stockClasses";
 
@@ -117,10 +118,10 @@ export default function StockWorkspace(p: Props) {
           {regular.length ? <div className="table-wrap dg-table"><table><thead><tr><th>Code</th><th>Item name</th><th className="num">Ready</th><th className="num">Not ready</th><th className="num">Minimum</th><th>Status</th>{(canManage || canOperate) && <th><span className="dg-sr">Actions</span></th>}</tr></thead>
             <tbody>{regular.map(r => <tr key={r.id} className={isLow(r) ? "is-low" : ""}>
               <td className="mono">{r.item_code || "—"}</td>
-              <td><b>{r.item_name}</b><small>{[r.category, r.brand, r.lot_no && "Lot " + r.lot_no].filter(Boolean).join(" · ")}</small></td>
-              <td className="num">{nf(r.stock_ready)} <small>{r.unit_of_measure}</small></td>
-              <td className="num">{nf(r.stock_unready)} <small>{r.unit_of_measure}</small></td>
-              <td className="num">{nf(r.minimum_stock)} <small>{r.unit_of_measure}</small></td>
+              <td><b>{enText(r.item_name)}</b><small>{[en(r.category), r.brand, r.lot_no && "Lot " + r.lot_no].filter(Boolean).join(" · ")}</small></td>
+              <td className="num">{nf(r.stock_ready)} <small>{en(r.unit_of_measure)}</small></td>
+              <td className="num">{nf(r.stock_unready)} <small>{en(r.unit_of_measure)}</small></td>
+              <td className="num">{nf(r.minimum_stock)} <small>{en(r.unit_of_measure)}</small></td>
               <td><span className={"dg-pill " + (isLow(r) ? "dg-pill-stale" : "dg-pill-none")}><i />{isLow(r) ? "Low stock" : "Recorded"}</span></td>
               {(canManage || canOperate) && <td className="dg-row-actions">{canOperate && <button type="button" className="dg-btn" onClick={() => p.onNewMovement(r.id)}>Transaction</button>}{canManage && <button type="button" className="dg-btn" onClick={() => p.onEditItem(r)}>Edit</button>}</td>}
             </tr>)}</tbody></table></div>
@@ -137,12 +138,12 @@ export default function StockWorkspace(p: Props) {
       {moves.length ? <div className="table-wrap dg-table"><table><thead><tr><th>Date</th><th>Item</th><th>Type</th><th className="num">Quantity</th><th>Condition</th><th>Reference</th><th>Purpose / notes</th></tr></thead>
         <tbody>{moves.map(m => { const it = itemName[m.item_id]; return <tr key={m.id}>
           <td>{fmtDate(m.movement_date)}</td>
-          <td><b>{it?.item_name || "—"}</b><small>{it?.item_code || ""}</small></td>
+          <td><b>{enText(it?.item_name) || "—"}</b><small>{it?.item_code || ""}</small></td>
           <td><span className={"dg-pill " + (m.movement_type === "inbound" ? "dg-pill-live" : "dg-pill-proxy")}><i />{m.movement_type === "inbound" ? "In" : m.movement_type === "outbound" ? "Out" : m.movement_type || "—"}</span></td>
-          <td className="num">{m.movement_type === "outbound" ? "−" : "+"}{nf(m.quantity)} <small>{it?.unit_of_measure || ""}</small></td>
+          <td className="num">{m.movement_type === "outbound" ? "−" : "+"}{nf(m.quantity)} <small>{en(it?.unit_of_measure)}</small></td>
           <td>{COND[m.condition_status] || m.condition_status || "—"}</td>
           <td>{m.reference_no || "—"}</td>
-          <td>{[m.movement_purpose, m.notes].filter(Boolean).join(" · ") || "—"}</td>
+          <td>{[enText(m.movement_purpose), enText(m.notes)].filter(Boolean).join(" · ") || "—"}</td>
         </tr>; })}</tbody></table></div>
         : <div className="dg-empty"><b>No transactions{moveFilter !== "all" ? " for this filter" : ""} yet.</b></div>}
     </section>
