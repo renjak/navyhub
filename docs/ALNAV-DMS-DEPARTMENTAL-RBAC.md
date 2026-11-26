@@ -75,7 +75,7 @@ Create a verified data-bearing Supabase development project/restore, then implem
 - Profiles: department_code, is_department_head, can_access_class_v.
 - Department ownership columns on activity_logs, inventory_items, maintenance_assets, maintenance_records, checklists, checklist_runs, daily_watch_reports and personnel.
 - Inventory supply_class check: I, III, IV, V, VIII, IX.
-- Existing known stock mapping: Air Tawar -> I/LOG; BBM -> III/LOG; Amunisi -> V/OPS (owner decision 26 Nov 2026: OPS holds Class V; migration 20261126130000 moves the 15 rows from SIN).
+- Existing known stock mapping: Air Tawar -> I/LOG; BBM -> III/LOG; Amunisi -> V/OPS (owner decision 26 Nov 2026: OPS holds Class V; migration 20261126061025 moves the 15 rows from SIN).
 - Display labels: department codes are shown as DEPOPS, DEPSIN, DEPEKA, DEPLOG; stored codes remain OPS/SIN/EKA/LOG.
 - Class V authorisation (profiles.can_access_class_v) may only be granted to OPS accounts (app + admin-invite-user function).
 - Class V SELECT protection enforced by restrictive RLS on inventory_items and stock_movements.

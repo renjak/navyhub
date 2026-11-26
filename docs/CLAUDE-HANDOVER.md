@@ -131,7 +131,7 @@ User's reference direction:
 ## 10. Departments, roles and stock
 - Department codes: OPS (Operasi), SIN (Mesin / engineering — corrected by the owner on 26 Nov 2026; the earlier "Senjata" label was wrong), EKA (Elektronika), LOG (Logistik).
 - Supply classes: I, III, IV, V, VIII, IX.
-- Existing inventory classification from the migration: Air Tawar → Class I / LOG; BBM → Class III / LOG; Amunisi → Class V / OPS (owner decision 26 Nov 2026; previously SIN, moved by migration 20261126130000). Class V authorisation is for OPS accounts only. Department codes are displayed as DEPOPS/DEPSIN/DEPEKA/DEPLOG. No other stock should be fabricated.
+- Existing inventory classification from the migration: Air Tawar → Class I / LOG; BBM → Class III / LOG; Amunisi → Class V / OPS (owner decision 26 Nov 2026; previously SIN, moved by migration 20261126061025). Class V authorisation is for OPS accounts only. Department codes are displayed as DEPOPS/DEPSIN/DEPEKA/DEPLOG. No other stock should be fabricated.
 - Class V visibility is intended for Admin/Commander or explicitly entitled users. Verify the actual policy, including linked stock movements.
 - Department ownership and supply class are distinct fields.
 - Proposed department read/write/approval matrix is in `docs/ALNAV-DMS-DEPARTMENTAL-RBAC.md`; not all write policies are complete.
