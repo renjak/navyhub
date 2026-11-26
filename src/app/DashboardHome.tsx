@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NavControls, fixState, useNav } from "./NavRuntime";
+import { depLabel } from "./displayEn";
 import NavMapButton from "./NavMap";
 const VesselModel3D = dynamic(() => import("./VesselModel3D"), { ssr: false, loading: () => <div className="dg-3d-loading">Loading 3D model…</div> });
 
@@ -282,7 +283,7 @@ export default function DashboardHome({ supabase: sb, unitId, userId, role, gree
           <div className="dg-grid2">
             {DEPTS.map(d => {
               const x = byDept[d];
-              return <div key={d} className="dg-well"><div className="dg-h dg-dept">{d}</div><div className={x.n ? "dg-sub" : "dg-dim"}>{x.n ? `${x.n} items · Class ${[...x.cls].sort((a, b) => CLASSES.indexOf(a as any) - CLASSES.indexOf(b as any)).join(", ")}` : "—"}</div></div>;
+              return <div key={d} className="dg-well"><div className="dg-h dg-dept">{depLabel(d)}</div><div className={x.n ? "dg-sub" : "dg-dim"}>{x.n ? `${x.n} items · Class ${[...x.cls].sort((a, b) => CLASSES.indexOf(a as any) - CLASSES.indexOf(b as any)).join(", ")}` : "—"}</div></div>;
             })}
           </div>
         </article>

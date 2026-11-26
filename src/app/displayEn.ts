@@ -119,3 +119,9 @@ export function enText(v: unknown): string {
   for (const [re, rep] of PHRASES) s = s.replace(re, rep);
   return s;
 }
+
+/** Department code as shown to users: OPS → DEPOPS. Stored codes stay OPS/SIN/EKA/LOG. */
+export function depLabel(code: unknown): string {
+  const c = String(code ?? "").trim().toUpperCase();
+  return c ? (c.startsWith("DEP") ? c : "DEP" + c) : "";
+}
