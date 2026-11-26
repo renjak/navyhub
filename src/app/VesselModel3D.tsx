@@ -48,16 +48,16 @@ type Drill = "api" | "bocor" | "asap";
 
 const WIB = "Asia/Jakarta";
 const localDate = (d = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: WIB, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
-const fmtT = (iso: string | number) => { const d = new Date(iso); return isNaN(d.getTime()) ? "—" : d.toLocaleString("id-ID", { timeZone: WIB, day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + " WIB"; };
-const fmtHM = (ms: number) => new Date(ms).toLocaleTimeString("id-ID", { timeZone: WIB, hour: "2-digit", minute: "2-digit" });
-const nf = (n: number) => Math.round(n).toLocaleString("id-ID");
+const fmtT = (iso: string | number) => { const d = new Date(iso); return isNaN(d.getTime()) ? "—" : d.toLocaleString("en-GB", { timeZone: WIB, day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) + " WIB"; };
+const fmtHM = (ms: number) => new Date(ms).toLocaleTimeString("en-GB", { timeZone: WIB, hour: "2-digit", minute: "2-digit" });
+const nf = (n: number) => Math.round(n).toLocaleString("en-GB");
 const num = (v: unknown): number | null => { if (v === null || v === undefined || v === "") return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
 const rgb = (c: Rgb) => "rgb(" + c.map(v => Math.round(v * 255)).join(",") + ")";
 const deg3 = (v: number) => String(Math.round(((v % 360) + 360) % 360)).padStart(3, "0") + "°";
 const dm = (v: number, pos: string, neg: string) => { const a = Math.abs(v), d = Math.floor(a), m = (a - d) * 60; return `${d}°${m.toFixed(3).padStart(6, "0")}′ ${v >= 0 ? pos : neg}`; };
 const COL: Record<Tone, string> = { live: "var(--v3d-ok)", demo: "var(--v3d-demo)", info: "var(--v3d-info)", warn: "var(--v3d-warn)", bad: "var(--v3d-bad)", none: "var(--v3d-none)" };
-const SRC: Record<string, string> = { onboard_gps: "GPS kapal", admin_device_gps: "Posisi perangkat Admin (proxy)" };
-const FS: Record<FaultStatus, string> = { reported: "Dilaporkan", in_progress: "Dikerjakan", deferred: "Ditunda", completed: "Selesai" };
+const SRC: Record<string, string> = { onboard_gps: "Ship GPS", admin_device_gps: "Admin device position (proxy)" };
+const FS: Record<FaultStatus, string> = { reported: "Reported", in_progress: "In progress", deferred: "Deferred", completed: "Completed" };
 const OPEN: FaultStatus[] = ["reported", "in_progress", "deferred"];
 const TAG = /^\[(3D-[A-Z0-9]+)\]\s*/i;
 const CODE2PART: Record<string, string> = Object.fromEntries(PARTS.map(p => [assetCode(p).toUpperCase(), p.id]));
@@ -166,7 +166,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
 
   useEffect(() => {
     let alive = true;
-    const run = () => { if (alive && !document.hidden) loadCore().catch(() => setLoadErr({ all: "Data belum dapat dimuat. Periksa koneksi." })); };
+    const run = () => { if (alive && !document.hidden) loadCore().catch(() => setLoadErr({ all: "Data could not be loaded. Check the connection." })); };
     run();
     const id = window.setInterval(run, 60_000), onVis = () => { if (!document.hidden) run(); };
     document.addEventListener("visibilitychange", onVis);
@@ -185,19 +185,19 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
     return out;
   }, [supply]);
   const roomLocked = (id: string) => ROOM[id]?.type === "terbatas" && !canAccessClassV;
-  const roomName = (id: string) => roomLocked(id) ? "Ruang terbatas" : ROOM[id]?.n ?? id;
+  const roomName = (id: string) => roomLocked(id) ? "Restricted room" : ROOM[id]?.n ?? id;
   const pjName = watch && (watch.new_watch_name || "").trim() ? [watch.new_watch_rank, watch.new_watch_name].filter(Boolean).join(" ") : null;
 
   function sysStatus(id: SysId): [Tone, string] {
     if (id === "bbm" || id === "aw") {
-      const t = tankInfo[id]; if (loadErr.supply || !t || t.frac === null || !t.row) return ["none", "Belum ada data"];
+      const t = tankInfo[id]; if (loadErr.supply || !t || t.frac === null || !t.row) return ["none", "No data yet"];
       return [t.frac < 0.15 ? "bad" : t.frac < 0.3 ? "warn" : "info", Math.round(t.frac * 100) + "% · " + nf(t.row.stock ?? 0) + " L"];
     }
-    if (loadErr.faults) return ["none", "Laporan kerusakan belum dapat dimuat"];
+    if (loadErr.faults) return ["none", "Fault reports could not be loaded"];
     const n = openFaults.filter(f => f.part && PART[f.part]?.sys === id).length;
-    if (n) return ["bad", n + " kerusakan terbuka"];
-    if (id === "gps") { if (!gps) return ["none", "Belum ada data posisi"]; return gpsLive ? ["live", "Live · " + fmtT(gps.position_at)] : ["warn", "Data lama · " + fmtT(gps.position_at)]; }
-    return ["info", "Tidak ada laporan kerusakan"];
+    if (n) return ["bad", n + (n === 1 ? " open fault" : " open faults")];
+    if (id === "gps") { if (!gps) return ["none", "No position data yet"]; return gpsLive ? ["live", "Live · " + fmtT(gps.position_at)] : ["warn", "Stale data · " + fmtT(gps.position_at)]; }
+    return ["info", "No fault reports"];
   }
 
   /* replay track */
@@ -233,7 +233,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           return pads;
         }
       });
-    } catch (e) { console.error("Modul 3D gagal dimulai", e); eng = null; }
+    } catch (e) { console.error("3D module failed to start", e); eng = null; }
     if (!eng) { setGlFail("nogl"); return; }
     engineRef.current = eng;
     return () => { eng?.destroy(); engineRef.current = null; };
@@ -260,15 +260,15 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
     const L: EngineMarker[] = [];
     if (mode === "status") for (const s of SYS) {
       const [k, t] = sysStatus(s.id);
-      const short = k === "info" ? "" : k === "none" ? " · —" : k === "live" ? " · Live" : k === "warn" && s.id === "gps" ? " · data lama" : /kerusakan/.test(t) ? " · " + t.replace(" kerusakan terbuka", " rusak") : " · " + t.split(" · ")[0];
-      L.push({ key: "sys:" + s.id, p: s.p, label: s.n + short, col: COL[k], lb: !narrow || k !== "info", pulse: k === "bad" && /rusak|kerusakan/.test(t) });
+      const short = k === "info" ? "" : k === "none" ? " · —" : k === "live" ? " · Live" : k === "warn" && s.id === "gps" ? " · stale data" : /open fault/.test(t) ? " · " + t.replace(/ open faults?/, " faulty") : " · " + t.split(" · ")[0];
+      L.push({ key: "sys:" + s.id, p: s.p, label: s.n + short, col: COL[k], lb: !narrow || k !== "info", pulse: k === "bad" && /open fault/.test(t) });
     }
-    else if (mode === "kerusakan") for (const p of PARTS) { const n = openByPart[p.id] || 0; L.push({ key: "part:" + p.id, p: p.p, label: p.n + (n ? " · " + n + " terbuka" : ""), col: n ? COL.bad : COL.info, sel: part === p.id, pulse: n > 0 }); }
+    else if (mode === "kerusakan") for (const p of PARTS) { const n = openByPart[p.id] || 0; L.push({ key: "part:" + p.id, p: p.p, label: p.n + (n ? " · " + n + " open" : ""), col: n ? COL.bad : COL.info, sel: part === p.id, pulse: n > 0 }); }
     else if (mode === "tangki") for (const t of TANKS) { const f = tankInfo[t.id]?.frac ?? null; L.push({ key: "tank:" + t.id, p: [(t.x0 + t.x1) / 2, 0, t.z1 + 0.4], label: t.short + " · " + (f === null ? "—" : Math.round(f * 100) + "%"), col: rgb(t.col), lb: true }); }
     else if (mode === "geladak") for (const r of ROOMS) { if (deck !== "semua" && r.deck !== deck) continue; const lock = roomLocked(r.id); L.push({ key: "room:" + r.id, r: r.id, label: roomName(r.id), col: rgb(lock ? TYPEC.terbatas : r.type === "terbatas" ? TYPEC.senjata : TYPEC[r.type]), sel: room === r.id }); }
     else if (mode === "jaga") for (const p of POSTS) { const name = p.id === "pj" ? pjName : null; L.push({ key: "post:" + p.id, p: p.p, label: p.n + " · " + (name || "—"), col: name ? COL.live : COL.none, lb: true }); }
-    else if (mode === "latihan") for (const r of ROOMS) { if (r.deck !== drillDeck) continue; const s = drill[r.id]; L.push({ key: "drill:" + r.id, r: r.id, label: (roomLocked(r.id) ? "Kompartemen terbatas" : r.n) + (s ? " · " + DRILLN[s] : ""), col: s ? rgb(DRILLC[s]) : COL.none, lb: !!s, pulse: !!s }); }
-    else if ((mode === "telemetri" || mode === "putar-ulang") && nav.cog !== null) L.push({ key: "n", w: [0, 0.1, -38], label: "U (utara)", col: "var(--v3d-red)", lb: true });
+    else if (mode === "latihan") for (const r of ROOMS) { if (r.deck !== drillDeck) continue; const s = drill[r.id]; L.push({ key: "drill:" + r.id, r: r.id, label: (roomLocked(r.id) ? "Restricted compartment" : r.n) + (s ? " · " + DRILLN[s] : ""), col: s ? rgb(DRILLC[s]) : COL.none, lb: !!s, pulse: !!s }); }
+    else if ((mode === "telemetri" || mode === "putar-ulang") && nav.cog !== null) L.push({ key: "n", w: [0, 0.1, -38], label: "N (north)", col: "var(--v3d-red)", lb: true });
     return L;
   }, [mode, part, deck, room, drillDeck, drill, openByPart, tankInfo, pjName, gps, gpsLive, loadErr, nav.cog === null, canAccessClassV, narrow]);
 
@@ -302,39 +302,39 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   /* ---------- writes (same tables and rules as the rest of the app) ---------- */
   async function reportFault() {
     const p = PART[part], text = faultText.trim();
-    if (!canOperate || !p) { setNotice({ text: "Akun ini tidak dapat membuat laporan kerusakan.", err: true }); return; }
-    if (!text) { setNotice({ text: "Uraian kerusakan wajib diisi.", err: true }); return; }
+    if (!canOperate || !p) { setNotice({ text: "This account cannot create fault reports.", err: true }); return; }
+    if (!text) { setNotice({ text: "Fault description is required.", err: true }); return; }
     setBusy(true); setNotice(null);
-    const issue = `[${assetCode(p)}] ${p.n} — Prioritas ${faultPrio.toLowerCase()}: ${text}`.slice(0, 600);
+    const issue = `[${assetCode(p)}] ${p.n} — ${({ Rendah: "Low", Sedang: "Medium", Tinggi: "High" } as Record<string, string>)[faultPrio] || faultPrio} priority: ${text}`.slice(0, 600);
     const { error } = await supabase.from("maintenance_records").insert({ unit_id: unitId, asset_id: assetByPart[p.id] || null, report_date: localDate(), issue_description: issue, status: "reported", reported_by: userId });
-    if (error) setNotice({ text: "Laporan gagal disimpan: " + error.message, err: true });
-    else { setFaultText(""); setNotice({ text: "Laporan kerusakan tercatat di Maintenance dengan status Dilaporkan." }); await loadCore(); onDataChange?.(); }
+    if (error) setNotice({ text: "Failed to save report: " + error.message, err: true });
+    else { setFaultText(""); setNotice({ text: "Fault report recorded in Maintenance with status Reported." }); await loadCore(); onDataChange?.(); }
     setBusy(false);
   }
   async function setFaultStatus(f: Fault, status: FaultStatus) {
-    if (!canManage) { setNotice({ text: "Hanya Admin atau Komandan yang dapat mengubah status pemeliharaan.", err: true }); return; }
+    if (!canManage) { setNotice({ text: "Only the Admin or Commander can change maintenance status.", err: true }); return; }
     setBusy(true); setNotice(null);
     const payload: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
     if (status === "completed") payload.completed_at = new Date().toISOString();
     const { error } = await supabase.from("maintenance_records").update(payload).eq("id", f.id).eq("unit_id", unitId);
-    if (error) setNotice({ text: "Status gagal diperbarui: " + error.message, err: true });
-    else { setNotice({ text: "Status diperbarui: " + FS[status] + "." }); await loadCore(); onDataChange?.(); }
+    if (error) setNotice({ text: "Failed to update status: " + error.message, err: true });
+    else { setNotice({ text: "Status updated: " + FS[status] + "." }); await loadCore(); onDataChange?.(); }
     setBusy(false);
   }
   async function saveSounding(tankId: string) {
     const t = TANKS.find(x => x.id === tankId), row = tankInfo[tankId]?.row;
-    if (!isAdmin) { setNotice({ text: "Hanya Admin yang dapat mengubah data Air Tawar dan HSD.", err: true }); return; }
-    if (!t || !row) { setNotice({ text: "Data persediaan untuk tangki ini belum ada.", err: true }); return; }
+    if (!isAdmin) { setNotice({ text: "Only the Admin can change fresh water and HSD data.", err: true }); return; }
+    if (!t || !row) { setNotice({ text: "There is no inventory record for this tank yet.", err: true }); return; }
     const target = Number(sounding[tankId]), cap = row.capacity;
-    if (!cap || cap <= 0) { setNotice({ text: "Kapasitas tangki belum diisi. Atur kapasitas di Dashboard.", err: true }); return; }
-    if (sounding[tankId] === undefined || sounding[tankId].trim() === "" || !Number.isFinite(target) || target < 0 || target > cap) { setNotice({ text: `Isi antara 0 dan ${nf(cap)} liter.`, err: true }); return; }
+    if (!cap || cap <= 0) { setNotice({ text: "Tank capacity is not set. Set the capacity on the Dashboard.", err: true }); return; }
+    if (sounding[tankId] === undefined || sounding[tankId].trim() === "" || !Number.isFinite(target) || target < 0 || target > cap) { setNotice({ text: `Enter between 0 and ${nf(cap)} litres.`, err: true }); return; }
     const delta = target - (row.stock ?? 0);
-    if (delta === 0) { setNotice({ text: "Tidak ada perubahan saldo." }); return; }
+    if (delta === 0) { setNotice({ text: "No balance change." }); return; }
     setBusy(true); setNotice(null);
     const label = t.category === "Air Tawar" ? "Air Tawar" : "HSD";
-    const { error } = await supabase.from("stock_movements").insert({ unit_id: unitId, item_id: row.id, movement_type: delta > 0 ? "inbound" : "outbound", quantity: Math.abs(delta), movement_date: localDate(), condition_status: "not_applicable", movement_purpose: "Hasil sounding tangki melalui Modul 3D", notes: "Penyesuaian saldo " + label, recorded_by: userId });
-    if (error) setNotice({ text: "Penyesuaian stok gagal: " + error.message, err: true });
-    else { setSounding(s => ({ ...s, [tankId]: "" })); setNotice({ text: `Saldo ${label} diperbarui. Penyesuaian tercatat pada riwayat transaksi stok.` }); await loadCore(); onDataChange?.(); }
+    const { error } = await supabase.from("stock_movements").insert({ unit_id: unitId, item_id: row.id, movement_type: delta > 0 ? "inbound" : "outbound", quantity: Math.abs(delta), movement_date: localDate(), condition_status: "not_applicable", movement_purpose: "Tank sounding via the 3D module", notes: "Balance adjustment " + label, recorded_by: userId });
+    if (error) setNotice({ text: "Stock adjustment failed: " + error.message, err: true });
+    else { setSounding(s => ({ ...s, [tankId]: "" })); setNotice({ text: `${label} balance updated. The adjustment is recorded in stock transaction history.` }); await loadCore(); onDataChange?.(); }
     setBusy(false);
   }
 
@@ -355,7 +355,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
       else setReplayRows(gpsTrack((g.data || []).map((r: any) => ({ position_at: r.position_at, latitude: Number(r.latitude), longitude: Number(r.longitude), speed_knots: num(r.speed_knots), course_degrees: num(r.course_degrees) }))));
       setReplayLogs(l.error ? [] : (l.data || []).map((r: any) => ({ t: new Date(replayDate + "T" + String(r.activity_time).slice(0, 8) + "+07:00").getTime(), title: String(r.title || "") })).filter((x: LogPoint) => Number.isFinite(x.t)));
       setRf(0); setPlaying(false); setReplayBusy(false);
-    })().catch(() => { if (alive) { setReplayErr("Jejak belum dapat dimuat."); setReplayBusy(false); } });
+    })().catch(() => { if (alive) { setReplayErr("Track could not be loaded."); setReplayBusy(false); } });
     return () => { alive = false; };
   }, [mode, replayDate, supabase, unitId]);
   useEffect(() => {
@@ -382,64 +382,64 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   const modeList = MODES.filter(m => !modes || modes.includes(m[0]));
   const modeInfo = MODES.find(m => m[0] === mode) || MODES[0];
   const chev = <Svg size={16}><path d="M9 6l6 6-6 6" /></Svg>;
-  const errLine = (k: string) => loadErr[k] || loadErr.all ? <p className="v3d-msg err">Data belum dapat dimuat: {loadErr[k] || loadErr.all}</p> : null;
+  const errLine = (k: string) => loadErr[k] || loadErr.all ? <p className="v3d-msg err">Data could not be loaded: {loadErr[k] || loadErr.all}</p> : null;
 
   let banner: { text: string; col: string } | null = null;
-  if (mode === "latihan") banner = { text: "LATIHAN · tidak tersimpan sebagai kejadian nyata", col: "var(--v3d-bad)" };
-  else if (mode === "putar-ulang" && replayDemo) banner = { text: "DEMO · jejak contoh, bukan data kapal", col: "var(--v3d-demo)" };
-  else if (mode === "telemetri" && sim) banner = { text: "DEMO · telemetri simulasi, tidak disimpan", col: "var(--v3d-demo)" };
+  if (mode === "latihan") banner = { text: "DRILL · not saved as a real event", col: "var(--v3d-bad)" };
+  else if (mode === "putar-ulang" && replayDemo) banner = { text: "DEMO · sample track, not ship data", col: "var(--v3d-demo)" };
+  else if (mode === "telemetri" && sim) banner = { text: "DEMO · simulated telemetry, not saved", col: "var(--v3d-demo)" };
 
   function panelBody() {
     switch (mode) {
       case "status": return <>
         {errLine("all")}
-        <p className="v3d-note">Warna mengikuti data yang ada. Hijau hanya untuk data live; biru berarti tidak ada laporan kerusakan, bukan berarti "sehat"; abu berarti belum ada data.</p>
+        <p className="v3d-note">Colours follow the available data. Green is only for live data; blue means no fault reports, not “healthy”; grey means no data yet.</p>
         <div className="v3d-list">{SYS.map(s => { const [k, t] = sysStatus(s.id); return <button type="button" key={s.id} className="v3d-row" onClick={() => goSys(s.id)}><span className="v3d-dot" style={{ background: COL[k] }} /><span className="v3d-grow"><b>{s.n}</b><small>{t}</small></span>{chev}</button>; })}</div>
-        <div className="v3d-legend">{([["live", "Live"], ["info", "Tanpa laporan"], ["warn", "Perhatian / data lama"], ["bad", "Rusak / kritis"], ["none", "Belum ada data"]] as Array<[Tone, string]>).map(([k, l]) => <span key={k}><i className="v3d-dot" style={{ background: COL[k] }} />{l}</span>)}</div>
-        <p className="v3d-note">Tangki: kuning di bawah 30%, merah di bawah 15%.</p>
+        <div className="v3d-legend">{([["live", "Live"], ["info", "No reports"], ["warn", "Attention / stale data"], ["bad", "Faulty / critical"], ["none", "No data yet"]] as Array<[Tone, string]>).map(([k, l]) => <span key={k}><i className="v3d-dot" style={{ background: COL[k] }} />{l}</span>)}</div>
+        <p className="v3d-note">Tanks: amber below 30%, red below 15%.</p>
       </>;
       case "telemetri": {
-        const chip: [Tone, string] = sim ? ["demo", "DEMO"] : gps ? (gpsLive ? ["live", "Live"] : ["warn", "Data lama"]) : ["none", "Tidak ada data"];
+        const chip: [Tone, string] = sim ? ["demo", "DEMO"] : gps ? (gpsLive ? ["live", "Live"] : ["warn", "Stale data"]) : ["none", "No data"];
         return <>
           {errLine("gps")}
-          <div className="v3d-between"><span className="v3d-kicker">Sumber: {sim ? "Simulasi (tidak disimpan)" : gps ? SRC[gps.source] || gps.source : "—"}</span><span className="v3d-chip" style={{ color: COL[chip[0]] }}>{chip[1]}</span></div>
+          <div className="v3d-between"><span className="v3d-kicker">Source: {sim ? "Simulation (not saved)" : gps ? SRC[gps.source] || gps.source : "—"}</span><span className="v3d-chip" style={{ color: COL[chip[0]] }}>{chip[1]}</span></div>
           <div className="v3d-grid2">
-            <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>Posisi{gps && !sim ? " · " + fmtT(gps.position_at) : ""}</small><b style={{ fontSize: 15 }}>{gps && !sim ? dm(gps.latitude, "U", "S") + "  " + dm(gps.longitude, "T", "B") : sim && navRt?.sim ? dm(navRt.sim.latitude, "U", "S") + "  " + dm(navRt.sim.longitude, "T", "B") : "—"}</b>{sim && navRt?.sim && <small>Posisi simulasi (DEMO), bukan GPS kapal</small>}{gps && !sim && gps.accuracy_m !== null && <small>Akurasi ±{nf(gps.accuracy_m)} m</small>}</div>
+            <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>Position{gps && !sim ? " · " + fmtT(gps.position_at) : ""}</small><b style={{ fontSize: 15 }}>{gps && !sim ? dm(gps.latitude, "U", "S") + "  " + dm(gps.longitude, "T", "B") : sim && navRt?.sim ? dm(navRt.sim.latitude, "U", "S") + "  " + dm(navRt.sim.longitude, "T", "B") : "—"}</b>{sim && navRt?.sim && <small>Simulated position (DEMO), not ship GPS</small>}{gps && !sim && gps.accuracy_m !== null && <small>Accuracy ±{nf(gps.accuracy_m)} m</small>}</div>
             <div className="v3d-cell"><small>SOG</small><b>{sim ? sim.sog + " kn" : gps && gps.speed_knots !== null ? gps.speed_knots.toFixed(1) + " kn" : "—"}</b></div>
             <div className="v3d-cell"><small>COG</small><b>{sim ? deg3(sim.cog) : gps && gps.course_degrees !== null ? deg3(gps.course_degrees) : "—"}</b></div>
-            <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>Heading</small><b>—</b><small>Butuh gyro/AHRS; belum ada di sistem</small></div>
+            <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>Heading</small><b>—</b><small>Needs a gyro/AHRS; not in the system yet</small></div>
           </div>
           {navRt ? telemetrySlot : <><label className="v3d-sw"><input type="checkbox" checked={!!sim} onChange={e => setSim(e.target.checked ? { cog: gps?.course_degrees !== null && gps?.course_degrees !== undefined ? Math.round(gps.course_degrees) : 45, sog: 12 } : null)} />Simulasi telemetri (DEMO)</label>
           {sim && <>
             <label className="v3d-f">COG {deg3(sim.cog)}<input type="range" min={0} max={359} value={sim.cog} onChange={e => setSim({ ...sim, cog: Number(e.target.value) })} /></label>
             <label className="v3d-f">SOG {sim.sog} knot<input type="range" min={0} max={27} value={sim.sog} onChange={e => setSim({ ...sim, sog: Number(e.target.value) })} /></label>
           </>}</>}
-          <p className="v3d-note">Model diputar menurut COG (arah lintasan), bukan heading. Kapal hanya diputar dan diberi buih bila data live dan kecepatan minimal 0,5 knot; selain itu kapal tampil diam dan lingkar kompas disembunyikan.</p>
-          <button type="button" className="v3d-btn s" onClick={() => loadCore()}>Muat ulang posisi</button>
+          <p className="v3d-note">The model is turned by COG (course over ground), not heading. The ship only turns and shows a wake when data is live and speed is at least 0.5 kn; otherwise it stays still and the compass ring is hidden.</p>
+          <button type="button" className="v3d-btn s" onClick={() => loadCore()}>Reload position</button>
         </>;
       }
       case "kerusakan": {
         const p = PART[part], here = openFaults.filter(f => f.part === part);
         return <>
           {errLine("faults")}
-          <label className="v3d-f">Bagian kapal<select value={part} onChange={e => setPart(e.target.value)}>{PARTS.map(x => <option key={x.id} value={x.id}>{x.n}{openByPart[x.id] ? " ●" : ""}</option>)}</select></label>
-          {p && <p className="v3d-note">{p.cat} · {p.loc}{here.length ? ` · ${here.length} laporan terbuka` : ""}</p>}
+          <label className="v3d-f">Ship part<select value={part} onChange={e => setPart(e.target.value)}>{PARTS.map(x => <option key={x.id} value={x.id}>{x.n}{openByPart[x.id] ? " ●" : ""}</option>)}</select></label>
+          {p && <p className="v3d-note">{p.cat} · {p.loc}{here.length ? ` · ${here.length} open report${here.length === 1 ? "" : "s"}` : ""}</p>}
           {canOperate ? <>
-            <label className="v3d-f">Uraian kerusakan<textarea maxLength={400} value={faultText} onChange={e => setFaultText(e.target.value)} placeholder="Contoh: getaran tidak normal pada putaran tinggi" /></label>
-            <label className="v3d-f">Prioritas<select value={faultPrio} onChange={e => setFaultPrio(e.target.value)}><option>Rendah</option><option>Sedang</option><option>Tinggi</option></select></label>
-            <button type="button" className="v3d-btn p" disabled={busy} onClick={reportFault}>Laporkan · {p?.n}</button>
-          </> : <p className="v3d-note">Akun viewer hanya dapat melihat laporan.</p>}
-          <h3 className="v3d-sub">Laporan terbuka ({openFaults.length})</h3>
+            <label className="v3d-f">Fault description<textarea maxLength={400} value={faultText} onChange={e => setFaultText(e.target.value)} placeholder="e.g. abnormal vibration at high RPM" /></label>
+            <label className="v3d-f">Priority<select value={faultPrio} onChange={e => setFaultPrio(e.target.value)}><option value="Rendah">Low</option><option value="Sedang">Medium</option><option value="Tinggi">High</option></select></label>
+            <button type="button" className="v3d-btn p" disabled={busy} onClick={reportFault}>Report · {p?.n}</button>
+          </> : <p className="v3d-note">Viewer accounts can only view reports.</p>}
+          <h3 className="v3d-sub">Open reports ({openFaults.length})</h3>
           <div className="v3d-list">{openFaults.length ? openFaults.map(f => <div key={f.id} className={"v3d-row" + (f.part === part ? " sel" : "")} style={{ alignItems: "flex-start" }}>
             <span className="v3d-dot" style={{ background: COL.bad, marginTop: 6 }} />
             <span className="v3d-grow"><button type="button" onClick={() => f.part && setPart(f.part)} style={{ background: "none", border: 0, padding: 0, textAlign: "left", fontWeight: 600, fontSize: 14 }}>{f.part ? PART[f.part]?.n : "—"}</button><small>{f.text}</small><small>{FS[f.status]} · {fmtT(f.created_at)}</small></span>
             {canManage && <span className="v3d-actions" style={{ flexDirection: "column" }}>
-              {f.status !== "in_progress" && <button type="button" className="v3d-btn s" disabled={busy} onClick={() => setFaultStatus(f, "in_progress")}>Kerjakan</button>}
-              <button type="button" className="v3d-btn s" disabled={busy} onClick={() => setFaultStatus(f, "completed")}>Selesai</button>
+              {f.status !== "in_progress" && <button type="button" className="v3d-btn s" disabled={busy} onClick={() => setFaultStatus(f, "in_progress")}>Start work</button>}
+              <button type="button" className="v3d-btn s" disabled={busy} onClick={() => setFaultStatus(f, "completed")}>Complete</button>
             </span>}
-          </div>) : <p className="v3d-note">Tidak ada laporan kerusakan terbuka yang terhubung ke model.</p>}</div>
-          {unlinkedOpen > 0 && <p className="v3d-note">{unlinkedOpen} laporan terbuka lain tidak terhubung ke bagian kapal di model. Lihat di menu Maintenance.</p>}
-          <p className="v3d-note">Laporan masuk ke Maintenance dengan status Dilaporkan. Hanya Admin atau Komandan yang dapat mengubah status.</p>
+          </div>) : <p className="v3d-note">No open fault reports linked to the model.</p>}</div>
+          {unlinkedOpen > 0 && <p className="v3d-note">{unlinkedOpen} other open report(s) are not linked to a ship part on the model. See the Maintenance module.</p>}
+          <p className="v3d-note">Reports go to Maintenance with status Reported. Only the Admin or Commander can change the status.</p>
         </>;
       }
       case "tangki": return <>
@@ -447,31 +447,31 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
         {TANKS.map(t => {
           const info = tankInfo[t.id], row = info?.row || null, f = info?.frac ?? null;
           return <div key={t.id} className="v3d-cell" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div className="v3d-between"><b style={{ fontSize: 15 }}>{t.n}</b><small>{row && row.capacity ? "kapasitas " + nf(row.capacity) + " L" : "kapasitas —"}</small></div>
-            <div style={{ textAlign: "center" }}><Gauge p={f} col={rgb(t.col)} /><div style={{ marginTop: -30, fontSize: 22, fontWeight: 600 }}>{f === null ? "—" : Math.round(f * 100) + "%"}</div><small>{row && row.stock !== null ? nf(row.stock) + " L" + (row.updated_at ? " · " + fmtT(row.updated_at) : "") : "Belum ada data"}</small></div>
+            <div className="v3d-between"><b style={{ fontSize: 15 }}>{t.n}</b><small>{row && row.capacity ? "capacity " + nf(row.capacity) + " L" : "capacity —"}</small></div>
+            <div style={{ textAlign: "center" }}><Gauge p={f} col={rgb(t.col)} /><div style={{ marginTop: -30, fontSize: 22, fontWeight: 600 }}>{f === null ? "—" : Math.round(f * 100) + "%"}</div><small>{row && row.stock !== null ? nf(row.stock) + " L" + (row.updated_at ? " · " + fmtT(row.updated_at) : "") : "No data yet"}</small></div>
             {isAdmin && row && <div style={{ display: "flex", gap: 8 }}>
-              <input id={"v3d-tank-" + t.id} type="number" min={0} max={row.capacity ?? undefined} step={100} inputMode="numeric" placeholder="Liter hasil sounding" aria-label={"Liter " + t.n} value={sounding[t.id] ?? ""} onChange={e => setSounding(s => ({ ...s, [t.id]: e.target.value }))} style={{ flex: 1 }} />
-              <button type="button" className="v3d-btn" disabled={busy} onClick={() => saveSounding(t.id)}>Simpan</button>
+              <input id={"v3d-tank-" + t.id} type="number" min={0} max={row.capacity ?? undefined} step={100} inputMode="numeric" placeholder="Sounding (litres)" aria-label={"Litres " + t.n} value={sounding[t.id] ?? ""} onChange={e => setSounding(s => ({ ...s, [t.id]: e.target.value }))} style={{ flex: 1 }} />
+              <button type="button" className="v3d-btn" disabled={busy} onClick={() => saveSounding(t.id)}>Save</button>
             </div>}
           </div>;
         })}
-        <p className="v3d-note">Isi tangki diambil dari persediaan Air Tawar dan BBM (HSD) yang sama dengan Dashboard. {isAdmin ? "Menyimpan hasil sounding mencatat penyesuaian saldo pada riwayat transaksi stok." : "Hanya Admin yang dapat memperbarui isi tangki."} Letak tangki di model skematik karena gambar rencana tidak menunjukkan tangki.</p>
+        <p className="v3d-note">Tank contents come from the same fresh water and fuel (HSD) inventory as the Dashboard. {isAdmin ? "Saving a sounding records a balance adjustment in stock transaction history." : "Only the Admin can update tank contents."} Tank positions on the model are schematic because the plans do not show the tanks.</p>
       </>;
       case "geladak": {
         const rs = ROOMS.filter(r => deck === "semua" || r.deck === deck), types = [...new Set(rs.map(r => roomLocked(r.id) ? "terbatas" : r.type))];
         return <>
-          <div className="v3d-seg" role="group" aria-label="Pilih geladak">{([["semua", "Semua"], ["atas", "Atas"], ["utama", "Utama"], ["bawah", "Bawah"]] as Array<["semua" | Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={deck === v} onClick={() => { setDeck(v); setRoom(null); }}>{l}</button>)}</div>
+          <div className="v3d-seg" role="group" aria-label="Choose deck">{([["semua", "All"], ["atas", "Upper"], ["utama", "Main"], ["bawah", "Lower"]] as Array<["semua" | Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={deck === v} onClick={() => { setDeck(v); setRoom(null); }}>{l}</button>)}</div>
           <div className="v3d-list">{rs.map(r => { const lock = roomLocked(r.id); return <button type="button" key={r.id} className={"v3d-row" + (room === r.id ? " sel" : "")} style={{ minHeight: 46 }} onClick={() => setRoom(x => x === r.id ? null : r.id)}><span className="v3d-sq" style={{ background: rgb(lock ? TYPEC.terbatas : r.type === "terbatas" ? TYPEC.senjata : TYPEC[r.type]) }} /><span className="v3d-grow"><b>{roomName(r.id)}</b><small>{DECKN[r.deck]}</small></span></button>; })}</div>
           <div className="v3d-legend">{types.map(t => <span key={t}><i className="v3d-sq" style={{ background: rgb(TYPEC[t]) }} />{TYPEN[t]}</span>)}</div>
-          {onRoomPick && <button type="button" className="v3d-btn p" disabled={!room || roomLocked(room)} onClick={() => room && onRoomPick(roomName(room))}>{room ? (roomPickLabel || "Gunakan ruangan") + " · " + roomName(room) : "Pilih ruangan di daftar atau di kapal"}</button>}
-          <p className="v3d-note">Ruangan dipetakan dari denah navigation, main dan lower deck. Ruang yang labelnya tidak terbaca di denah tidak dimasukkan.{canAccessClassV ? "" : " Nama ruang terbatas disembunyikan untuk akun tanpa hak Kelas V."}</p>
+          {onRoomPick && <button type="button" className="v3d-btn p" disabled={!room || roomLocked(room)} onClick={() => room && onRoomPick(roomName(room))}>{room ? (roomPickLabel || "Use room") + " · " + roomName(room) : "Pick a room in the list or on the ship"}</button>}
+          <p className="v3d-note">Rooms are mapped from the navigation, main and lower deck plans. Rooms with unreadable labels on the plans are left out.{canAccessClassV ? "" : " Restricted room names are hidden for accounts without Class V rights."}</p>
         </>;
       }
       case "jaga": return <>
         {errLine("watch")}
-        <span className="v3d-kicker">{new Date().toLocaleDateString("id-ID", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" })}{watch?.watch_type ? " · " + watch.watch_type : ""}</span>
-        <div className="v3d-list">{POSTS.map(p => { const name = p.id === "pj" ? pjName : null; return <div key={p.id} className="v3d-row"><span className="v3d-dot" style={{ background: name ? COL.live : COL.none }} /><span className="v3d-grow"><b>{p.n}</b><small>{p.id === "pj" ? name || "Belum ada penugasan hari ini" : "— · belum ada sumber data"}</small><small>{p.room ? roomName(p.room) : "Geladak buritan"}</small></span></div>; })}</div>
-        <p className="v3d-note">Perwira jaga diambil dari penugasan jaga harian di Logbook dan diubah di sana. Pos lain belum tercatat di sistem, jadi ditampilkan "—".</p>
+        <span className="v3d-kicker">{new Date().toLocaleDateString("en-GB", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" })}{watch?.watch_type ? " · " + watch.watch_type : ""}</span>
+        <div className="v3d-list">{POSTS.map(p => { const name = p.id === "pj" ? pjName : null; return <div key={p.id} className="v3d-row"><span className="v3d-dot" style={{ background: name ? COL.live : COL.none }} /><span className="v3d-grow"><b>{p.n}</b><small>{p.id === "pj" ? name || "No assignment today" : "— · no data source yet"}</small><small>{p.room ? roomName(p.room) : "Aft deck"}</small></span></div>; })}</div>
+        <p className="v3d-note">The officer of the watch comes from the daily watch assignment in the Logbook and is changed there. Other posts are not recorded in the system yet, so they show “—”.</p>
       </>;
       case "putar-ulang": {
         let map: React.ReactNode = null;
@@ -479,7 +479,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           const xs = track.map(p => p.e), ys = track.map(p => p.n), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
           const s = Math.min(280 / Math.max(x1 - x0, 1e-3), 150 / Math.max(y1 - y0, 1e-3)), X = (e: number) => 20 + (e - x0) * s, Y = (n: number) => 170 - (n - y0) * s;
           const pts = track.length > 800 ? track.filter((_, i) => i % Math.ceil(track.length / 800) === 0 || i === track.length - 1) : track;
-          map = <svg className="v3d-svgmap" viewBox="0 0 320 190" role="img" aria-label="Peta jejak pelayaran">
+          map = <svg className="v3d-svgmap" viewBox="0 0 320 190" role="img" aria-label="Voyage track map">
             <polyline points={pts.map(p => X(p.e).toFixed(1) + "," + Y(p.n).toFixed(1)).join(" ")} fill="none" stroke={replayDemo ? "rgba(185,163,255,.75)" : "rgba(127,178,229,.85)"} strokeWidth={2} />
             {logsOnTrack.map((l, i) => { if (l.t < track[0].t || l.t > track[track.length - 1].t) return null; const q = trackAt(track, (l.t - track[0].t) / Math.max(1, track[track.length - 1].t - track[0].t)); return <circle key={i} cx={X(q.e)} cy={Y(q.n)} r={4} fill="#0b1626" stroke="#E8EEF5" strokeWidth={2} />; })}
             {rp && <g transform={`translate(${X(rp.e).toFixed(1)} ${Y(rp.n).toFixed(1)}) rotate(${rp.cog ?? 0})`}><path d={rp.cog !== null ? "M0 -9L6 7L0 3L-6 7Z" : "M0 -5A5 5 0 1 0 0.01 -5Z"} fill="#E6121C" /></g>}
@@ -487,33 +487,33 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           </svg>;
         }
         return <>
-          <label className="v3d-f">Tanggal (WIB)<input type="date" value={replayDate} max={localDate()} onChange={e => { setReplayDemo(false); setReplayDate(e.target.value); }} /></label>
-          {replayErr && <p className="v3d-msg err">Jejak belum dapat dimuat: {replayErr}</p>}
-          {replayBusy && <p className="v3d-note">Memuat jejak…</p>}
-          {!replayBusy && !replayDemo && replayRows.length < 2 && <div className="v3d-msg">Belum cukup posisi GPS pada tanggal ini ({replayRows.length} titik), jadi jejak tidak bisa diputar.<div style={{ marginTop: 8 }}><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(true); setRf(0); }}>Lihat contoh (DEMO)</button></div></div>}
-          {replayDemo && <div className="v3d-between"><span className="v3d-chip" style={{ color: COL.demo }}>DEMO · jejak contoh</span><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(false); setRf(0); setPlaying(false); }}>Data asli</button></div>}
+          <label className="v3d-f">Date (WIB)<input type="date" value={replayDate} max={localDate()} onChange={e => { setReplayDemo(false); setReplayDate(e.target.value); }} /></label>
+          {replayErr && <p className="v3d-msg err">Track could not be loaded: {replayErr}</p>}
+          {replayBusy && <p className="v3d-note">Loading track…</p>}
+          {!replayBusy && !replayDemo && replayRows.length < 2 && <div className="v3d-msg">Not enough GPS positions on this date ({replayRows.length} points), so the track cannot be replayed.<div style={{ marginTop: 8 }}><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(true); setRf(0); }}>View sample (DEMO)</button></div></div>}
+          {replayDemo && <div className="v3d-between"><span className="v3d-chip" style={{ color: COL.demo }}>DEMO · jejak contoh</span><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(false); setRf(0); setPlaying(false); }}>Real data</button></div>}
           {map}
           {track.length >= 2 && <>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}><button type="button" className="v3d-btn" style={{ minWidth: 92 }} onClick={() => { if (rf >= 1) setRf(0); setPlaying(p => !p); }}>{playing ? "Jeda" : "Putar"}</button><input type="range" min={0} max={1000} value={Math.round(rf * 1000)} onChange={e => { setRf(Number(e.target.value) / 1000); setPlaying(false); }} aria-label="Waktu" /></div>
-            <div className="v3d-grid2"><div className="v3d-cell"><small>Waktu</small><b>{rp ? fmtHM(rp.t) : "—"}</b></div><div className="v3d-cell"><small>SOG · COG</small><b style={{ fontSize: 15 }}>{rp && rp.sog !== null ? rp.sog.toFixed(1) + " kn" : "—"} · {rp && rp.cog !== null ? deg3(rp.cog) : "—"}</b></div></div>
-            {logsOnTrack.length > 0 && <><h3 className="v3d-sub">Catatan {replayDemo ? "contoh" : "Logbook"}</h3><div className="v3d-list">{logsOnTrack.map((l, i) => <button type="button" key={i} className="v3d-row" style={{ minHeight: 46 }} onClick={() => jumpTo(l.t)}><span className="v3d-dot" style={{ background: replayDemo ? COL.demo : COL.info }} /><span className="v3d-grow"><b>{fmtHM(l.t)}</b><small>{l.title}</small></span></button>)}</div></>}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}><button type="button" className="v3d-btn" style={{ minWidth: 92 }} onClick={() => { if (rf >= 1) setRf(0); setPlaying(p => !p); }}>{playing ? "Pause" : "Play"}</button><input type="range" min={0} max={1000} value={Math.round(rf * 1000)} onChange={e => { setRf(Number(e.target.value) / 1000); setPlaying(false); }} aria-label="Time" /></div>
+            <div className="v3d-grid2"><div className="v3d-cell"><small>Time</small><b>{rp ? fmtHM(rp.t) : "—"}</b></div><div className="v3d-cell"><small>SOG · COG</small><b style={{ fontSize: 15 }}>{rp && rp.sog !== null ? rp.sog.toFixed(1) + " kn" : "—"} · {rp && rp.cog !== null ? deg3(rp.cog) : "—"}</b></div></div>
+            {logsOnTrack.length > 0 && <><h3 className="v3d-sub">{replayDemo ? "Sample" : "Logbook"} entries</h3><div className="v3d-list">{logsOnTrack.map((l, i) => <button type="button" key={i} className="v3d-row" style={{ minHeight: 46 }} onClick={() => jumpTo(l.t)}><span className="v3d-dot" style={{ background: replayDemo ? COL.demo : COL.info }} /><span className="v3d-grow"><b>{fmtHM(l.t)}</b><small>{l.title}</small></span></button>)}</div></>}
           </>}
-          <p className="v3d-note">Jejak dari posisi GPS tersimpan pada tanggal itu. Kapal diputar menurut COG; bila COG tidak terekam, arah dihitung dari dua posisi berurutan.</p>
+          <p className="v3d-note">Track from GPS positions stored on that date. The ship is turned by COG; when COG is not recorded, the direction is calculated from two consecutive positions.</p>
         </>;
       }
       case "latihan": {
         const marked = Object.entries(drill);
         return <>
-          <div className="v3d-seg" role="group" aria-label="Pilih geladak">{([["atas", "Atas"], ["utama", "Utama"], ["bawah", "Bawah"]] as Array<[Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={drillDeck === v} onClick={() => setDrillDeck(v)}>{l}</button>)}</div>
-          <div className="v3d-cell v3d-between"><div><small>Waktu latihan</small><b>{mmss(drillMs)}</b></div><div className="v3d-actions">
-            <button type="button" className="v3d-btn s" onClick={() => { if (drillT0 !== null) { setDrillAcc(a => a + Date.now() - drillT0); setDrillT0(null); } else { setDrillT0(Date.now()); setNow(Date.now()); } }}>{drillT0 !== null ? "Berhenti" : "Mulai"}</button>
+          <div className="v3d-seg" role="group" aria-label="Choose deck">{([["atas", "Upper"], ["utama", "Main"], ["bawah", "Lower"]] as Array<[Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={drillDeck === v} onClick={() => setDrillDeck(v)}>{l}</button>)}</div>
+          <div className="v3d-cell v3d-between"><div><small>Drill time</small><b>{mmss(drillMs)}</b></div><div className="v3d-actions">
+            <button type="button" className="v3d-btn s" onClick={() => { if (drillT0 !== null) { setDrillAcc(a => a + Date.now() - drillT0); setDrillT0(null); } else { setDrillT0(Date.now()); setNow(Date.now()); } }}>{drillT0 !== null ? "Stop" : "Start"}</button>
             <button type="button" className="v3d-btn s" onClick={() => { setDrillT0(null); setDrillAcc(0); }}>Reset</button>
           </div></div>
-          <p className="v3d-note">Ketuk titik kompartemen di kapal untuk mengganti status: kebakaran → kebocoran → asap → normal.</p>
-          <div className="v3d-list">{marked.length ? marked.map(([id, s]) => <div key={id} className="v3d-row" style={{ minHeight: 46 }}><span className="v3d-sq" style={{ background: rgb(DRILLC[s]) }} /><span className="v3d-grow"><b>{roomLocked(id) ? "Kompartemen terbatas" : ROOM[id]?.n}</b><small>{DRILLN[s]} · {ROOM[id] ? DECKN[ROOM[id].deck] : ""}</small></span></div>) : <p className="v3d-note">Belum ada kompartemen ditandai.</p>}</div>
-          {marked.length > 0 && <button type="button" className="v3d-btn" onClick={() => setDrill({})}>Hapus semua tanda</button>}
+          <p className="v3d-note">Tap a compartment point on the ship to cycle its status: fire → flooding → smoke → normal.</p>
+          <div className="v3d-list">{marked.length ? marked.map(([id, s]) => <div key={id} className="v3d-row" style={{ minHeight: 46 }}><span className="v3d-sq" style={{ background: rgb(DRILLC[s]) }} /><span className="v3d-grow"><b>{roomLocked(id) ? "Restricted compartment" : ROOM[id]?.n}</b><small>{DRILLN[s]} · {ROOM[id] ? DECKN[ROOM[id].deck] : ""}</small></span></div>) : <p className="v3d-note">No compartments marked yet.</p>}</div>
+          {marked.length > 0 && <button type="button" className="v3d-btn" onClick={() => setDrill({})}>Clear all marks</button>}
           <div className="v3d-legend">{(Object.keys(DRILLN) as Drill[]).map(k => <span key={k}><i className="v3d-sq" style={{ background: rgb(DRILLC[k]) }} />{DRILLN[k]}</span>)}</div>
-          <p className="v3d-note">Latihan hanya ada di layar ini dan tidak disimpan ke database.</p>
+          <p className="v3d-note">Drills exist only on this screen and are not saved to the database.</p>
         </>;
       }
       default: return null;
@@ -521,34 +521,34 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   }
 
   return <div className={"v3d-root" + (modes ? " v3d-embed" : "") + (modeList.length < 2 ? " v3d-single" : "") + (className ? " " + className : "")} ref={rootRef} data-lenis-prevent>
-    <canvas ref={canvasRef} className="v3d-cv" aria-label="Model 3D KRI ALAMANG-644. Seret untuk memutar, cubit atau scroll untuk zoom, Shift+seret untuk menggeser." />
+    <canvas ref={canvasRef} className="v3d-cv" aria-label="3D model of KRI ALAMANG-644. Drag to rotate, pinch or scroll to zoom, Shift+drag to pan." />
     <div ref={marksRef} className="v3d-marks" />
-    {glFail && <div className="v3d-fallback"><p>{glFail === "lost" ? "Tampilan 3D berhenti karena GPU perangkat direset. Buka ulang menu ini untuk memulai lagi." : "Perangkat atau browser ini tidak mendukung WebGL 2, jadi model 3D tidak bisa ditampilkan. Data tetap tersedia di menu lain."}</p></div>}
+    {glFail && <div className="v3d-fallback"><p>{glFail === "lost" ? "The 3D view stopped because the device GPU was reset. Reopen this page to start again." : "This device or browser does not support WebGL 2, so the 3D model cannot be shown. The data is still available elsewhere."}</p></div>}
     {banner && <div className="v3d-banner" style={{ color: banner.col }} role="status">{banner.text}</div>}
 
-    <div ref={modesRef} role="navigation" className="v3d-modes v3d-glass" aria-label="Tampilan modul 3D">
+    <div ref={modesRef} role="navigation" className="v3d-modes v3d-glass" aria-label="3D views">
       {modeList.length > 1 && modeList.map(([id, label]) => <button type="button" key={id} aria-current={mode === id} title={label} onClick={() => setMode(id)}><Svg>{ICON[id]}</Svg><b>{label}</b></button>)}
       <span className="v3d-tools">
-        <button type="button" title="Pusatkan tampilan" aria-label="Pusatkan tampilan" onClick={() => engineRef.current?.view(true)}><Svg><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></Svg></button>
-        {fsOk && <button type="button" title="Layar penuh" aria-label="Layar penuh" onClick={toggleFs}><Svg><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></Svg></button>}
+        <button type="button" title="Centre view" aria-label="Centre view" onClick={() => engineRef.current?.view(true)}><Svg><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></Svg></button>
+        {fsOk && <button type="button" title="Full screen" aria-label="Full screen" onClick={toggleFs}><Svg><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></Svg></button>}
       </span>
     </div>
 
     {mode === "sambut" ? <div className="v3d-welcome">
       <div className="v3d-wcard v3d-glass">
-        <img className="v3d-logo" src="/branding/alnav-dms-logo.jpg" alt="Logo resmi ALNAV DMS" />
+        <img className="v3d-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo" />
         <div><p>Welcome aboard</p><h1 className="v3d-h">KRI ALAMANG-644</h1></div>
-        <p>Status sistem, telemetri, kerusakan, tangki, geladak, jaga, putar ulang dan latihan peran dalam satu model kapal.</p>
-        <button type="button" className="v3d-btn p" style={{ minWidth: 180 }} onClick={() => setMode("status")}>Masuk</button>
+        <p>System status, telemetry, faults, tanks, decks, watch posts, replay and drills in one ship model.</p>
+        <button type="button" className="v3d-btn p" style={{ minWidth: 180 }} onClick={() => setMode("status")}>Enter</button>
       </div>
-    </div> : <div ref={panelRef} role="complementary" aria-label="Panel informasi model 3D" className={"v3d-panel v3d-glass" + (panelMin ? " min" : "")} aria-live="polite">
+    </div> : <div ref={panelRef} role="complementary" aria-label="3D model information panel" className={"v3d-panel v3d-glass" + (panelMin ? " min" : "")} aria-live="polite">
       <div className="v3d-ph">
         <div><div className="v3d-kicker">{modeInfo[2]}</div><h2 className="v3d-pt v3d-h">{modeInfo[1]}</h2></div>
-        <button type="button" className="v3d-pc" aria-expanded={!panelMin} aria-label={panelMin ? "Buka panel" : "Ciutkan panel"} onClick={() => setPanelMin(v => !v)} style={{ transform: panelMin ? "rotate(180deg)" : undefined }}><Svg><path d="M6 9l6 6 6-6" /></Svg></button>
+        <button type="button" className="v3d-pc" aria-expanded={!panelMin} aria-label={panelMin ? "Expand panel" : "Collapse panel"} onClick={() => setPanelMin(v => !v)} style={{ transform: panelMin ? "rotate(180deg)" : undefined }}><Svg><path d="M6 9l6 6 6-6" /></Svg></button>
       </div>
       <div className="v3d-pb">
         {notice && <p className={"v3d-msg" + (notice.err ? " err" : "")} role={notice.err ? "alert" : "status"}>{notice.text}</p>}
-        {!loaded && <p className="v3d-note">Memuat data kapal…</p>}
+        {!loaded && <p className="v3d-note">Loading ship data…</p>}
         {panelBody()}
       </div>
     </div>}

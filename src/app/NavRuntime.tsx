@@ -61,7 +61,7 @@ export function NavRuntimeProvider({ supabase, unitId, isAdmin, children }: { su
     pending.current = true; setTrackError("");
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Sesi Admin tidak tersedia. Silakan masuk kembali.");
+      if (!session?.access_token) throw new Error("Admin session not available. Please sign in again.");
       const position_at = new Date(pos.timestamp).toISOString();
       const speed = pos.coords.speed == null ? null : Math.max(0, pos.coords.speed * 1.943844);
       const course = pos.coords.heading == null || Number.isNaN(pos.coords.heading) ? null : ((pos.coords.heading % 360) + 360) % 360;
@@ -69,31 +69,31 @@ export function NavRuntimeProvider({ supabase, unitId, isAdmin, children }: { su
       const res = await fetch("/api/gps", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
-        body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed_knots: speed, course_degrees: course, accuracy_m: accuracy, position_at, fix_quality: "Lokasi perangkat Admin; proksi posisi kapal, bukan GPS onboard", source: "admin_device_gps" })
+        body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed_knots: speed, course_degrees: course, accuracy_m: accuracy, position_at, fix_quality: "Admin device location; proxy for ship position, not onboard GPS", source: "admin_device_gps" })
       });
-      const body = await res.json().catch(() => ({ error: "Respons server tidak valid." }));
-      if (!res.ok) throw new Error(body.error || "Lokasi perangkat gagal dikirim.");
+      const body = await res.json().catch(() => ({ error: "Invalid server response." }));
+      if (!res.ok) throw new Error(body.error || "Failed to send device location.");
       if (!enabled.current) return;
       setGps({ position_at, latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed_knots: speed, course_degrees: course, source: "admin_device_gps", accuracy_m: accuracy });
       setLastSentAt(position_at); setTrackState("ACTIVE");
     } catch (e: any) {
-      setTrackState("ERROR"); setTrackError(e?.message || "Posisi perangkat gagal dikirim.");
+      setTrackState("ERROR"); setTrackError(e?.message || "Failed to send device position.");
     } finally { pending.current = false; }
   }, [supabase]);
 
   const requestFix = useCallback(() => {
     if (!enabled.current || pending.current) return;
-    if (typeof navigator === "undefined" || !navigator.geolocation) { setTrackState("UNAVAILABLE"); setTrackError("Perangkat ini tidak menyediakan layanan lokasi."); return; }
+    if (typeof navigator === "undefined" || !navigator.geolocation) { setTrackState("UNAVAILABLE"); setTrackError("This device does not provide location services."); return; }
     setTrackState(s => (s === "ACTIVE" ? s : "ACQUIRING"));
     navigator.geolocation.getCurrentPosition(p => void publish(p), err => {
       setTrackState("ERROR");
-      setTrackError(err.code === 1 ? "Izin lokasi ditolak. Izinkan ALNAV DMS mengakses lokasi di pengaturan browser." : err.code === 2 ? "Lokasi perangkat belum tersedia. Periksa GPS dan layanan lokasi." : "GPS perangkat belum merespons. Akan dicoba lagi.");
+      setTrackError(err.code === 1 ? "Location permission denied. Allow ALNAV DMS to access location in your browser settings." : err.code === 2 ? "Device location not available yet. Check GPS and location services." : "Device GPS is not responding. Will retry.");
     }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
   }, [publish]);
 
   const startMaster = useCallback(() => {
     if (!isAdmin || enabled.current) return;
-    if (typeof navigator === "undefined" || !navigator.geolocation) { setTrackState("UNAVAILABLE"); setTrackError("Perangkat ini tidak menyediakan layanan lokasi."); return; }
+    if (typeof navigator === "undefined" || !navigator.geolocation) { setTrackState("UNAVAILABLE"); setTrackError("This device does not provide location services."); return; }
     enabled.current = true; setTracking(true); setTrackState("ACQUIRING"); setTrackError("");
     requestFix();
     timer.current = window.setInterval(requestFix, 30000);
@@ -143,25 +143,25 @@ export function NavRunningChips() {
   const { tracking, trackState, stopMaster, sim, stopSim } = useNav();
   if (!tracking && !sim) return null;
   return <div className="dg-running" role="status">
-    {tracking && <span className={"dg-run-chip" + (trackState === "ERROR" || trackState === "UNAVAILABLE" ? " is-err" : "")}><i />Master GPS {trackState === "ACTIVE" ? "aktif" : trackState === "ACQUIRING" ? "mencari posisi" : "gangguan"}<button type="button" onClick={stopMaster}>Hentikan</button></span>}
-    {sim && <span className="dg-run-chip is-demo"><i />Simulasi berjalan (DEMO)<button type="button" onClick={stopSim}>Hentikan</button></span>}
+    {tracking && <span className={"dg-run-chip" + (trackState === "ERROR" || trackState === "UNAVAILABLE" ? " is-err" : "")}><i />Master GPS {trackState === "ACTIVE" ? "active" : trackState === "ACQUIRING" ? "acquiring" : "error"}<button type="button" onClick={stopMaster}>Stop</button></span>}
+    {sim && <span className="dg-run-chip is-demo"><i />Simulation running (DEMO)<button type="button" onClick={stopSim}>Stop</button></span>}
   </div>;
 }
 
 /** Compact Master GPS + simulation controls (used on the Dashboard telemetry card). */
 export function NavControls() {
   const { canMaster, tracking, trackState, lastSentAt, trackError, startMaster, stopMaster, sim, startSim, stopSim } = useNav();
-  const t = (iso: string) => new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(iso)) + " WIB";
+  const t = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(iso)) + " WIB";
   return <div className="dg-navctl">
     {canMaster && <div className="dg-well dg-navctl-row">
-      <div><b>Master GPS perangkat Admin</b><small>{tracking ? (trackState === "ACTIVE" ? "Mengirim posisi tiap 30 detik" : trackState === "ACQUIRING" ? "Mengambil posisi perangkat…" : "Periksa izin/koneksi lokasi") + (lastSentAt ? " · terakhir " + t(lastSentAt) : "") : "Posisi perangkat dikirim sebagai proksi posisi kapal, bukan GPS onboard."}</small></div>
-      <button type="button" className={"dg-btn" + (tracking ? " dg-btn-stop" : "")} onClick={tracking ? stopMaster : startMaster}>{tracking ? "Hentikan" : "Aktifkan"}</button>
+      <div><b>Admin device Master GPS</b><small>{tracking ? (trackState === "ACTIVE" ? "Sending position every 30 seconds" : trackState === "ACQUIRING" ? "Acquiring device position…" : "Check location permission/connection") + (lastSentAt ? " · last " + t(lastSentAt) : "") : "Device position is sent as a proxy for ship position, not onboard GPS."}</small></div>
+      <button type="button" className={"dg-btn" + (tracking ? " dg-btn-stop" : "")} onClick={tracking ? stopMaster : startMaster}>{tracking ? "Stop" : "Activate"}</button>
     </div>}
     <div className="dg-well dg-navctl-row">
-      <div><b>Simulasi navigasi (DEMO)</b><small>{sim ? "Lintasan sintetis berjalan; tidak disimpan ke database." : "Uji gerak model 3D tanpa mengubah data GPS."}</small></div>
-      <button type="button" className={"dg-btn" + (sim ? " dg-btn-stop" : "")} onClick={sim ? stopSim : startSim}>{sim ? "Hentikan" : "Jalankan"}</button>
+      <div><b>Navigation simulation (DEMO)</b><small>{sim ? "Synthetic track running; not saved to the database." : "Test 3D model motion without changing GPS data."}</small></div>
+      <button type="button" className={"dg-btn" + (sim ? " dg-btn-stop" : "")} onClick={sim ? stopSim : startSim}>{sim ? "Stop" : "Run"}</button>
     </div>
     {trackError && tracking && <p className="dg-note dg-err">{trackError}</p>}
-    <p className="dg-note">Keduanya tetap berjalan saat Anda pindah modul, sampai dihentikan. Di HP, mengunci layar atau menutup browser bisa menghentikan pengiriman GPS.</p>
+    <p className="dg-note">Both keep running when you switch modules, until stopped. On phones, locking the screen or closing the browser can stop GPS updates.</p>
   </div>;
 }
