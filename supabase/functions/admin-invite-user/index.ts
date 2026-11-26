@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
     if (!["OPS", "SIN", "EKA", "LOG"].includes(departmentCode)) return response({ error: "Departemen tidak valid" }, 400);
     if (!["officer", "operator", "viewer"].includes(role)) return response({ error: "Role akun tidak diizinkan" }, 400);
     if (isDepartmentHead && !departmentCode) return response({ error: "Kepala departemen harus memiliki departemen" }, 400);
-    if (canAccessClassV && departmentCode !== "SIN") return response({ error: "Akses Class V hanya dapat diberikan pada akun Departemen Senjata" }, 403);
+    if (canAccessClassV && departmentCode !== "OPS") return response({ error: "Class V access can only be given to DEPOPS (Operations) accounts" }, 403);
 
     const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
       data: { full_name: fullName, rank_title: rankTitle, unit_id: actorProfile.unit_id },
