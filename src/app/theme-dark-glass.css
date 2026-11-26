@@ -515,3 +515,26 @@ div.dg-kpi{cursor:default}
   .dg-modal{padding:8px;align-items:end}
   .dg-modal-card.dg-editor{max-height:calc(100dvh - 16px);border-radius:16px 16px 12px 12px}
 }
+
+/* ================= Maintenance ================= */
+.dg-maint{display:flex;flex-direction:column;gap:16px;min-width:0}
+.dg-sub-picker{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dg-sub-picker .dg-class-text small{white-space:normal}
+.dg-pill-bad{color:#FFB3B5;background:rgba(255,90,95,.12);border-color:rgba(255,90,95,.4)}
+.dg-faults{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.dg-fault{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;padding:12px 14px;border-radius:12px;background:var(--dg-well);border-left:3px solid var(--dg-warn)}
+.dg-fault.is-in_progress{border-left-color:var(--dg-info)}
+.dg-fault.is-completed{border-left-color:var(--dg-ok);opacity:.85}
+.dg-fault.is-deferred{border-left-color:rgba(255,255,255,.25)}
+.dg-fault-main{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.dg-fault-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dg-fault-top small,.dg-fault-main>small{font-size:12px;color:var(--dg-dim)}
+.dg-fault-main>b{font-size:14.5px;font-weight:600}
+.dg-fault-main>p{margin:0;font-size:13.5px;line-height:1.5;color:var(--dg-ink-2);white-space:pre-line;overflow-wrap:anywhere}
+.dg-fault .dg-pill{font-size:12px;padding:2px 9px}
+.dg-fault-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;flex:none;min-width:150px}
+.dg-fault-actions .dg-btn{min-height:36px;font-size:12.5px}
+.dg-fault-actions select{min-height:36px;width:100%;padding:0 10px;border-radius:9px;font:inherit;font-size:13px;border:1px solid rgba(200,215,235,.18);background:rgba(0,0,0,.25);color:var(--dg-ink)}
+.dg-sr-wrap{display:block;margin:0}
+@media(max-width:900px){.dg-sub-picker{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:640px){.dg-fault{flex-direction:column}.dg-fault-actions{flex-direction:row;width:100%;min-width:0}.dg-fault-actions>*{flex:1}}
