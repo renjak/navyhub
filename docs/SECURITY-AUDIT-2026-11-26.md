@@ -75,3 +75,5 @@ Messaging without consent → app sends only Supabase invite emails, no SMS/What
 - App: Personnel module, dashboard counts and Logbook watch handover use the directory for non-managers.
 - Verified (role impersonation, rolled back): viewer table=0 / directory=39; admin & commander full rows=39; operator without department → Class V denied, LOG denied; LOG operator → LOG allowed, Class V denied; OPS operator without entitlement → Class V denied, with entitlement → allowed; commander → Class V allowed; spoofed NRP replaced by server value.
 - Note: duty-officer NRP still appears in the approved watch record/logbook (`daily_watch_assignments`, `phst_daily_orders`) as part of the official record.
+
+**2026-11-26 — owner decision on NRP** (migration `20261126065114_personnel_directory_include_nrp`): NRP may be shown to every active unit account and is now part of `personnel_directory()` and the Personnel table. Date of birth must not be shown; birth place, education, TMT and remarks also remain Admin/Commander only. Verified: viewer directory 39 rows with NRP, base table 0 rows, no anon grant.
