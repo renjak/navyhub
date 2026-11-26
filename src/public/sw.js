@@ -1,7 +1,7 @@
 /* ALNAV DMS PWA. Never cache authenticated HTML, Supabase responses, API payloads or user records. */
-const CACHE_VERSION = "navyhub-static-v1";
+const CACHE_VERSION = "navyhub-static-v2";
 const OFFLINE_URL = "/offline.html";
-const APP_ASSETS = [OFFLINE_URL, "/alamang-emblem.jpg", "/kri-alamang-bg.jpg", "/navyhub-icon.svg"];
+const APP_ASSETS = [OFFLINE_URL, "/alamang-emblem.jpg", "/kri-alamang-bg.jpg", "/icons/icon-192.png", "/icons/icon-512.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(APP_ASSETS)).then(() => self.skipWaiting()));
 });
@@ -18,7 +18,7 @@ self.addEventListener("fetch", event => {
     event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE_URL)) || new Response("ALNAV DMS memerlukan koneksi internet.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } })));
     return;
   }
-  const staticAsset = url.pathname.startsWith("/_next/static/") || ["/alamang-emblem.jpg", "/kri-alamang-bg.jpg", "/navyhub-icon.svg"].includes(url.pathname);
+  const staticAsset = url.pathname.startsWith("/_next/static/") || ["/alamang-emblem.jpg", "/kri-alamang-bg.jpg", "/icons/icon-192.png", "/icons/icon-512.png"].includes(url.pathname);
   if (!staticAsset) return;
   event.respondWith(caches.match(request).then(cached => cached || fetch(request).then(response => {
     if (response.ok && (response.type === "basic" || response.type === "default")) caches.open(CACHE_VERSION).then(cache => cache.put(request, response.clone()));

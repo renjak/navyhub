@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Administration, logbook, maintenance, logistics and personnel system for KRI Alamang-644.",
   applicationName: "ALNAV DMS", manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "ALNAV DMS", statusBarStyle: "black-translucent" },
-  icons: { icon: [{ url: "/navyhub-icon.svg", type: "image/svg+xml" }], apple: [{ url: "/alamang-emblem.jpg", type: "image/jpeg" }] },
+  icons: { icon: [{ url: "/favicon.ico", sizes: "48x48" }, { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }], apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }] },
   formatDetection: { telephone: false }
 };
 export const viewport: Viewport = { themeColor: "#050B14", width: "device-width", initialScale: 1, viewportFit: "cover" };

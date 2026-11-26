@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">NAVYHUB</string>
-    <string name="title_activity_main">NAVYHUB</string>
+    <string name="app_name">ALNAV DMS</string>
+    <string name="title_activity_main">ALNAV DMS</string>
     <string name="package_name">id.navyhub.app</string>
     <string name="custom_url_scheme">id.navyhub.app</string>
 </resources>
