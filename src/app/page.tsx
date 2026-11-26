@@ -12,6 +12,7 @@ import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
 import {NavRuntimeProvider,NavRunningChips,useNav} from "./NavRuntime";
 import NavMapButton from "./NavMap";
+import IntroSplash from "./intro/IntroSplash";
 import DashboardHome from "./DashboardHome";
 import dynamic from "next/dynamic";
 const VesselModel3D=dynamic(()=>import("./VesselModel3D"),{ssr:false,loading:()=><div className="dg-3d-loading">Loading 3D model…</div>});
@@ -378,7 +379,7 @@ export default function Home(){
  if(loading)return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV DMS logo"/> <span>INITIALIZING</span></div></main>;
  if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><img className="dg-login-ship" src="/images/kri-alamang-644-side.png" alt="KRI ALAMANG-644 line drawing"/><small>Welcome aboard · SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Registered account email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Checking…":"Sign in to ALNAV DMS"}</button></form><footer>Restricted to authorised users.</footer></section></main>;
  if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Signed in, but the account is not activated or not linked to a unit yet.</p><button onClick={()=>sb.auth.signOut()}>Sign out</button></section></main>;
-return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><div className="dg-app">
+return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><IntroSplash/><div className="dg-app">
 <aside className="dg-glass dg-side">
 <div className="dg-logo"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV-DMS — Alamang Naval Data Management System"/></div>
 <button type="button" className="dg-ship" onClick={()=>openModule("Dashboard")}><b className="dg-h">KRI ALAMANG-644</b><small>{envName==="production"?"Fast Patrol Craft Unit · Koarmada I":envName==="preview"?"Preview · not production":"Fast Patrol Craft Unit · Koarmada I"}</small></button>

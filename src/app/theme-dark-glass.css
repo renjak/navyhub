@@ -623,3 +623,27 @@ button.dg-kpi:hover,.dg-log-kpi:hover{transform:translateY(-2px);box-shadow:inse
   .dg-btn:active,.dg-nav button:active,button.dg-kpi:hover,.dg-log-kpi:hover{transform:none}
 }
 .v3d-root.v3d-embed .v3d-glass{border-color:transparent;box-shadow:0 10px 28px rgba(0,0,0,.38)}
+
+/* ================= Opening sequence ================= */
+.dg-intro-overlay{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;background:radial-gradient(900px 700px at 50% 45%,rgba(37,84,150,.35),transparent 65%),radial-gradient(600px 500px at 50% 110%,rgba(231,19,28,.12),transparent 60%),#050B14;transition:opacity .75s ease,transform .75s var(--dg-ease),filter .75s ease}
+.dg-intro-overlay.is-exiting{opacity:0;transform:scale(1.08);filter:blur(6px);pointer-events:none}
+.dg-intro-globe{position:absolute;inset:0;width:100%;height:100%}
+.dg-intro-center{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(640px,84vw);margin-top:22vh}
+.dg-intro-ship{width:100%;height:auto;filter:drop-shadow(0 0 18px rgba(120,170,230,.45));clip-path:inset(0 100% 0 0);animation:dg-intro-draw 1.9s .35s cubic-bezier(.65,0,.35,1) forwards,dg-intro-float 6s 2.2s ease-in-out infinite}
+.dg-intro-text{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;opacity:0;animation:dg-rise .8s 1.5s var(--dg-ease) forwards}
+.dg-intro-text b{font-size:clamp(22px,4vw,34px);letter-spacing:.06em}
+.dg-intro-text span{font-size:13.5px;color:var(--dg-ink-2);letter-spacing:.02em}
+.dg-intro-logo{position:absolute;top:24px;left:50%;transform:translateX(-50%);height:44px;padding:6px 12px;border-radius:12px;background:#FEFEFE;object-fit:contain;opacity:0;animation:dg-fade .8s .2s ease forwards}
+.dg-intro-skip{position:absolute;right:20px;bottom:20px;min-height:40px;padding:0 16px;border-radius:11px;border:0;background:rgba(255,255,255,.08);color:var(--dg-ink-2);font:inherit;font-size:13.5px;cursor:pointer}
+.dg-intro-skip:hover{background:rgba(255,255,255,.16);color:#fff}
+@keyframes dg-intro-draw{to{clip-path:inset(0 0 0 0)}}
+@keyframes dg-intro-float{50%{transform:translateY(-6px)}}
+/* keep dashboard reveals waiting until the intro opens */
+body.dg-intro .dg-reveal.dg-in{opacity:0;transform:translateY(16px) scale(.985)}
+body.dg-intro{overflow:hidden}
+@media(prefers-reduced-motion:reduce){
+  .dg-intro-ship{clip-path:none;animation:none}
+  .dg-intro-text,.dg-intro-logo{opacity:1;animation:none}
+  .dg-intro-overlay{transition:opacity .3s ease}
+  .dg-intro-overlay.is-exiting{transform:none;filter:none}
+}
