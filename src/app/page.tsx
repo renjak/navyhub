@@ -1,13 +1,12 @@
 "use client";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {createClient,type User} from "@supabase/supabase-js";
-import DigitalLogbook from "./DigitalLogbook";
-import {LogbookSummary,LogTabs,type LogTab} from "./LogbookParts";
+import JagaDarat from "./JagaDarat";
+import JagaLaut from "./JagaLaut";
 import {stockClasses,itemBelongsToStockClass} from "./stockClasses";
 import StockWorkspace from "./StockWorkspace";
 import {en,enText,depLabel} from "./displayEn";
 import MaintenanceWorkspace from "./MaintenanceWorkspace";
-import PHSTLogbook from "./PHSTLogbook";
 import DailyWatchArchive from "./DailyWatchArchive";
 import {NavRuntimeProvider,NavRunningChips,useNav} from "./NavRuntime";
 import NavMapButton from "./NavMap";
@@ -150,6 +149,7 @@ function parsePhstLines(lines:string[]):ImportedPlan[]{
    }
    continue;
   }
+  if(/^a\.?\s*n\.?\s*Komandan|^Komandan\s+KRI|^Palaksa\b|^Mengetahui\b/i.test(line)){section="";continue}
   if(section==="F. LAIN-LAIN"){
    const m=line.match(/^[a-z]\.?\s*(.+)$/i);const val=(m?m[1]:line).replace(/^[-•–]\s*/,"").trim();
    if(val)push(section,val);
@@ -194,7 +194,7 @@ export default function Home(){
  const [docName,setDocName]=useState("");
  const [docBusy,setDocBusy]=useState(false);
  const refreshProfile=useCallback(async(u:User)=>{const {data,error}=await sb.from("profiles").select("id,full_name,rank_title,unit_id,role,is_active,department_code,is_department_head,can_access_class_v").eq("id",u.id).maybeSingle();if(error)throw error;setProfile(data as Profile|null)},[]);
- useEffect(()=>{let alive=true;sb.auth.getSession().then(async({data})=>{const u=data.session?.user??null;if(!alive)return;setUser(u);if(u){try{await refreshProfile(u)}catch(e){setError("Failed to load account profile.")}}setLoading(false)});const {data:listener}=sb.auth.onAuthStateChange((_event,session)=>{const u=session?.user??null;setUser(u);if(!u){setProfile(null);setRows([]);setMovements([])}else{setTimeout(()=>refreshProfile(u).catch(()=>setError("Failed to load profile.")),0)}});return()=>{alive=false;listener.subscription.unsubscribe()}},[refreshProfile]);
+ useEffect(()=>{let alive=true;const t0=performance.now();sb.auth.getSession().then(async({data})=>{const u=data.session?.user??null;if(!alive)return;setUser(u);if(u){try{await refreshProfile(u)}catch(e){setError("Failed to load account profile.")}}/* keep the 3D loading mark on screen long enough for one full turn */const wait=Math.max(0,1500-(performance.now()-t0));window.setTimeout(()=>{if(alive)setLoading(false)},wait)});const {data:listener}=sb.auth.onAuthStateChange((_event,session)=>{const u=session?.user??null;setUser(u);if(!u){setProfile(null);setRows([]);setMovements([])}else{setTimeout(()=>refreshProfile(u).catch(()=>setError("Failed to load profile.")),0)}});return()=>{alive=false;listener.subscription.unsubscribe()}},[refreshProfile]);
  const isViewer=profile?.role==="viewer";
  const isAdmin=profile?.role==="admin";
  const canManage=profile?.role==="admin"||profile?.role==="commander";
@@ -253,7 +253,9 @@ export default function Home(){
    const meta=dailyMeta.meta,officer=meta["Perwira Jaga"]||"";
    const officerNrp=(officer.match(/NRP\s*([\w/.-]+)/i)||[])[1]||null;
    const cleanOfficer=officer.replace(/\s*NRP\s*[\w/.-]+/i,"").trim();
-   const {data:daily,error:dailyError}=await sb.from("phst_daily_orders").upsert({unit_id:profile.unit_id,activity_date:dailyMeta.activity_date,duty_officer:cleanOfficer,duty_officer_nrp:officerNrp,duty_division:meta["Divisi Jaga"]||"",duty_nco:meta["Bintara Jaga"]||"",duty_messenger:meta["Caraka"]||"",duty_attire:meta["Tenue Jaga"]||"",source_file:docName,source_verified:true},{onConflict:"unit_id,activity_date"}).select("id").single();
+   const dayPlans=docPlans.filter(p=>p.activity_date===dailyMeta.activity_date);const pick=(cat:string,re:RegExp)=>dayPlans.find(p=>p.category===cat&&re.test(p.title))?.description?.trim()||"";
+   const brief:Record<string,string>={};const pos=pick("A. SITUASI",/posisi/i),siaga=pick("A. SITUASI",/siaga/i),tugas=pick("B. TUGAS POKOK",/tugas/i);if(pos)brief.situation=pos;if(siaga)brief.readiness_level=siaga;if(tugas)brief.main_task=tugas;
+   const {data:daily,error:dailyError}=await sb.from("phst_daily_orders").upsert({unit_id:profile.unit_id,activity_date:dailyMeta.activity_date,duty_officer:cleanOfficer,duty_officer_nrp:officerNrp,duty_division:meta["Divisi Jaga"]||"",duty_nco:meta["Bintara Jaga"]||"",duty_messenger:meta["Caraka"]||"",duty_attire:meta["Tenue Jaga"]||"",...brief,source_file:docName,source_verified:true},{onConflict:"unit_id,activity_date"}).select("id").single();
    if(dailyError){setNotice("Data personel PHST "+dailyMeta.activity_date+" gagal disimpan: "+dailyError.message);setBusy(false);return;}
    const checklist=docPlans.filter(p=>p.activity_date===dailyMeta.activity_date&&p.category==="C. UMUM"&&p.activity_time).map((p,i)=>({unit_id:profile.unit_id,daily_order_id:daily.id,sequence_no:i+1,scheduled_time:p.activity_time,activity_text:p.title}));
    if(checklist.length){const {error:checkError}=await sb.from("phst_checklist_items").upsert(checklist,{onConflict:"daily_order_id,sequence_no"});if(checkError){setNotice("Checklist Bagian C "+dailyMeta.activity_date+" gagal disimpan: "+checkError.message);setBusy(false);return;}}
@@ -262,7 +264,7 @@ export default function Home(){
   if(insertError){setNotice("PHST gagal disimpan. Riwayat lama tetap aman: "+insertError.message);await loadTomorrowPlans();}
   else{
    setNotice("PHST berhasil disimpan tanpa menghapus riwayat. "+newPlans.length+" data baru ditambahkan; "+(docPlans.length-newPlans.length)+" data identik dilewati.");
-   setDocPlans([]);setDocMeta({});setDocDailyMeta([]);setDocName("");await loadModule();await loadTomorrowPlans();
+   setDocPlans([]);setDocMeta({});setDocDailyMeta([]);setDocName("");setLogRefresh(n=>n+1);await loadModule();await loadTomorrowPlans();
   }
   setBusy(false);
  }
@@ -376,7 +378,7 @@ export default function Home(){
  const greetName=cleanName?(profile?.rank_title?profile.rank_title+" ":"")+cleanName.split(" ")[0]:displayName;
  const initials=displayName.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
  const roleLabel=roleNames[profile?.role||""]||profile?.role||"";
- const [logTab,setLogTab]=useState<LogTab>("jaga"),[logRefresh,setLogRefresh]=useState(0);
+ const [logTab,setLogTab]=useState<"darat"|"laut"|"arsip">("darat"),[logRefresh,setLogRefresh]=useState(0);
  const [focusPart,setFocusPart]=useState<string|undefined>(undefined);
  const pickAssetRoom=useCallback((name:string)=>{setAssetDraft((d:any)=>d?{...d,location_label:name}:{asset_code:"",asset_name:"",category:maintSection,location_label:name,condition_label:"Baik",is_active:true});setNotice("Asset location set: "+name+". Complete the asset code and name in the form below.")},[maintSection]);
  if(loading)return <LogoLoader3D label="INITIALIZING"/>;
@@ -426,90 +428,10 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 </section>
 }
 {module==="NAVYLOG"&&<div className="dg-logbook">
-<LogbookSummary supabase={sb} unitId={profile.unit_id} onTab={setLogTab} refreshKey={logRefresh}/>
-<LogTabs tab={logTab} onTab={setLogTab}/>
+<div role="group" aria-label="Jenis jaga" className="dg-seg dg-log-mode">{([["darat","Jaga Darat"],["laut","Jaga Laut"],["arsip","Arsip"]] as const).map(([k,l])=><button type="button" key={k} aria-pressed={logTab===k} onClick={()=>setLogTab(k)}>{l}</button>)}</div>
 {notice&&<p className="dg-note dg-notice" role="status">{notice}</p>}
-{logTab==="jaga"&&<div className="dg-log-grid">
-<section className="dg-glass dg-card dg-3d-section dg-log-3d"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · pos jaga</div><h2 className="dg-h dg-card-title">Pos jaga hari ini</h2><div className="dg-sub">Perwira Jaga diambil dari penetapan jaga hari ini. Pos lain tampil “—” sampai datanya tercatat.</div></div></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["jaga"]}/></section>
-<DigitalLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} viewer={isViewer} onChange={()=>setLogRefresh(n=>n+1)}/>
-</div>}
-{logTab==="phst"&&<PHSTLogbook supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer} onChange={()=>setLogRefresh(n=>n+1)}/>}
-{logTab==="agenda"&&<div className="dg-log-stack">
-<section className="panel data-panel">
-<div className="panelhead">
-<div>
-<h3>Agenda esok hari</h3>
-<p>Rencana kegiatan tersimpan untuk tanggal kegiatan berikutnya</p>
-</div>
-
-<span className="glass-chip">{tomorrowPlans.length} KEGIATAN</span>
-</div>
-
-{Object.keys(agendaDutyMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONEL & POSISI JAGA</small><span>PHST · KESIAGAAN</span></div><div className="agenda-duty-grid">{Object.entries(agendaDutyMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{role}</small><b>{name||"—"}</b></div>)}</div></section>}
-<div className="agenda-list">{agendaVisibleRows.length>0?agendaVisibleRows.map(p=>
-<article className="agenda-card agenda-card-compact" key={p.id}>
-<div className="agenda-time">{p.activity_time?p.activity_time.slice(0,5):"—"}</div>
-<div className="agenda-content"><h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}<small className="agenda-status">{p.status==="draft"?"AGENDA · DRAFT":p.status}</small></div>
-</article>):<div className="empty">Belum ada kegiatan terjadwal sampai pukul 22.00. Unggah dokumen PHST untuk menampilkan agenda.</div>}</div>
-<section className="agenda-departments"><div className="agenda-departments-head"><div><small>KEGIATAN TAMBAHAN</small><h4>Rencana tiap Departemen</h4></div><span>4 DEPARTEMEN</span></div><div className="agenda-department-list">{agendaDeptRows.map(p=><article className="agenda-department-card" key={p.id}><button type="button" className="agenda-department-open" onClick={()=>canManage&&setDeptEditDraft({...p})} disabled={!canManage}><span><small>DEPARTEMEN</small><b>{depLabel(normalizeDepartment(String(p.title||""))||p.title)}</b></span><i>{canManage?"EDIT ↗":"TAMBAHAN"}</i></button>{p.description&&<p>{p.description}</p>}</article>)}</div></section>
-{deptEditDraft&&<section className="agenda-dept-editor"><div className="agenda-dept-editor-head"><div><small>EDIT KEGIATAN DEPARTEMEN</small><h4>{deptEditDraft.title||"Departemen"}</h4></div><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Tutup</button></div><label>Nama departemen<input value={deptEditDraft.title||""} onChange={e=>setDeptEditDraft(v=>v?({...v,title:e.target.value}):v)}/></label><label>Kegiatan tambahan / uraian<textarea rows={4} value={deptEditDraft.description||""} onChange={e=>setDeptEditDraft(v=>v?({...v,description:e.target.value}):v)}/></label><div className="agenda-dept-editor-actions"><button type="button" className="outline" onClick={()=>setDeptEditDraft(null)} disabled={deptEditSaving}>Batal</button><button type="button" onClick={saveDeptAgenda} disabled={deptEditSaving}>{deptEditSaving?"Menyimpan…":"Simpan perubahan"}</button></div></section>}
-
-</section>
-<section className="panel plan-panel">
-<div className="panelhead">
-<div>
-<h3>Impor dokumen PHST</h3>
-<p>Unggah PHST (.docx/.pdf). Hasil pembacaan ditinjau dulu, lalu disimpan sebagai agenda DRAFT; data lama tidak dihapus.</p>
-</div>
-
-<span className="glass-chip">{isViewer?"Hanya pengelola":"Sumber resmi"}</span>
-</div>
-{!isViewer&&<>
-<div className="phst-upload">
-<label className="upload-label">Pilih dokumen agenda<input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" onChange={handlePhstUpload}/>
-</label>{docBusy&&<span>Memproses dokumen…</span>}
-{docName&&<small>File: {docName}</small>}</div>
-{docPlans.length>0&&<>
-<div className="agenda-preview">
-<div className="agenda-preview-head">
-<div>
-<b>Agenda kegiatan hari berikutnya</b>
-<small>Hasil pembacaan dokumen · periksa sebelum disimpan</small>
-</div>
-
-<span>{docPlans.length} KEGIATAN</span>
-</div>
-
-{Object.keys(docMeta).length>0&&<section className="agenda-duty-strip"><div className="agenda-duty-heading"><small>PERSONEL & POSISI JAGA</small><span>PHST · KESIAGAAN</span></div><div className="agenda-duty-grid">{Object.entries(docMeta).map(([role,name])=><div className="agenda-duty-item" key={role}><small>{role}</small><b>{name||"—"}</b></div>)}</div></section>}<div className="agenda-sections">{phstSectionOrder.map(section=>{const items=docPlans.filter(p=>p.category===section&&(section!=="C. UMUM"||!p.activity_time||p.activity_time.slice(0,5)<="22:00"));if(!items.length)return null;return <section className={"agenda-section "+section.charAt(0).toLowerCase()} key={section}>
-<div className="agenda-section-title">
-<span>{section}</span>
-<small>{items.length} {section==="C. UMUM"?"JADWAL":section==="D. KHUSUS"?"DEPARTEMEN":"INFORMASI"}</small>
-</div>
-
-<div className="agenda-cards">{items.map((p,i)=>
-<article className="agenda-card" key={section+"-"+i}>
-<div className="agenda-time">{p.activity_time||"•"}</div>
-
-<div className="agenda-content">
-<h4>{p.title}</h4>{p.description&&<p>{p.description}</p>}</div>
-
-</article>)}</div>
-
-</section>
-})}</div>
-
-<div className="plan-actions">
-<small>Agenda disimpan sebagai DRAFT. Peralatan hanya ditampilkan bila tertulis di dokumen.</small>
-<button onClick={importPhstPlans} disabled={busy}>{busy?"Menyimpan…":"Simpan agenda ke LOGBOOK"}</button>
-</div>
-
-</div>
-
-</>
-}</>
-}</section>
-</div>}
-{logTab==="jejak"&&<section className="dg-glass dg-card dg-3d-section"><div className="dg-card-head"><div><div className="dg-eyebrow">Model 3D · jejak &amp; latihan</div><h2 className="dg-h dg-card-title">Putar ulang pelayaran &amp; latihan peran</h2><div className="dg-sub">Jejak GPS per tanggal bersama catatan logbook pada jam yang sama. Latihan peran hanya di layar ini dan tidak disimpan.</div></div><NavMapButton label="Buka peta" lang="id"/></div><LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/></section>}
+{logTab==="darat"&&<JagaDarat supabase={sb} unitId={profile.unit_id} userId={user.id} canManage={canManage} canOperate={canOperate} viewer={isViewer} refreshKey={logRefresh} preview={{file:docName,busy:docBusy,saving:busy,plans:docPlans,days:docDailyMeta}} onFile={handlePhstUpload} onImport={importPhstPlans} onCancelPreview={()=>{setDocPlans([]);setDocMeta({});setDocDailyMeta([]);setDocName("")}}/>}
+{logTab==="laut"&&<JagaLaut replay={<LogShip3D sb={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} canAccessClassV={canAccessClassV} modes={["putar-ulang","latihan"]}/>}/>}
 {logTab==="arsip"&&<DailyWatchArchive supabase={sb} unitId={profile.unit_id} userId={user.id} role={profile.role} viewer={isViewer} title="Arsip Logbook" lang="id"/>}
 </div>}
 {selected?.table && <>

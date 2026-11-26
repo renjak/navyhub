@@ -97,3 +97,10 @@ Production remains unchanged. A preview marked READY is not a production release
 - Verified by read-only queries after apply. No profiles had a department or Class V access at the time, so no account was affected.
 
 - 2026-11-26: `admin-invite-user` v3 deployed (no-department invites allowed; AAL2 required for Admins with verified MFA). Migrations applied: protect_personnel_pii_and_class_v_movements, personnel_directory_include_nrp, require_mfa_when_enrolled.
+
+## 2026-11-26 — Logbook: Jaga Darat / Jaga Laut (owner direction)
+- Logbook opens on **Jaga Darat** (default) with a three-way switch: Jaga Darat · Jaga Laut · Arsip. The previous five tabs (summary, Jaga, PHST, Agenda, Jejak) are no longer shown.
+- **Jaga Darat** flow: Komandan/Admin upload the PHST (PDF/Word) → reviewed preview (date, Perwira/Bintara Jaga, Caraka, posisi sandar, number of Section C items) → "Simpan PHST" (non-destructive, duplicate-aware, as before). View: crew + A (posisi kapal, kesiagaan), B (tugas pokok) and D (khusus, collapsible) summarised at the top; Section C as the Perwira Jaga daily checklist (items already due but unchecked are marked); F (Lain-lain) at the bottom. Viewer: read-only.
+- Import now also stores A·Posisi → `phst_daily_orders.situation`, A·Tingkat kesiagaan → `readiness_level`, B → `main_task` (only when present in the document). Parser fix: the signature block ("a.n. Komandan … Palaksa") no longer becomes a Section F item. Verified against `PHST_ALAMANG_2025.docx` (13 Section C items, 4 F items).
+- **Jaga Laut**: current watch from WIB clock — Divisi A = PH-MH (08–12, 20–24), B = SH-LM (12–16, 00–04), C = SH-DH (16–20, 04–08), assumed in the order the owner listed them; 24-hour board; ship position/SOG/COG with source label, heading "—" (no gyro). Voyage replay & drill (3D) moved here as a collapsible section.
+- 3D loading mark stays at least 1.5 s on the INITIALIZING screen.
