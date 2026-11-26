@@ -95,7 +95,7 @@ export default function DashboardHome({ supabase: sb, unitId, userId, role, gree
       const [gc, inv, per, prof, mov, chk, faults, watch, order] = await Promise.all([
         head("vessel_gps_positions"),
         sb.from("inventory_items").select("id,category,supply_class,department_code").eq("unit_id", unitId).eq("is_active", true).limit(2000),
-        head("personnel"),
+        sb.rpc("personnel_directory", {}, { count: "exact", head: true }),
         head("profiles"),
         head("stock_movements"),
         head("checklists").eq("is_active", true),

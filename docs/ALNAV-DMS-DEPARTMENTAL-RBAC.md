@@ -90,3 +90,7 @@ Create a verified data-bearing Supabase development project/restore, then implem
 - Account deactivation/revocation workflow and full role change audit.
 - Column-level protection for sensitive personnel fields and document confidentiality controls.
 - Existing legacy records with unknown department ownership must be reviewed before assigning department codes.
+
+## Update 2026-11-26 — personnel privacy and stock write rule
+- Personnel private fields readable only by Admin/Commander; others use `personnel_directory()`.
+- Stock movement insert validates item class (Class V entitlement) and owning department for non-managers (restrictive RLS). Other modules' department write rules remain pending.

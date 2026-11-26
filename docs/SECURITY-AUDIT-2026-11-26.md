@@ -30,8 +30,8 @@ with explicit approval.
 ## 2. Findings (priority order)
 | # | Severity | Finding | Recommendation |
 |---|---|---|---|
-| F1 | **High** | Every unit account (incl. Viewer) can read all 39 personnel rows **including NRP, birth place/date, education** (`personnel_read_unit`). UI hiding is not protection. | Split sensitive columns into a `personnel_private` table (or view + column grants) readable only by Admin/Commander/personnel officer; keep a directory view for others. |
-| F2 | **High** | Officer/Operator can insert `stock_movements` for **Class V items they cannot see**; the SECURITY DEFINER balance trigger then changes ammunition balances. No department check on stock writes either. | Add RESTRICTIVE insert policy (Class V requires `can_access_class_v()`/admin/commander) and department write rule; re-test allow/deny. |
+| F1 | **High — FIXED** | Every unit account (incl. Viewer) can read all 39 personnel rows **including NRP, birth place/date, education** (`personnel_read_unit`). UI hiding is not protection. | Split sensitive columns into a `personnel_private` table (or view + column grants) readable only by Admin/Commander/personnel officer; keep a directory view for others. |
+| F2 | **High — FIXED** | Officer/Operator can insert `stock_movements` for **Class V items they cannot see**; the SECURITY DEFINER balance trigger then changes ammunition balances. No department check on stock writes either. | Add RESTRICTIVE insert policy (Class V requires `can_access_class_v()`/admin/commander) and department write rule; re-test allow/deny. |
 | F3 | **High** | No MFA (0 factors enrolled), leaked-password protection disabled, no idle-logout. A stolen phone/session = full access. | Enable HIBP check (Dashboard → Auth), enforce TOTP MFA for admin/commander (AAL2 in RLS for Class V + personnel), auto sign-out after idle, shorter JWT expiry. |
 | F4 | Medium | Public sign-up probably still enabled (app is invite-only). Strangers can create auth users (spam, email cost), even though they see no data. | Disable "Allow new users to sign up" in Supabase Auth; invite via `admin-invite-user` only. Verify in Dashboard. |
 | F5 | Medium | Single hard-coded main admin UUID in policy + RPC: if that account is lost/compromised there is no recovery path and no second approver. | Documented break-glass procedure; second admin with MFA; consider two-person rule for role changes and Class V. |
@@ -65,3 +65,13 @@ Messaging without consent → app sends only Supabase invite emails, no SMS/What
 6. Personnel qualifications, leave/onboard count (POB), watch bill rotation fairness.
 7. Fuel/water consumption trend & endurance estimate.
 8. Communications log (signals in/out) with classification handling.
+
+## 5. Remediation log
+**2026-11-26 — F1 and F2 fixed** (migration `20261126064546_protect_personnel_pii_and_class_v_movements`, applied to live DB with owner approval; additive, rollback in file header).
+- `personnel` full rows (NRP, birth data, education, TMT, remarks): Admin/Commander only (RLS).
+- `public.personnel_directory()`: unit directory without private fields + `has_nrp` flag, for every active unit account. Advisor lint 0029 on this function is intentional (filters on caller's unit, returns no private fields).
+- Watch handover: trigger `fill_watch_officer_identity` copies name/rank/NRP of the selected officers from PERSONEL on the server; client-sent NRP is ignored.
+- `stock_movements` RESTRICTIVE insert policy: Class V requires Admin/Commander or `can_access_class_v`; non-managers may only move items of their own department (items without a department remain common).
+- App: Personnel module, dashboard counts and Logbook watch handover use the directory for non-managers.
+- Verified (role impersonation, rolled back): viewer table=0 / directory=39; admin & commander full rows=39; operator without department → Class V denied, LOG denied; LOG operator → LOG allowed, Class V denied; OPS operator without entitlement → Class V denied, with entitlement → allowed; commander → Class V allowed; spoofed NRP replaced by server value.
+- Note: duty-officer NRP still appears in the approved watch record/logbook (`daily_watch_assignments`, `phst_daily_orders`) as part of the official record.

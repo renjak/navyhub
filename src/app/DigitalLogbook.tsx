@@ -34,7 +34,7 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer,onChange}:
    supabase.from("checklist_items").select("id,checklist_id,item_order,item_label,is_required").order("item_order"),
    supabase.from("daily_watch_assignments").select("*").eq("unit_id",unitId).eq("duty_date",today).maybeSingle(),
    supabase.from("checklist_runs").select("id,checklist_id,duty_date,duty_role,performed_by,performed_at,completed_at").eq("unit_id",unitId).eq("duty_date",today),
-   supabase.from("personnel").select("id,full_name,rank_title,nrp,position").eq("unit_id",unitId).order("sequence_no",{ascending:true})
+   supabase.rpc("personnel_directory").select("id,full_name,rank_title,position,has_nrp")
   ]);
   if(c.error||i.error||a.error||r.error||p.error){setNotice("Data checklist/personel belum dapat dimuat: "+(c.error||i.error||a.error||r.error||p.error)?.message);setLoading(false);return}
   const cs=(c.data||[]) as Checklist[],its=(i.data||[]) as Item[],rs=(r.data||[]) as Run[];
@@ -74,9 +74,9 @@ export default function DigitalLogbook({supabase,unitId,userId,viewer,onChange}:
   const oldPerson=personnel.find(p=>p.id===oldWatchId),newPerson=personnel.find(p=>p.id===newWatchId);
   if(!oldPerson||!newPerson){setNotice("Pilih Perwira Jaga lama dan Perwira Jaga baru dari daftar personel.");return}
   if(oldPerson.id===newPerson.id){setNotice("Perwira Jaga lama dan baru harus merupakan personel yang berbeda.");return}
-  if(!oldPerson.rank_title||!oldPerson.nrp||!newPerson.rank_title||!newPerson.nrp){setNotice("Lengkapi pangkat dan NRP kedua Perwira Jaga di PERSONEL sebelum menetapkan jaga.");return}
+  if(!oldPerson.rank_title||!oldPerson.has_nrp||!newPerson.rank_title||!newPerson.has_nrp){setNotice("Lengkapi pangkat dan NRP kedua Perwira Jaga di PERSONEL sebelum menetapkan jaga.");return}
   setBusy(true);setNotice("");
-  const payload={unit_id:unitId,duty_date:today,duty_role:"Perwira Jaga",selected_by:userId,watch_type:watchType,old_watch_personnel_id:oldPerson.id,new_watch_personnel_id:newPerson.id,old_watch_name:oldPerson.full_name,old_watch_rank:oldPerson.rank_title,old_watch_nrp:oldPerson.nrp,new_watch_name:newPerson.full_name,new_watch_rank:newPerson.rank_title,new_watch_nrp:newPerson.nrp,handover_notes:handoverNotes.trim()};
+  const payload={unit_id:unitId,duty_date:today,duty_role:"Perwira Jaga",selected_by:userId,watch_type:watchType,old_watch_personnel_id:oldPerson.id,new_watch_personnel_id:newPerson.id,/* name, rank and NRP are copied from PERSONEL by the server trigger fill_watch_officer_identity */handover_notes:handoverNotes.trim()};
   const {data,error}=await supabase.from("daily_watch_assignments").insert(payload).select("*").single();
   if(error){const {data:existing}=await supabase.from("daily_watch_assignments").select("*").eq("unit_id",unitId).eq("duty_date",today).maybeSingle();if(existing){setAssignment(existing);setRole("Perwira Jaga");setNotice("Penetapan jaga hari ini sudah tersimpan sebelumnya.")}else setNotice("Penetapan jaga gagal: "+error.message)}
   else{setAssignment(data);setRole("Perwira Jaga");setNotice("Serah terima "+watchType+" tersimpan. Checklist Perwira Jaga telah dibuka.");onChange?.()}
