@@ -29,9 +29,9 @@ export default function PWAClient() {
   }
   if (!visible || installed) return null;
   return <aside className="pwa-install-card" aria-label="Install ALNAV DMS">
-    <div className="pwa-install-copy"><strong>Install ALNAV DMS</strong><span>Tambahkan ALNAV DMS ke perangkat sebagai aplikasi.</span>
-      {showIOSHelp && <span className="pwa-ios-help">Di Safari: tekan Bagikan, lalu pilih “Add to Home Screen” / “Tambahkan ke Layar Utama”.</span>}
+    <div className="pwa-install-copy"><strong>Install ALNAV DMS</strong><span>Add ALNAV DMS to this device as an app.</span>
+      {showIOSHelp && <span className="pwa-ios-help">In Safari: tap Share, then choose “Add to Home Screen”.</span>}
     </div>
-    <div className="pwa-install-actions"><button type="button" onClick={install}>INSTALL</button><button type="button" className="pwa-dismiss" aria-label="Tutup" onClick={() => setVisible(false)}>×</button></div>
+    <div className="pwa-install-actions"><button type="button" onClick={install}>INSTALL</button><button type="button" className="pwa-dismiss" aria-label="Close" onClick={() => setVisible(false)}>×</button></div>
   </aside>;
 }

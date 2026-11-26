@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     p_speed_knots: speed,
     p_course_degrees: course,
     p_satellites: satellites,
-    p_fix_quality: isHardware ? (typeof body.fix_quality === "string" ? body.fix_quality.slice(0, 80) : null) : "Lokasi perangkat Admin; bukan GPS onboard",
+    p_fix_quality: isHardware ? (typeof body.fix_quality === "string" ? body.fix_quality.slice(0, 80) : null) : "Admin device location; not onboard GPS",
     p_position_at: positionAt,
     p_source: source
   });
