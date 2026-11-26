@@ -1,4 +1,5 @@
 "use client";
+import Portal from "./Portal";
 import { enText } from "./displayEn";
 import { useMemo, useState } from "react";
 import { PARTS, assetCode } from "./vessel3d/data";
@@ -76,7 +77,7 @@ export default function MaintenanceWorkspace(p: Props) {
     </section>
 
     {p.notice && <p className="dg-note dg-notice" role="status">{p.notice}</p>}
-    {p.editors}
+    <Portal>{p.editors}</Portal>
 
     <section className="dg-row dg-kpis">
       <div className={"dg-glass dg-card dg-kpi" + (open.length ? " is-warn" : "")}><span>Open faults</span><b className="dg-h">{open.length}</b><small>{open.filter(f => f.status === "in_progress").length} in progress</small></div>
@@ -102,7 +103,7 @@ export default function MaintenanceWorkspace(p: Props) {
         <div><div className="dg-eyebrow">Fault reports</div><h2 className="dg-h dg-card-title">{faultView === "open" ? "Open faults" : "All fault reports"}</h2><div className="dg-sub">Latest 200 reports. {canManage ? "Change the status from each report." : "Only the Admin or Commander can change status."}</div></div>
         <div role="group" aria-label="Report filter" className="dg-seg dg-seg-sm">{([["open", "Open"], ["all", "All"]] as const).map(([k, l]) => <button type="button" key={k} aria-pressed={faultView === k} onClick={() => setFaultView(k)}>{l}</button>)}</div>
       </div>
-      {faultList.length ? <ul className="dg-faults">{faultList.map(f => <li key={f.id} className={"dg-fault is-" + (f.status || "reported")}>
+      {faultList.length ? <ul className="dg-faults" key={faultView + section}>{faultList.map(f => <li key={f.id} className={"dg-fault is-" + (f.status || "reported")}>
         <div className="dg-fault-main">
           <div className="dg-fault-top">
             <span className={"dg-pill " + (PILL[f.status] || "dg-pill-none")}><i />{STATUS[f.status] || f.status || "—"}</span>

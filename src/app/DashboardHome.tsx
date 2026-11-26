@@ -204,9 +204,9 @@ export default function DashboardHome({ supabase: sb, unitId, userId, role, gree
             <div className="dg-well dg-span2"><span>{sim ? "Simulated position (DEMO)" : "Position"}{gps && !sim ? " · " + timeWib(gps.position_at) : ""}</span><b className="dg-mono">{gps ? `${dm(gps.latitude, "U", "S")}  ${dm(gps.longitude, "T", "B")}` : "—"}</b></div>
             <div className="dg-well"><span>SOG</span><b>{gps?.speed_knots != null ? gps.speed_knots.toFixed(1) + " kn" : "—"}</b></div>
             <div className="dg-well"><span>COG</span><b>{gps?.course_degrees != null ? String(Math.round(gps.course_degrees)).padStart(3, "0") + "°" : "—"}</b></div>
-            <div className="dg-well dg-span2"><span>Heading</span><b>—</b></div>
+            <div className="dg-well dg-span2"><span>{sim ? "Heading · DEMO gyro" : "Heading"}</span><b>{sim && sim.heading_demo != null ? String(Math.round(sim.heading_demo)).padStart(3, "0") + "°" : "—"}</b></div>
           </div>
-          <p className="dg-note">Heading needs a gyro/AHRS; COG is not heading. {gpsCount === null ? "" : `${fmtInt(gpsCount)} positions stored`}{!sim && navRt.gps?.source ? `, last source: ${navRt.gps.source === "onboard_gps" ? "ship GPS" : navRt.gps.source === "admin_device_gps" ? "Admin device (proxy)" : navRt.gps.source}.` : "."}{sim ? " The values above come from the simulation and are not saved." : ""}</p>
+          <p className="dg-note">{sim ? "Simulated gyro heading (DEMO); real heading needs a gyro/AHRS. " : "Heading needs a gyro/AHRS; COG is not heading. "} {gpsCount === null ? "" : `${fmtInt(gpsCount)} positions stored`}{!sim && navRt.gps?.source ? `, last source: ${navRt.gps.source === "onboard_gps" ? "ship GPS" : navRt.gps.source === "admin_device_gps" ? "Admin device (proxy)" : navRt.gps.source}.` : "."}{sim ? " The values above come from the simulation and are not saved." : ""}</p>
           <NavControls />
           <div className="dg-btn-row">
             <NavMapButton className="dg-btn dg-btn-block" label="Open map" />

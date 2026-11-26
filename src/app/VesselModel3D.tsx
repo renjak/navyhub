@@ -15,7 +15,8 @@ import {
 } from "./vessel3d/data";
 import "./vessel3d/vessel3d.css";
 
-type NavFix = { position_at: string; latitude: number; longitude: number; speed_knots: number | null; course_degrees: number | null; source: string | null; accuracy_m: number | null };
+const ID_UI: Record<string, string> = {"Aft peak & steering gear": "Ceruk buritan & steering gear", "Aft store (port)": "Gudang buritan kiri", "Aft store (starboard)": "Gudang buritan kanan", "Engine room": "Ruang mesin", "Control panel room": "Ruang panel control", "Inverter room": "Ruang inverter", "Kopaska berth": "Ruang tidur Kopaska", "Crew berth": "Ruang tidur ABK", "Crew squad berth": "Ruang tidur regu ABK", "Compass room & spares": "Compass room & suku cadang", "Stairs & passage": "Tangga & lorong", "Provisions store": "Gudang perbekalan", "Ammunition magazine": "Gudang amunisi", "Crew toilet": "Toilet anggota", "Forward bosun store": "Gudang bahari haluan", "Fore peak": "Ceruk haluan", "Galley": "Ruang dapur", "Personnel room": "Ruang personel", "Executive officer's cabin": "Ruang Palaksa", "Officers' cabin": "Ruang perwira", "CO2 bottle room": "Ruang botol CO2", "Washroom": "Kamar mandi", "Officers' lounge": "Ruang lounge perwira", "Commanding officer's cabin": "Ruang Komandan", "Forward accommodation store": "Gudang akomodasi haluan", "Radio room": "Ruang radio komunikasi", "Stairs": "Tangga", "Bridge": "Ruang anjungan", "Officer of the watch": "Perwira jaga", "Helmsman": "Juru mudi", "Engine watch": "Jaga mesin", "Deck watch": "Jaga geladak", "Telemetry": "Telemetri", "Faults": "Kerusakan", "Tanks": "Tangki", "Decks": "Geladak", "Watch": "Jaga", "Replay": "Putar ulang", "Drills": "Latihan", "Welcome": "Sambut", "System status": "Status sistem", "Course & speed": "Arah & kecepatan", "Mark on the ship": "Tandai di kapal", "Fuel & fresh water": "BBM & air tawar", "Decks & rooms": "Lapisan & ruangan", "Today's watch posts": "Pos jaga hari ini", "Voyage track": "Jejak pelayaran", "Emergency drills": "Latihan peran", "Fire": "Kebakaran", "Flooding": "Kebocoran", "Smoke": "Asap", "Cast off, leave the channel": "Lepas tali, keluar alur", "Fire drill": "Latihan peran kebakaran", "Speed trial": "Uji kecepatan", "Man overboard drill": "Latihan orang jatuh ke laut", "Return and berth": "Kembali, sandar", "Restricted room": "Ruang terbatas", "Restricted compartment": "Kompartemen terbatas", "No assignment today": "Belum ada penugasan hari ini", "— · no data source yet": "— · belum ada sumber data", "Aft deck": "Geladak buritan", "Centre view": "Pusatkan tampilan", "Full screen": "Layar penuh", "Expand panel": "Buka panel", "Collapse panel": "Ciutkan panel", "Loading ship data…": "Memuat data kapal…", "3D views": "Tampilan model 3D", "DRILL · not saved as a real event": "LATIHAN · tidak tersimpan sebagai kejadian nyata", "DEMO · sample track, not ship data": "DEMO · jejak contoh, bukan data kapal", "DEMO · simulated telemetry, not saved": "DEMO · telemetri simulasi, tidak disimpan", "Track could not be loaded.": "Jejak belum dapat dimuat.", "Data could not be loaded. Check the connection.": "Data belum dapat dimuat. Periksa koneksi.", "N (north)": "U (utara)", "The officer of the watch comes from the daily watch assignment in the Logbook and is changed there. Other posts are not recorded in the system yet, so they show “—”.": "Perwira jaga diambil dari penugasan jaga harian di Logbook dan diubah di sana. Pos lain belum tercatat di sistem, jadi ditampilkan “—”.", "Date (WIB)": "Tanggal (WIB)", "Loading track…": "Memuat jejak…", "View sample (DEMO)": "Lihat contoh (DEMO)", "Real data": "Data asli", "Pause": "Jeda", "Play": "Putar", "Time": "Waktu", "Sample": "Contoh", "Logbook": "Logbook", " entries": "", "Track from GPS positions stored on that date. The ship is turned by COG; when COG is not recorded, the direction is calculated from two consecutive positions.": "Jejak dari posisi GPS tersimpan pada tanggal itu. Kapal diputar menurut COG; bila COG tidak terekam, arah dihitung dari dua posisi berurutan.", "Drill time": "Waktu latihan", "Start": "Mulai", "Stop": "Berhenti", "Reset": "Reset", "Tap a compartment point on the ship to cycle its status: fire → flooding → smoke → normal.": "Ketuk titik kompartemen di kapal untuk mengganti status: kebakaran → kebocoran → asap → normal.", "No compartments marked yet.": "Belum ada kompartemen ditandai.", "Clear all marks": "Hapus semua tanda", "Drills exist only on this screen and are not saved to the database.": "Latihan hanya ada di layar ini dan tidak disimpan ke database.", "Upper": "Atas", "Main": "Utama", "Lower": "Bawah", "All": "Semua", "Choose deck": "Pilih geladak", "Navigation deck": "Geladak navigasi", "Main deck": "Geladak utama", "Lower deck": "Geladak bawah", "Voyage track map": "Peta jejak pelayaran", "3D model of KRI ALAMANG-644. Drag to rotate, pinch or scroll to zoom, Shift+drag to pan.": "Model 3D KRI ALAMANG-644. Seret untuk memutar, cubit atau scroll untuk zoom, Shift+seret untuk menggeser.", "The 3D view stopped because the device GPU was reset. Reopen this page to start again.": "Tampilan 3D berhenti karena GPU perangkat direset. Buka ulang halaman ini untuk memulai lagi.", "This device or browser does not support WebGL 2, so the 3D model cannot be shown. The data is still available elsewhere.": "Perangkat atau browser ini tidak mendukung WebGL 2, jadi model 3D tidak bisa ditampilkan. Data tetap tersedia di menu lain."};
+type NavFix = { position_at: string; latitude: number; longitude: number; speed_knots: number | null; course_degrees: number | null; source: string | null; accuracy_m: number | null; heading_demo?: number | null };
 type Props = {
   supabase: any; unitId: string; userId: string; role: string; canAccessClassV: boolean;
   /** Views offered in this placement (default: all). */
@@ -37,6 +38,8 @@ type Props = {
   /** Called after this component writes to the database. */
   onDataChange?: () => void;
   className?: string;
+  /** UI language for this placement ("id" in the PHST Logbook). */
+  lang?: "en" | "id";
 };
 type Gps = { position_at: string; latitude: number; longitude: number; speed_knots: number | null; course_degrees: number | null; source: string; accuracy_m: number | null };
 type Supply = { id: string; item_name: string; category: string; capacity: number | null; stock: number | null; unit: string | null; updated_at: string | null };
@@ -87,7 +90,8 @@ function Gauge({ p, col }: { p: number | null; col: string }) {
   </svg>;
 }
 
-export default function VesselModel3D({ supabase, unitId, userId, role, canAccessClassV, modes, initialMode, nav: navRt, telemetrySlot, onRoomPick, roomPickLabel, onExternalMode, initialPart, panelCollapsed, onDataChange, className }: Props) {
+export default function VesselModel3D({ supabase, unitId, userId, role, canAccessClassV, modes, initialMode, nav: navRt, telemetrySlot, onRoomPick, roomPickLabel, onExternalMode, initialPart, panelCollapsed, onDataChange, className, lang = "en" }: Props) {
+  const t = (x: string) => (lang === "id" ? ID_UI[x] ?? x : x);
   const isAdmin = role === "admin", canManage = role === "admin" || role === "commander";
   const canOperate = ["admin", "commander", "officer", "operator"].includes(role);
 
@@ -167,7 +171,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
 
   useEffect(() => {
     let alive = true;
-    const run = () => { if (alive && !document.hidden) loadCore().catch(() => setLoadErr({ all: "Data could not be loaded. Check the connection." })); };
+    const run = () => { if (alive && !document.hidden) loadCore().catch(() => setLoadErr({ all: t("Data could not be loaded. Check the connection.") })); };
     run();
     const id = window.setInterval(run, 60_000), onVis = () => { if (!document.hidden) run(); };
     document.addEventListener("visibilitychange", onVis);
@@ -186,7 +190,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
     return out;
   }, [supply]);
   const roomLocked = (id: string) => ROOM[id]?.type === "terbatas" && !canAccessClassV;
-  const roomName = (id: string) => roomLocked(id) ? "Restricted room" : ROOM[id]?.n ?? id;
+  const roomName = (id: string) => roomLocked(id) ? t("Restricted room") : t(ROOM[id]?.n ?? id);
   const pjName = watch && (watch.new_watch_name || "").trim() ? [watch.new_watch_rank, watch.new_watch_name].filter(Boolean).join(" ") : null;
 
   function sysStatus(id: SysId): [Tone, string] {
@@ -207,11 +211,11 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
 
   const nav = useMemo(() => {
     if (mode === "telemetri") {
-      if (sim) return { cog: sim.cog, sog: sim.sog };
-      if (gpsLive && gps && gps.course_degrees !== null && (gps.speed_knots ?? 0) >= 0.5) return { cog: gps.course_degrees, sog: gps.speed_knots ?? 0 };
+      if (sim) return { cog: sim.cog, sog: sim.sog, heading: navRt?.sim?.heading_demo ?? null };
+      if (gpsLive && gps && gps.course_degrees !== null && (gps.speed_knots ?? 0) >= 0.5) return { cog: gps.course_degrees, sog: gps.speed_knots ?? 0, heading: null };
     }
-    if (mode === "putar-ulang" && rp && rp.cog !== null) return { cog: rp.cog, sog: rp.sog ?? 0 };
-    return { cog: null as number | null, sog: 0 };
+    if (mode === "putar-ulang" && rp && rp.cog !== null) return { cog: rp.cog, sog: rp.sog ?? 0, heading: null };
+    return { cog: null as number | null, sog: 0, heading: null as number | null };
   }, [mode, sim, gpsLive, gps, rp]);
 
   /* ---------- engine ---------- */
@@ -267,9 +271,9 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
     else if (mode === "kerusakan") for (const p of PARTS) { const n = openByPart[p.id] || 0; L.push({ key: "part:" + p.id, p: p.p, label: p.n + (n ? " · " + n + " open" : ""), col: n ? COL.bad : COL.info, sel: part === p.id, pulse: n > 0 }); }
     else if (mode === "tangki") for (const t of TANKS) { const f = tankInfo[t.id]?.frac ?? null; L.push({ key: "tank:" + t.id, p: [(t.x0 + t.x1) / 2, 0, t.z1 + 0.4], label: t.short + " · " + (f === null ? "—" : Math.round(f * 100) + "%"), col: rgb(t.col), lb: true }); }
     else if (mode === "geladak") for (const r of ROOMS) { if (deck !== "semua" && r.deck !== deck) continue; const lock = roomLocked(r.id); L.push({ key: "room:" + r.id, r: r.id, label: roomName(r.id), col: rgb(lock ? TYPEC.terbatas : r.type === "terbatas" ? TYPEC.senjata : TYPEC[r.type]), sel: room === r.id }); }
-    else if (mode === "jaga") for (const p of POSTS) { const name = p.id === "pj" ? pjName : null; L.push({ key: "post:" + p.id, p: p.p, label: p.n + " · " + (name || "—"), col: name ? COL.live : COL.none, lb: true }); }
-    else if (mode === "latihan") for (const r of ROOMS) { if (r.deck !== drillDeck) continue; const s = drill[r.id]; L.push({ key: "drill:" + r.id, r: r.id, label: (roomLocked(r.id) ? "Restricted compartment" : r.n) + (s ? " · " + DRILLN[s] : ""), col: s ? rgb(DRILLC[s]) : COL.none, lb: !!s, pulse: !!s }); }
-    else if ((mode === "telemetri" || mode === "putar-ulang") && nav.cog !== null) L.push({ key: "n", w: [0, 0.1, -38], label: "N (north)", col: "var(--v3d-red)", lb: true });
+    else if (mode === "jaga") for (const p of POSTS) { const name = p.id === "pj" ? pjName : null; L.push({ key: "post:" + p.id, p: p.p, label: t(p.n) + " · " + (name || "—"), col: name ? COL.live : COL.none, lb: true }); }
+    else if (mode === "latihan") for (const r of ROOMS) { if (r.deck !== drillDeck) continue; const s = drill[r.id]; L.push({ key: "drill:" + r.id, r: r.id, label: (roomLocked(r.id) ? t("Restricted compartment") : t(r.n)) + (s ? " · " + t(DRILLN[s]) : ""), col: s ? rgb(DRILLC[s]) : COL.none, lb: !!s, pulse: !!s }); }
+    else if ((mode === "telemetri" || mode === "putar-ulang") && nav.cog !== null) L.push({ key: "n", w: [0, 0.1, -38], label: t("N (north)"), col: "var(--v3d-red)", lb: true });
     return L;
   }, [mode, part, deck, room, drillDeck, drill, openByPart, tankInfo, pjName, gps, gpsLive, loadErr, nav.cog === null, canAccessClassV, narrow]);
 
@@ -356,7 +360,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
       else setReplayRows(gpsTrack((g.data || []).map((r: any) => ({ position_at: r.position_at, latitude: Number(r.latitude), longitude: Number(r.longitude), speed_knots: num(r.speed_knots), course_degrees: num(r.course_degrees) }))));
       setReplayLogs(l.error ? [] : (l.data || []).map((r: any) => ({ t: new Date(replayDate + "T" + String(r.activity_time).slice(0, 8) + "+07:00").getTime(), title: String(r.title || "") })).filter((x: LogPoint) => Number.isFinite(x.t)));
       setRf(0); setPlaying(false); setReplayBusy(false);
-    })().catch(() => { if (alive) { setReplayErr("Track could not be loaded."); setReplayBusy(false); } });
+    })().catch(() => { if (alive) { setReplayErr(t("Track could not be loaded.")); setReplayBusy(false); } });
     return () => { alive = false; };
   }, [mode, replayDate, supabase, unitId]);
   useEffect(() => {
@@ -367,7 +371,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
     return () => cancelAnimationFrame(raf);
   }, [playing, mode]);
   const jumpTo = (t: number) => { if (track.length < 2) return; const t0 = track[0].t, t1 = track[track.length - 1].t; setRf(Math.max(0, Math.min(1, (t - t0) / Math.max(1, t1 - t0)))); setPlaying(false); };
-  const logsOnTrack: LogPoint[] = replayDemo ? DEMO_LOGS.map(([f, title]) => ({ t: DEMO_TRACK[0].t + f * (DEMO_TRACK[DEMO_TRACK.length - 1].t - DEMO_TRACK[0].t), title })) : replayLogs;
+  const logsOnTrack: LogPoint[] = replayDemo ? DEMO_LOGS.map(([f, title]) => ({ title: t(title), t: DEMO_TRACK[0].t + f * (DEMO_TRACK[DEMO_TRACK.length - 1].t - DEMO_TRACK[0].t) })) : replayLogs;
 
   /* ---------- drill timer ---------- */
   useEffect(() => { if (drillT0 === null) return; const id = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(id); }, [drillT0]);
@@ -386,9 +390,9 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   const errLine = (k: string) => loadErr[k] || loadErr.all ? <p className="v3d-msg err">Data could not be loaded: {loadErr[k] || loadErr.all}</p> : null;
 
   let banner: { text: string; col: string } | null = null;
-  if (mode === "latihan") banner = { text: "DRILL · not saved as a real event", col: "var(--v3d-bad)" };
-  else if (mode === "putar-ulang" && replayDemo) banner = { text: "DEMO · sample track, not ship data", col: "var(--v3d-demo)" };
-  else if (mode === "telemetri" && sim) banner = { text: "DEMO · simulated telemetry, not saved", col: "var(--v3d-demo)" };
+  if (mode === "latihan") banner = { text: t("DRILL · not saved as a real event"), col: "var(--v3d-bad)" };
+  else if (mode === "putar-ulang" && replayDemo) banner = { text: t("DEMO · sample track, not ship data"), col: "var(--v3d-demo)" };
+  else if (mode === "telemetri" && sim) banner = { text: t("DEMO · simulated telemetry, not saved"), col: "var(--v3d-demo)" };
 
   function panelBody() {
     switch (mode) {
@@ -408,7 +412,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
             <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>Position{gps && !sim ? " · " + fmtT(gps.position_at) : ""}</small><b style={{ fontSize: 15 }}>{gps && !sim ? dm(gps.latitude, "U", "S") + "  " + dm(gps.longitude, "T", "B") : sim && navRt?.sim ? dm(navRt.sim.latitude, "U", "S") + "  " + dm(navRt.sim.longitude, "T", "B") : "—"}</b>{sim && navRt?.sim && <small>Simulated position (DEMO), not ship GPS</small>}{gps && !sim && gps.accuracy_m !== null && <small>Accuracy ±{nf(gps.accuracy_m)} m</small>}</div>
             <div className="v3d-cell"><small>SOG</small><b>{sim ? sim.sog + " kn" : gps && gps.speed_knots !== null ? gps.speed_knots.toFixed(1) + " kn" : "—"}</b></div>
             <div className="v3d-cell"><small>COG</small><b>{sim ? deg3(sim.cog) : gps && gps.course_degrees !== null ? deg3(gps.course_degrees) : "—"}</b></div>
-            <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>Heading</small><b>—</b><small>Needs a gyro/AHRS; not in the system yet</small></div>
+            <div className="v3d-cell" style={{ gridColumn: "1 / -1" }}><small>{navRt?.sim ? "Heading · DEMO gyro" : "Heading"}</small><b>{navRt?.sim?.heading_demo != null ? deg3(navRt.sim.heading_demo) : "—"}</b><small>{navRt?.sim ? "Simulated, not ship data; real heading needs a gyro/AHRS" : "Needs a gyro/AHRS; not in the system yet"}</small></div>
           </div>
           {navRt ? telemetrySlot : <><label className="v3d-sw"><input type="checkbox" checked={!!sim} onChange={e => setSim(e.target.checked ? { cog: gps?.course_degrees !== null && gps?.course_degrees !== undefined ? Math.round(gps.course_degrees) : 45, sog: 12 } : null)} />Simulasi telemetri (DEMO)</label>
           {sim && <>
@@ -461,7 +465,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
       case "geladak": {
         const rs = ROOMS.filter(r => deck === "semua" || r.deck === deck), types = [...new Set(rs.map(r => roomLocked(r.id) ? "terbatas" : r.type))];
         return <>
-          <div className="v3d-seg" role="group" aria-label="Choose deck">{([["semua", "All"], ["atas", "Upper"], ["utama", "Main"], ["bawah", "Lower"]] as Array<["semua" | Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={deck === v} onClick={() => { setDeck(v); setRoom(null); }}>{l}</button>)}</div>
+          <div className="v3d-seg" role="group" aria-label={t("Choose deck")}>{([["semua", t("All")], ["atas", t("Upper")], ["utama", t("Main")], ["bawah", t("Lower")]] as Array<["semua" | Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={deck === v} onClick={() => { setDeck(v); setRoom(null); }}>{l}</button>)}</div>
           <div className="v3d-list">{rs.map(r => { const lock = roomLocked(r.id); return <button type="button" key={r.id} className={"v3d-row" + (room === r.id ? " sel" : "")} style={{ minHeight: 46 }} onClick={() => setRoom(x => x === r.id ? null : r.id)}><span className="v3d-sq" style={{ background: rgb(lock ? TYPEC.terbatas : r.type === "terbatas" ? TYPEC.senjata : TYPEC[r.type]) }} /><span className="v3d-grow"><b>{roomName(r.id)}</b><small>{DECKN[r.deck]}</small></span></button>; })}</div>
           <div className="v3d-legend">{types.map(t => <span key={t}><i className="v3d-sq" style={{ background: rgb(TYPEC[t]) }} />{TYPEN[t]}</span>)}</div>
           {onRoomPick && <button type="button" className="v3d-btn p" disabled={!room || roomLocked(room)} onClick={() => room && onRoomPick(roomName(room))}>{room ? (roomPickLabel || "Use room") + " · " + roomName(room) : "Pick a room in the list or on the ship"}</button>}
@@ -471,8 +475,8 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
       case "jaga": return <>
         {errLine("watch")}
         <span className="v3d-kicker">{new Date().toLocaleDateString("en-GB", { timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric" })}{watch?.watch_type ? " · " + en(watch.watch_type) : ""}</span>
-        <div className="v3d-list">{POSTS.map(p => { const name = p.id === "pj" ? pjName : null; return <div key={p.id} className="v3d-row"><span className="v3d-dot" style={{ background: name ? COL.live : COL.none }} /><span className="v3d-grow"><b>{p.n}</b><small>{p.id === "pj" ? name || "No assignment today" : "— · no data source yet"}</small><small>{p.room ? roomName(p.room) : "Aft deck"}</small></span></div>; })}</div>
-        <p className="v3d-note">The officer of the watch comes from the daily watch assignment in the Logbook and is changed there. Other posts are not recorded in the system yet, so they show “—”.</p>
+        <div className="v3d-list">{POSTS.map(p => { const name = p.id === "pj" ? pjName : null; return <div key={p.id} className="v3d-row"><span className="v3d-dot" style={{ background: name ? COL.live : COL.none }} /><span className="v3d-grow"><b>{t(p.n)}</b><small>{p.id === "pj" ? name || t("No assignment today") : t("— · no data source yet")}</small><small>{p.room ? roomName(p.room) : t("Aft deck")}</small></span></div>; })}</div>
+        <p className="v3d-note">{t("The officer of the watch comes from the daily watch assignment in the Logbook and is changed there. Other posts are not recorded in the system yet, so they show “—”.")}</p>
       </>;
       case "putar-ulang": {
         let map: React.ReactNode = null;
@@ -480,7 +484,7 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           const xs = track.map(p => p.e), ys = track.map(p => p.n), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
           const s = Math.min(280 / Math.max(x1 - x0, 1e-3), 150 / Math.max(y1 - y0, 1e-3)), X = (e: number) => 20 + (e - x0) * s, Y = (n: number) => 170 - (n - y0) * s;
           const pts = track.length > 800 ? track.filter((_, i) => i % Math.ceil(track.length / 800) === 0 || i === track.length - 1) : track;
-          map = <svg className="v3d-svgmap" viewBox="0 0 320 190" role="img" aria-label="Voyage track map">
+          map = <svg className="v3d-svgmap" viewBox="0 0 320 190" role="img" aria-label={t("Voyage track map")}>
             <polyline points={pts.map(p => X(p.e).toFixed(1) + "," + Y(p.n).toFixed(1)).join(" ")} fill="none" stroke={replayDemo ? "rgba(185,163,255,.75)" : "rgba(127,178,229,.85)"} strokeWidth={2} />
             {logsOnTrack.map((l, i) => { if (l.t < track[0].t || l.t > track[track.length - 1].t) return null; const q = trackAt(track, (l.t - track[0].t) / Math.max(1, track[track.length - 1].t - track[0].t)); return <circle key={i} cx={X(q.e)} cy={Y(q.n)} r={4} fill="#0b1626" stroke="#E8EEF5" strokeWidth={2} />; })}
             {rp && <g transform={`translate(${X(rp.e).toFixed(1)} ${Y(rp.n).toFixed(1)}) rotate(${rp.cog ?? 0})`}><path d={rp.cog !== null ? "M0 -9L6 7L0 3L-6 7Z" : "M0 -5A5 5 0 1 0 0.01 -5Z"} fill="#E6121C" /></g>}
@@ -488,33 +492,33 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
           </svg>;
         }
         return <>
-          <label className="v3d-f">Date (WIB)<input type="date" value={replayDate} max={localDate()} onChange={e => { setReplayDemo(false); setReplayDate(e.target.value); }} /></label>
+          <label className="v3d-f">{t("Date (WIB)")}<input type="date" value={replayDate} max={localDate()} onChange={e => { setReplayDemo(false); setReplayDate(e.target.value); }} /></label>
           {replayErr && <p className="v3d-msg err">Track could not be loaded: {replayErr}</p>}
-          {replayBusy && <p className="v3d-note">Loading track…</p>}
-          {!replayBusy && !replayDemo && replayRows.length < 2 && <div className="v3d-msg">Not enough GPS positions on this date ({replayRows.length} points), so the track cannot be replayed.<div style={{ marginTop: 8 }}><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(true); setRf(0); }}>View sample (DEMO)</button></div></div>}
-          {replayDemo && <div className="v3d-between"><span className="v3d-chip" style={{ color: COL.demo }}>DEMO · jejak contoh</span><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(false); setRf(0); setPlaying(false); }}>Real data</button></div>}
+          {replayBusy && <p className="v3d-note">{t("Loading track…")}</p>}
+          {!replayBusy && !replayDemo && replayRows.length < 2 && <div className="v3d-msg">Not enough GPS positions on this date ({replayRows.length} points), so the track cannot be replayed.<div style={{ marginTop: 8 }}><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(true); setRf(0); }}>{t("View sample (DEMO)")}</button></div></div>}
+          {replayDemo && <div className="v3d-between"><span className="v3d-chip" style={{ color: COL.demo }}>{lang === "id" ? "DEMO · jejak contoh" : "DEMO · sample track"}</span><button type="button" className="v3d-btn s" onClick={() => { setReplayDemo(false); setRf(0); setPlaying(false); }}>{t("Real data")}</button></div>}
           {map}
           {track.length >= 2 && <>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}><button type="button" className="v3d-btn" style={{ minWidth: 92 }} onClick={() => { if (rf >= 1) setRf(0); setPlaying(p => !p); }}>{playing ? "Pause" : "Play"}</button><input type="range" min={0} max={1000} value={Math.round(rf * 1000)} onChange={e => { setRf(Number(e.target.value) / 1000); setPlaying(false); }} aria-label="Time" /></div>
-            <div className="v3d-grid2"><div className="v3d-cell"><small>Time</small><b>{rp ? fmtHM(rp.t) : "—"}</b></div><div className="v3d-cell"><small>SOG · COG</small><b style={{ fontSize: 15 }}>{rp && rp.sog !== null ? rp.sog.toFixed(1) + " kn" : "—"} · {rp && rp.cog !== null ? deg3(rp.cog) : "—"}</b></div></div>
-            {logsOnTrack.length > 0 && <><h3 className="v3d-sub">{replayDemo ? "Sample" : "Logbook"} entries</h3><div className="v3d-list">{logsOnTrack.map((l, i) => <button type="button" key={i} className="v3d-row" style={{ minHeight: 46 }} onClick={() => jumpTo(l.t)}><span className="v3d-dot" style={{ background: replayDemo ? COL.demo : COL.info }} /><span className="v3d-grow"><b>{fmtHM(l.t)}</b><small>{enText(l.title)}</small></span></button>)}</div></>}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}><button type="button" className="v3d-btn" style={{ minWidth: 92 }} onClick={() => { if (rf >= 1) setRf(0); setPlaying(p => !p); }}>{playing ? t("Pause") : t("Play")}</button><input type="range" min={0} max={1000} value={Math.round(rf * 1000)} onChange={e => { setRf(Number(e.target.value) / 1000); setPlaying(false); }} aria-label={t("Time")} /></div>
+            <div className="v3d-grid2"><div className="v3d-cell"><small>{t("Time")}</small><b>{rp ? fmtHM(rp.t) : "—"}</b></div><div className="v3d-cell"><small>SOG · COG</small><b style={{ fontSize: 15 }}>{rp && rp.sog !== null ? rp.sog.toFixed(1) + " kn" : "—"} · {rp && rp.cog !== null ? deg3(rp.cog) : "—"}</b></div></div>
+            {logsOnTrack.length > 0 && <><h3 className="v3d-sub">{lang === "id" ? "Catatan " + (replayDemo ? "contoh" : "Logbook") : (replayDemo ? "Sample" : "Logbook") + " entries"}</h3><div className="v3d-list">{logsOnTrack.map((l, i) => <button type="button" key={i} className="v3d-row" style={{ minHeight: 46 }} onClick={() => jumpTo(l.t)}><span className="v3d-dot" style={{ background: replayDemo ? COL.demo : COL.info }} /><span className="v3d-grow"><b>{fmtHM(l.t)}</b><small>{enText(l.title)}</small></span></button>)}</div></>}
           </>}
-          <p className="v3d-note">Track from GPS positions stored on that date. The ship is turned by COG; when COG is not recorded, the direction is calculated from two consecutive positions.</p>
+          <p className="v3d-note">{t("Track from GPS positions stored on that date. The ship is turned by COG; when COG is not recorded, the direction is calculated from two consecutive positions.")}</p>
         </>;
       }
       case "latihan": {
         const marked = Object.entries(drill);
         return <>
-          <div className="v3d-seg" role="group" aria-label="Choose deck">{([["atas", "Upper"], ["utama", "Main"], ["bawah", "Lower"]] as Array<[Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={drillDeck === v} onClick={() => setDrillDeck(v)}>{l}</button>)}</div>
-          <div className="v3d-cell v3d-between"><div><small>Drill time</small><b>{mmss(drillMs)}</b></div><div className="v3d-actions">
-            <button type="button" className="v3d-btn s" onClick={() => { if (drillT0 !== null) { setDrillAcc(a => a + Date.now() - drillT0); setDrillT0(null); } else { setDrillT0(Date.now()); setNow(Date.now()); } }}>{drillT0 !== null ? "Stop" : "Start"}</button>
+          <div className="v3d-seg" role="group" aria-label={t("Choose deck")}>{([["atas", t("Upper")], ["utama", t("Main")], ["bawah", t("Lower")]] as Array<[Deck, string]>).map(([v, l]) => <button type="button" key={v} aria-pressed={drillDeck === v} onClick={() => setDrillDeck(v)}>{l}</button>)}</div>
+          <div className="v3d-cell v3d-between"><div><small>{t("Drill time")}</small><b>{mmss(drillMs)}</b></div><div className="v3d-actions">
+            <button type="button" className="v3d-btn s" onClick={() => { if (drillT0 !== null) { setDrillAcc(a => a + Date.now() - drillT0); setDrillT0(null); } else { setDrillT0(Date.now()); setNow(Date.now()); } }}>{drillT0 !== null ? t("Stop") : t("Start")}</button>
             <button type="button" className="v3d-btn s" onClick={() => { setDrillT0(null); setDrillAcc(0); }}>Reset</button>
           </div></div>
-          <p className="v3d-note">Tap a compartment point on the ship to cycle its status: fire → flooding → smoke → normal.</p>
-          <div className="v3d-list">{marked.length ? marked.map(([id, s]) => <div key={id} className="v3d-row" style={{ minHeight: 46 }}><span className="v3d-sq" style={{ background: rgb(DRILLC[s]) }} /><span className="v3d-grow"><b>{roomLocked(id) ? "Restricted compartment" : ROOM[id]?.n}</b><small>{DRILLN[s]} · {ROOM[id] ? DECKN[ROOM[id].deck] : ""}</small></span></div>) : <p className="v3d-note">No compartments marked yet.</p>}</div>
-          {marked.length > 0 && <button type="button" className="v3d-btn" onClick={() => setDrill({})}>Clear all marks</button>}
-          <div className="v3d-legend">{(Object.keys(DRILLN) as Drill[]).map(k => <span key={k}><i className="v3d-sq" style={{ background: rgb(DRILLC[k]) }} />{DRILLN[k]}</span>)}</div>
-          <p className="v3d-note">Drills exist only on this screen and are not saved to the database.</p>
+          <p className="v3d-note">{t("Tap a compartment point on the ship to cycle its status: fire → flooding → smoke → normal.")}</p>
+          <div className="v3d-list">{marked.length ? marked.map(([id, s]) => <div key={id} className="v3d-row" style={{ minHeight: 46 }}><span className="v3d-sq" style={{ background: rgb(DRILLC[s]) }} /><span className="v3d-grow"><b>{roomLocked(id) ? t("Restricted compartment") : t(ROOM[id]?.n || "")}</b><small>{t(DRILLN[s])} · {ROOM[id] ? t(DECKN[ROOM[id].deck]) : ""}</small></span></div>) : <p className="v3d-note">{t("No compartments marked yet.")}</p>}</div>
+          {marked.length > 0 && <button type="button" className="v3d-btn" onClick={() => setDrill({})}>{t("Clear all marks")}</button>}
+          <div className="v3d-legend">{(Object.keys(DRILLN) as Drill[]).map(k => <span key={k}><i className="v3d-sq" style={{ background: rgb(DRILLC[k]) }} />{t(DRILLN[k])}</span>)}</div>
+          <p className="v3d-note">{t("Drills exist only on this screen and are not saved to the database.")}</p>
         </>;
       }
       default: return null;
@@ -522,16 +526,16 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
   }
 
   return <div className={"v3d-root" + (modes ? " v3d-embed" : "") + (modeList.length < 2 ? " v3d-single" : "") + (className ? " " + className : "")} ref={rootRef} data-lenis-prevent>
-    <canvas ref={canvasRef} className="v3d-cv" aria-label="3D model of KRI ALAMANG-644. Drag to rotate, pinch or scroll to zoom, Shift+drag to pan." />
+    <canvas ref={canvasRef} className="v3d-cv" aria-label={t("3D model of KRI ALAMANG-644. Drag to rotate, pinch or scroll to zoom, Shift+drag to pan.")} />
     <div ref={marksRef} className="v3d-marks" />
-    {glFail && <div className="v3d-fallback"><p>{glFail === "lost" ? "The 3D view stopped because the device GPU was reset. Reopen this page to start again." : "This device or browser does not support WebGL 2, so the 3D model cannot be shown. The data is still available elsewhere."}</p></div>}
+    {glFail && <div className="v3d-fallback"><p>{glFail === "lost" ? t("The 3D view stopped because the device GPU was reset. Reopen this page to start again.") : t("This device or browser does not support WebGL 2, so the 3D model cannot be shown. The data is still available elsewhere.")}</p></div>}
     {banner && <div className="v3d-banner" style={{ color: banner.col }} role="status">{banner.text}</div>}
 
-    <div ref={modesRef} role="navigation" className="v3d-modes v3d-glass" aria-label="3D views">
-      {modeList.length > 1 && modeList.map(([id, label]) => <button type="button" key={id} aria-current={mode === id} title={label} onClick={() => setMode(id)}><Svg>{ICON[id]}</Svg><b>{label}</b></button>)}
+    <div ref={modesRef} role="navigation" className="v3d-modes v3d-glass" aria-label={t("3D views")}>
+      {modeList.length > 1 && modeList.map(([id, label]) => <button type="button" key={id} aria-current={mode === id} title={t(label)} onClick={() => setMode(id)}><Svg>{ICON[id]}</Svg><b>{t(label)}</b></button>)}
       <span className="v3d-tools">
-        <button type="button" title="Centre view" aria-label="Centre view" onClick={() => engineRef.current?.view(true)}><Svg><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></Svg></button>
-        {fsOk && <button type="button" title="Full screen" aria-label="Full screen" onClick={toggleFs}><Svg><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></Svg></button>}
+        <button type="button" title={t("Centre view")} aria-label={t("Centre view")} onClick={() => engineRef.current?.view(true)}><Svg><circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></Svg></button>
+        {fsOk && <button type="button" title={t("Full screen")} aria-label={t("Full screen")} onClick={toggleFs}><Svg><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></Svg></button>}
       </span>
     </div>
 
@@ -544,12 +548,12 @@ export default function VesselModel3D({ supabase, unitId, userId, role, canAcces
       </div>
     </div> : <div ref={panelRef} role="complementary" aria-label="3D model information panel" className={"v3d-panel v3d-glass" + (panelMin ? " min" : "")} aria-live="polite">
       <div className="v3d-ph">
-        <div><div className="v3d-kicker">{modeInfo[2]}</div><h2 className="v3d-pt v3d-h">{modeInfo[1]}</h2></div>
-        <button type="button" className="v3d-pc" aria-expanded={!panelMin} aria-label={panelMin ? "Expand panel" : "Collapse panel"} onClick={() => setPanelMin(v => !v)} style={{ transform: panelMin ? "rotate(180deg)" : undefined }}><Svg><path d="M6 9l6 6 6-6" /></Svg></button>
+        <div><div className="v3d-kicker">{t(modeInfo[2])}</div><h2 className="v3d-pt v3d-h">{t(modeInfo[1])}</h2></div>
+        <button type="button" className="v3d-pc" aria-expanded={!panelMin} aria-label={panelMin ? t("Expand panel") : t("Collapse panel")} onClick={() => setPanelMin(v => !v)} style={{ transform: panelMin ? "rotate(180deg)" : undefined }}><Svg><path d="M6 9l6 6 6-6" /></Svg></button>
       </div>
       <div className="v3d-pb">
         {notice && <p className={"v3d-msg" + (notice.err ? " err" : "")} role={notice.err ? "alert" : "status"}>{notice.text}</p>}
-        {!loaded && <p className="v3d-note">Loading ship data…</p>}
+        {!loaded && <p className="v3d-note">{t("Loading ship data…")}</p>}
         {panelBody()}
       </div>
     </div>}

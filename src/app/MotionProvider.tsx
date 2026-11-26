@@ -70,11 +70,46 @@ export default function MotionProvider({ children }: { children: React.ReactNode
       if (root instanceof HTMLElement && root.matches("[data-gsap-heading]")) animateHeading(root);
     };
 
+    /* Reveal cards and list rows as they scroll into view. Elements already in
+       view on first paint get a short stagger; later ones animate on entry. */
+    const REVEAL = ".dg-titlebar,.dg-card,.dg-kpi,.dg-log-kpi,.dg-log-summary .dg-log-title,.dg-fault,.dg-files>li,.dg-check,.dg-supply,.dg-plain-list>li,.dg-content .panel,.dg-content .module-hero,.dg-content .dl-shell,.dg-content .watch-archive";
+    let batch = 0, batchTimer = 0;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const el = e.target as HTMLElement;
+        el.style.setProperty("--dg-delay", Math.min(batch++, 8) * 55 + "ms");
+        el.classList.add("dg-in");
+        io.unobserve(el);
+        const done = (ev: TransitionEvent) => {
+          if (ev.target !== el || ev.propertyName !== "transform") return;
+          el.removeEventListener("transitionend", done);
+          el.classList.remove("dg-reveal", "dg-in");
+          el.style.removeProperty("--dg-delay");
+        };
+        el.addEventListener("transitionend", done);
+      }
+      window.clearTimeout(batchTimer);
+      batchTimer = window.setTimeout(() => { batch = 0; }, 120);
+    }, { rootMargin: "0px 0px -6% 0px", threshold: 0.06 });
+    const scanReveal = (root: ParentNode) => {
+      const list: HTMLElement[] = [];
+      if (root instanceof HTMLElement && root.matches(REVEAL)) list.push(root);
+      root.querySelectorAll<HTMLElement>(REVEAL).forEach((el) => list.push(el));
+      for (const el of list) {
+        if (el.dataset.dgReveal || el.closest(".dg-modal,.supply-modal,.v3d-root")) continue;
+        el.dataset.dgReveal = "1";
+        el.classList.add("dg-reveal");
+        io.observe(el);
+      }
+    };
+
     scanHeadings(document);
+    scanReveal(document);
     const observer = new MutationObserver((records) => {
       for (const record of records) {
         record.addedNodes.forEach((node) => {
-          if (node instanceof HTMLElement) scanHeadings(node);
+          if (node instanceof HTMLElement) { scanHeadings(node); scanReveal(node); }
         });
       }
     });
@@ -82,6 +117,8 @@ export default function MotionProvider({ children }: { children: React.ReactNode
 
     return () => {
       observer.disconnect();
+      io.disconnect();
+      window.clearTimeout(batchTimer);
       activeAnimations.forEach((animation) => {
         animation.scrollTrigger?.kill();
         animation.kill();

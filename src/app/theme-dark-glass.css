@@ -538,3 +538,88 @@ div.dg-kpi{cursor:default}
 .dg-sr-wrap{display:block;margin:0}
 @media(max-width:900px){.dg-sub-picker{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:640px){.dg-fault{flex-direction:column}.dg-fault-actions{flex-direction:row;width:100%;min-width:0}.dg-fault-actions>*{flex:1}}
+
+/* ================= Archive (files) ================= */
+.dg-archive{gap:14px}
+.dg-archive-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dg-archive-tools .dg-search{flex:2 1 220px;min-height:40px}
+.dg-archive-tools select{min-height:40px;padding:0 10px;border-radius:11px}
+.dg-files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dg-files>li{display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--dg-well);transition:background .2s}
+.dg-files>li:hover{background:rgba(255,255,255,.06)}
+.dg-file-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:10px 12px;border:0;background:none;color:var(--dg-ink);font:inherit;text-align:left;cursor:pointer;border-radius:12px}
+.dg-file-open:focus-visible{outline:2px solid var(--dg-info);outline-offset:-2px}
+.dg-file-icon{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(127,178,229,.12);color:var(--dg-info)}
+.dg-file-icon svg{width:20px;height:20px}
+.dg-file-name{flex:1;min-width:0}
+.dg-file-name b{display:block;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.dg-file-name small{display:block;font-size:12px;color:var(--dg-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dg-file-open .dg-pill{flex:none;font-size:12px;padding:2px 9px}
+.dg-file-actions{display:flex;gap:4px;padding-right:10px}
+.dg-file-actions .dg-btn{min-height:34px;padding:0 10px;font-size:12.5px}
+.dg-plain-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dg-plain-list>li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--dg-well);font-size:13.5px}
+.dg-plain-list>li>div{min-width:0}
+.dg-plain-list>li:not(:has(time)){grid-template-columns:minmax(0,1fr) auto}
+.dg-plain-list time{font-size:12.5px;color:var(--dg-dim);white-space:nowrap}
+.dg-plain-list b{display:block;font-weight:600}
+.dg-plain-list small{display:block;font-size:12px;color:var(--dg-dim)}
+.dg-plain-list p{margin:4px 0 0;color:var(--dg-ink-2);white-space:pre-line;overflow-wrap:anywhere}
+.dg-plain-list em{font-style:normal;font-size:12.5px;color:var(--dg-ink-2)}
+.dg-activity-list>li{grid-template-columns:minmax(140px,auto) minmax(0,1fr)}
+.dg-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dg-archive-detail{display:flex;flex-direction:column;gap:10px}
+.dg-archive-detail h4{margin:6px 0 0;font-size:15px}
+.dg-check-group{display:flex;flex-direction:column;gap:6px}
+.dg-field{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--dg-muted)}
+.dg-field textarea,.dg-field input{min-height:42px;padding:10px 12px;font:inherit;font-size:14px;border-radius:11px;border:1px solid rgba(200,215,235,.16);background:rgba(0,0,0,.25);color:var(--dg-ink)}
+.dg-approve{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.dg-approve .dg-field{flex:1 1 220px}
+.dg-modal-card.dg-archive-modal{width:min(900px,100%)}
+.dg-archive-modal>.dg-card-head .dg-pill{margin-top:6px}
+@media(max-width:900px){.dg-grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.dg-files>li{flex-direction:column;align-items:stretch;gap:0}.dg-file-open{flex-wrap:wrap}.dg-file-actions{padding:0 12px 10px 62px}.dg-activity-list>li{grid-template-columns:minmax(0,1fr)}}
+
+/* ================= No nested outlines ================= */
+/* Inner elements of a glass card use fill, not borders. */
+.dg-user,.dg-clock{border:0;background:rgba(255,255,255,.05)}
+.dg-search{border:0;background:rgba(0,0,0,.28)}
+.dg-search:focus-within{border:0;box-shadow:0 0 0 2px rgba(127,178,229,.35)}
+.dg-identity .v3d-root.dg-3d,.dg-3d-section .v3d-root.dg-3d{border:0}
+.v3d-root .v3d-row.sel{border-color:transparent;background:rgba(127,178,229,.14);box-shadow:inset 3px 0 0 var(--dg-info)}
+.dg-content .dl-approval-banner,.dg-content .dl-narrative{border:0}
+.dg-content .plan-panel .phst-upload{border:0;background:rgba(127,178,229,.08)}
+.dg-content .table-wrap,.dg-content .dg-table{border:0;background:rgba(0,0,0,.18)}
+.dg-content .admin-access-roadmap article,.dg-content .admin-access-warning{border:0}
+.dg-content .panel .table-wrap{border:0}
+.dg-head-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dg-head-actions .dg-btn{min-height:36px}
+
+/* ================= Motion ================= */
+:root{--dg-ease:cubic-bezier(.2,.8,.2,1)}
+/* scroll reveal (class set by MotionProvider only when motion is allowed) */
+.dg-reveal{opacity:0;transform:translateY(16px) scale(.985);transition:opacity .55s var(--dg-ease),transform .6s var(--dg-ease);transition-delay:var(--dg-delay,0ms);will-change:opacity,transform}
+.dg-reveal.dg-in{opacity:1;transform:none}
+/* dialogs */
+.dg-modal,.supply-modal{animation:dg-fade .22s ease-out both;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.dg-modal-card,.supply-modal-dialog{animation:dg-pop .34s var(--dg-ease) both}
+@keyframes dg-fade{from{opacity:0}to{opacity:1}}
+@keyframes dg-pop{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+/* tab / view content entering */
+.dg-tabs~*,.dg-class-detail,.dg-archive .dg-files,.dg-faults{animation:dg-rise .38s var(--dg-ease) both}
+@keyframes dg-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* tactile feedback */
+.dg-btn,.dg-nav button,.dg-seg button,.dg-tabs button,.dg-class-picker button,.dg-check-actions button,.dg-icon-btn,.dg-run-chip button{transition:background-color .18s,color .18s,box-shadow .2s,transform .12s var(--dg-ease)}
+.dg-btn:active,.dg-nav button:active,.dg-seg button:active,.dg-tabs button:active,.dg-class-picker button:active,.dg-check-actions button:active,.dg-icon-btn:active,.dg-file-open:active,.dg-kpi:active,.dg-log-kpi:active,.dg-action:active{transform:scale(.97)}
+button.dg-kpi,.dg-log-kpi,.dg-action,.dg-file-open,.dg-tank-edit{transition:transform .25s var(--dg-ease),box-shadow .25s,background-color .2s,border-color .2s}
+button.dg-kpi:hover,.dg-log-kpi:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 16px 36px rgba(0,0,0,.42)}
+.dg-action:hover,.dg-tank-edit:hover{transform:translateY(-1px)}
+.dg-nav button[aria-current=page] svg{transition:transform .3s var(--dg-ease)}
+.dg-nav button:hover svg{transform:translateX(2px)}
+.dg-run-chip{animation:dg-pop .3s var(--dg-ease) both}
+@media(prefers-reduced-motion:reduce){
+  .dg-reveal{opacity:1!important;transform:none!important;transition:none!important}
+  .dg-modal,.supply-modal,.dg-modal-card,.supply-modal-dialog,.dg-tabs~*,.dg-class-detail,.dg-archive .dg-files,.dg-faults,.dg-run-chip{animation:none!important}
+  .dg-btn:active,.dg-nav button:active,button.dg-kpi:hover,.dg-log-kpi:hover{transform:none}
+}
+.v3d-root.v3d-embed .v3d-glass{border-color:transparent;box-shadow:0 10px 28px rgba(0,0,0,.38)}

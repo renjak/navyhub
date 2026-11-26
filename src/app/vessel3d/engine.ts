@@ -504,7 +504,7 @@ goView(false);
 function loop(now){if(!alive)return;const dt=Math.min(.1,(now-lastNow)/1000);lastNow=now;stepTween(now);
  if(!document.hidden){simT+=dt;
   if(S.mode==='sambut'&&!RM&&!ptrs.size&&!tween)cam.yaw+=dt*.12;
-  const target=S.nav.cog!=null?(90-S.nav.cog)*Math.PI/180:0;const dy=((target-yawNow+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;yawNow+=dy*Math.min(1,dt*3);
+  const target=S.nav.cog!=null?(90-(S.nav.heading!=null?S.nav.heading:S.nav.cog))*Math.PI/180:0;const dy=((target-yawNow+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;yawNow+=dy*Math.min(1,dt*3);
   if(!RM){rA1+=dt*2.5;rA2+=dt*3.3}
   const bob=RM||S.draw?0:1,roll=.018*Math.sin(simT*.9)*bob,pit=.008*Math.sin(simT*.63+1)*bob,hv=.06*Math.sin(simT*.75)*bob;
   shipM=M.chain(M.tr(0,hv,0),M.ry(yawNow),M.rx(roll),M.rz(pit),M.tr(0,-1.8,0));
