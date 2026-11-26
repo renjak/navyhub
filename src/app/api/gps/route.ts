@@ -11,6 +11,12 @@ function sameSecret(a: string, b: string) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+// Token signature is verified by auth.getUser() before this value is trusted.
+function jwtAal(token: string) {
+  try { return String(JSON.parse(Buffer.from(token.split(".")[1] || "", "base64url").toString("utf8")).aal || "aal1"); }
+  catch { return "aal1"; }
+}
+
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -33,6 +39,11 @@ export async function POST(request: NextRequest) {
   if (!isHardware) {
     const { data: authData, error: authError } = await userClient.auth.getUser(bearer);
     if (authError || !authData.user) return NextResponse.json({ error: "Invalid session." }, { status: 401 });
+    // Same MFA rule as the database: an account with a verified authenticator needs an AAL2 session.
+    const enrolled = (authData.user.factors || []).some(f => f.status === "verified");
+    if (enrolled && jwtAal(bearer) !== "aal2") {
+      return NextResponse.json({ error: "Two-step verification required for this account." }, { status: 403 });
+    }
     const { data: profile, error: profileError } = await userClient
       .from("profiles")
       .select("role,is_active")

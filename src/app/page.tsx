@@ -14,6 +14,7 @@ import {NavRuntimeProvider,NavRunningChips,useNav} from "./NavRuntime";
 import NavMapButton from "./NavMap";
 import IntroSplash from "./intro/IntroSplash";
 import DashboardHome from "./DashboardHome";
+import {useMfa,MfaChallenge,MfaEnrollRequired,SecurityDialog,IdleGuard,mfaRequiredFor} from "./Security";
 import dynamic from "next/dynamic";
 const VesselModel3D=dynamic(()=>import("./VesselModel3D"),{ssr:false,loading:()=><div className="dg-3d-loading">Loading 3D model…</div>});
 const sb=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
@@ -194,6 +195,7 @@ export default function Home(){
  useEffect(()=>{let alive=true;sb.auth.getSession().then(async({data})=>{const u=data.session?.user??null;if(!alive)return;setUser(u);if(u){try{await refreshProfile(u)}catch(e){setError("Failed to load account profile.")}}setLoading(false)});const {data:listener}=sb.auth.onAuthStateChange((_event,session)=>{const u=session?.user??null;setUser(u);if(!u){setProfile(null);setRows([]);setMovements([])}else{setTimeout(()=>refreshProfile(u).catch(()=>setError("Failed to load profile.")),0)}});return()=>{alive=false;listener.subscription.unsubscribe()}},[refreshProfile]);
  const isViewer=profile?.role==="viewer";
  const isAdmin=profile?.role==="admin";
+ const mfa=useMfa(sb,user);const [secOpen,setSecOpen]=useState(false),[mfaSkip,setMfaSkip]=useState(false);
  const canManage=profile?.role==="admin"||profile?.role==="commander";
  const canAccessClassV=canManage||profile?.can_access_class_v===true;
  const canOperate=["admin","commander","officer","operator"].includes(profile?.role||"");
@@ -378,8 +380,11 @@ export default function Home(){
  const pickAssetRoom=useCallback((name:string)=>{setAssetDraft((d:any)=>d?{...d,location_label:name}:{asset_code:"",asset_name:"",category:maintSection,location_label:name,condition_label:"Baik",is_active:true});setNotice("Asset location set: "+name+". Complete the asset code and name in the form below.")},[maintSection]);
  if(loading)return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV DMS logo"/> <span>INITIALIZING</span></div></main>;
  if(!user)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><img className="dg-login-ship" src="/images/kri-alamang-644-side.png" alt="KRI ALAMANG-644 line drawing"/><small>Welcome aboard · SHIP MANAGEMENT SYSTEM</small><h1>ALNAV DMS</h1><p>Integrated ship administration and operational logbook</p><div className="ship">KRI ALAMANG-644 <span>● SECURE ACCESS</span></div><form onSubmit={login}><label>Registered account email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>{error&&<div className="error">{error}</div>}<button disabled={busy}>{busy?"Checking…":"Sign in to ALNAV DMS"}</button></form><footer>Restricted to authorised users.</footer></section></main>;
+ if(mfa.status==="checking")return <main className="loading"><div className="loaderglass"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV DMS logo"/> <span>SECURING SESSION</span></div></main>;
+ if(mfa.status==="challenge")return <MfaChallenge sb={sb} factorId={mfa.factorId} onSignOut={()=>sb.auth.signOut()} onDone={async()=>{await mfa.recheck();setError("");await refreshProfile(user).catch(()=>setError("Failed to load account profile."))}}/>;
  if(!profile?.unit_id||!profile.is_active)return <main className="login"><section className="loginbox"><img className="alnav-brand-logo alnav-login-logo" src="/branding/alnav-dms-logo.jpg" alt="Official ALNAV DMS logo"/><small>ACCOUNT ACCESS</small><h1>ALNAV DMS</h1><p>Signed in, but the account is not activated or not linked to a unit yet.</p><button onClick={()=>sb.auth.signOut()}>Sign out</button></section></main>;
-return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><IntroSplash/><div className="dg-app">
+ if(mfaRequiredFor(profile.role)&&!mfa.factorId&&!mfaSkip)return <MfaEnrollRequired sb={sb} roleLabel={profile.role==="admin"?"Admin":"Commander"} onSignOut={()=>sb.auth.signOut()} onUnavailable={()=>setMfaSkip(true)} onDone={()=>void mfa.recheck()}/>;
+return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdmin}><IntroSplash/><IdleGuard sb={sb} email={user.email||""} factorId={mfa.factorId}/>{secOpen&&<SecurityDialog sb={sb} role={profile.role} factorId={mfa.factorId} onClose={()=>setSecOpen(false)} onChanged={()=>void mfa.recheck()}/>}<div className="dg-app">
 <aside className="dg-glass dg-side">
 <div className="dg-logo"><img src="/branding/alnav-dms-logo.jpg" alt="ALNAV-DMS — Alamang Naval Data Management System"/></div>
 <button type="button" className="dg-ship" onClick={()=>openModule("Dashboard")}><b className="dg-h">KRI ALAMANG-644</b><small>{envName==="production"?"Fast Patrol Craft Unit · Koarmada I":envName==="preview"?"Preview · not production":"Fast Patrol Craft Unit · Koarmada I"}</small></button>
@@ -387,7 +392,7 @@ return <NavRuntimeProvider supabase={sb} unitId={profile.unit_id} isAdmin={isAdm
 <div className="dg-user">
 <div className="dg-avatar" aria-hidden="true">{initials}</div>
 <div className="dg-user-text"><b>{displayName}</b><small>{roleLabel}</small></div>
-<button type="button" className="dg-icon-btn" aria-label="Sign out" title="Sign out" onClick={()=>sb.auth.signOut()}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg></button>
+<button type="button" className={"dg-icon-btn"+(mfa.factorId?" is-secured":"")} aria-label={"Account security: two-step verification "+(mfa.factorId?"on":"off")} title={"Two-step verification "+(mfa.factorId?"on":"off")} onClick={()=>setSecOpen(true)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/>{mfa.factorId&&<path d="M9 12l2 2 4-4"/>}</svg></button><button type="button" className="dg-icon-btn" aria-label="Sign out" title="Sign out" onClick={()=>sb.auth.signOut()}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg></button>
 </div>
 </aside>
 <main className="dg-main">

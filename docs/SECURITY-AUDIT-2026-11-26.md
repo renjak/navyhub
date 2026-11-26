@@ -32,8 +32,8 @@ with explicit approval.
 |---|---|---|---|
 | F1 | **High — FIXED** | Every unit account (incl. Viewer) can read all 39 personnel rows **including NRP, birth place/date, education** (`personnel_read_unit`). UI hiding is not protection. | Split sensitive columns into a `personnel_private` table (or view + column grants) readable only by Admin/Commander/personnel officer; keep a directory view for others. |
 | F2 | **High — FIXED** | Officer/Operator can insert `stock_movements` for **Class V items they cannot see**; the SECURITY DEFINER balance trigger then changes ammunition balances. No department check on stock writes either. | Add RESTRICTIVE insert policy (Class V requires `can_access_class_v()`/admin/commander) and department write rule; re-test allow/deny. |
-| F3 | **High** | No MFA (0 factors enrolled), leaked-password protection disabled, no idle-logout. A stolen phone/session = full access. | Enable HIBP check (Dashboard → Auth), enforce TOTP MFA for admin/commander (AAL2 in RLS for Class V + personnel), auto sign-out after idle, shorter JWT expiry. |
-| F4 | Medium | Public sign-up probably still enabled (app is invite-only). Strangers can create auth users (spam, email cost), even though they see no data. | Disable "Allow new users to sign up" in Supabase Auth; invite via `admin-invite-user` only. Verify in Dashboard. |
+| F3 | **High — FIXED in app/DB; Dashboard steps pending** | No MFA (0 factors enrolled), leaked-password protection disabled, no idle-logout. A stolen phone/session = full access. | Enable HIBP check (Dashboard → Auth), enforce TOTP MFA for admin/commander (AAL2 in RLS for Class V + personnel), auto sign-out after idle, shorter JWT expiry. |
+| F4 | Medium — Dashboard step pending | Public sign-up probably still enabled (app is invite-only). Strangers can create auth users (spam, email cost), even though they see no data. | Disable "Allow new users to sign up" in Supabase Auth; invite via `admin-invite-user` only. Verify in Dashboard. |
 | F5 | Medium | Single hard-coded main admin UUID in policy + RPC: if that account is lost/compromised there is no recovery path and no second approver. | Documented break-glass procedure; second admin with MFA; consider two-person rule for role changes and Class V. |
 | F6 | Medium | Vercel: default firewall only, no rate limiting on `/api/gps` or login; no spend cap verified. (Reel risk: bandwidth/DDoS bill.) | Add WAF rate-limit rule for `/api/*` and auth paths; set Spend Management with **hard pause**, not only alerts; keep project on a plan with spend cap. |
 | F7 | Medium | No Content-Security-Policy. | Add CSP (self + Supabase + OSM tiles + Open-Meteo + Google Fonts), start in Report-Only. |
@@ -77,3 +77,16 @@ Messaging without consent → app sends only Supabase invite emails, no SMS/What
 - Note: duty-officer NRP still appears in the approved watch record/logbook (`daily_watch_assignments`, `phst_daily_orders`) as part of the official record.
 
 **2026-11-26 — owner decision on NRP** (migration `20261126065114_personnel_directory_include_nrp`): NRP may be shown to every active unit account and is now part of `personnel_directory()` and the Personnel table. Date of birth must not be shown; birth place, education, TMT and remarks also remain Admin/Commander only. Verified: viewer directory 39 rows with NRP, base table 0 rows, no anon grant.
+
+**2026-11-26 — F3 two-step verification and idle sign-out** (migration `20261126065753_require_mfa_when_enrolled`, applied with owner approval).
+- Database: RESTRICTIVE policy `require mfa when enrolled` on all 23 public tables and `storage.objects` via `private.mfa_ok()`: when the account has a verified MFA factor, only AAL2 sessions (password + authenticator code) can read/write. Own `profiles` row stays readable at AAL1 so the app can show the code step. `personnel_directory()` checks the same rule. No effect for accounts without a factor.
+  Verified with a simulated factor (rolled back): enrolled admin at AAL1 → 0 rows in every table except own profile, updates denied; at AAL2 → full access; account without factor → unchanged.
+- Server: `/api/gps` and `admin-invite-user` (service role) reject AAL1 sessions of enrolled accounts. The edge function change needs a deploy (with approval).
+- App (`src/app/Security.tsx`): sign-in code step; Admin/Commander must enrol a TOTP authenticator before the app opens (falls back to continue only if the server refuses enrolment); every account can enrol from the shield button in the sidebar; idle sign-out after 15 minutes with 60-second warning, synced across tabs; while Master GPS is running the screen locks instead (password + code to unlock) so position reporting continues.
+- **Important:** an account that enrols via the Preview cannot use the old production build (no code step) until this branch is merged.
+
+### Dashboard steps (owner) — not possible from code
+1. **F4 sign-ups:** Supabase → Authentication → Sign In / Providers → turn off *Allow new users to sign up*. Invites through `admin-invite-user` keep working.
+2. **F3 leaked passwords:** Authentication → Attack Protection (Password security) → enable *Prevent use of leaked passwords*; set minimum length ≥ 12 with letters, digits and symbols. Leaked-password protection requires the Supabase **Pro plan**.
+3. **F3 MFA:** Authentication → Multi-Factor → confirm *TOTP (App Authenticator)* is enabled (default).
+4. Optional: Authentication → Sessions → time-box sessions / inactivity timeout (Pro plan) as a server-side backstop to the app idle sign-out.
