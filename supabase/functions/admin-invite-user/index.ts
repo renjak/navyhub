@@ -8,16 +8,6 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
-function jwtAal(token: string): string {
-  try {
-    const part = token.split(".")[1] || "";
-    const json = atob(part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "="));
-    return String(JSON.parse(json).aal || "aal1");
-  } catch {
-    return "aal1";
-  }
-}
-
 function response(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
@@ -51,15 +41,6 @@ Deno.serve(async (req: Request) => {
 
     if (profileError || !actorProfile || !actorProfile.is_active || actorProfile.role !== "admin" || !actorProfile.unit_id) {
       return response({ error: "Only an active unit Admin can invite personnel" }, 403);
-    }
-
-    // This function uses the service role (bypasses RLS), so it applies the same MFA rule as the
-    // database: an account with a verified authenticator must call with an AAL2 session.
-    const { data: mfa, error: mfaError } = await admin.auth.admin.mfa.listFactors({ userId: actor.id });
-    if (mfaError) return response({ error: "Could not check two-step verification" }, 500);
-    const hasVerifiedFactor = (mfa?.factors || []).some((f: { status: string }) => f.status === "verified");
-    if (hasVerifiedFactor && jwtAal(token) !== "aal2") {
-      return response({ error: "Two-step verification code required. Sign in again with your authenticator code." }, 403);
     }
 
     const body = await req.json();

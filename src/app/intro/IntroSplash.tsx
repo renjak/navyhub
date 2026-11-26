@@ -10,8 +10,8 @@ import { useNav } from "../NavRuntime";
    never used here. Skippable; static under prefers-reduced-motion. */
 
 const KEY = "alnav-intro-seen";
-const DURATION = 4300; // ms before the exit transition starts
-const EXIT = 750;
+const DURATION = 1900; // ms before the exit transition starts
+const EXIT = 450;
 
 type Geo = typeof import("./geo");
 const D2R = Math.PI / 180;
@@ -51,7 +51,7 @@ export default function IntroSplash() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") finish(); };
     window.addEventListener("keydown", key);
-    const timer = window.setTimeout(finish, reduced ? 1400 : DURATION);
+    const timer = window.setTimeout(finish, reduced ? 900 : DURATION);
     const cv = canvasRef.current, ctx = cv?.getContext("2d");
     let raf = 0;
     const t0 = performance.now();
@@ -62,7 +62,7 @@ export default function IntroSplash() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       const R = Math.min(w, h) * (w < 640 ? 0.44 : 0.38), cx = w / 2, cy = h * 0.46;
-      const tgt = targetRef.current, k = reduced ? 1 : ease((now - t0) / 2700);
+      const tgt = targetRef.current, k = reduced ? 1 : ease((now - t0) / 1400);
       // end with the ship position in the upper part of the globe so the silhouette does not cover it
       const lon0 = tgt.lon - 150 * (1 - k), lat0 = tgt.lat - 26 + 44 * (1 - k);
       const sl0 = Math.sin(lat0 * D2R), cl0 = Math.cos(lat0 * D2R);
@@ -71,7 +71,7 @@ export default function IntroSplash() {
         const cosc = sl0 * sp + cl0 * cp * cl;
         return [cx + R * cp * Math.sin(l), cy - R * (cl0 * sp - sl0 * cp * cl), cosc > 0];
       };
-      const fadeIn = reduced ? 1 : Math.min(1, (now - t0) / 700);
+      const fadeIn = reduced ? 1 : Math.min(1, (now - t0) / 350);
       ctx.globalAlpha = fadeIn;
       // sphere
       const g = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
