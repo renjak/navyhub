@@ -3,16 +3,17 @@ import { useEffect, useState } from "react";
 import { useNav } from "./NavRuntime";
 import NavMapButton from "./NavMap";
 
-/* Logbook · Jaga Laut. Tiga divisi jaga bergantian, masing-masing dua kali sehari (WIB):
+/* Logbook · Jaga Laut. Tiga jaga, masing-masing dua kali sehari (WIB):
    PH-MH 08–12 & 20–24, PT-DH 12–16 & 00–04, SH-DH 04–08 & 16–20.
-   Divisi A/B/C dipasangkan sesuai urutan yang diberikan pemilik: A = PH-MH, B = PT-DH, C = SH-DH.
-   Posisi dari GPS kapal (atau proksi perangkat Admin); haluan tetap "—" tanpa gyro. */
+   Divisi A/B/C bergilir (pemilik, 26 Nov 2026), jadi divisi tidak ditebak: tampil "—" sampai
+   ada sumber pembagian divisi. Posisi dari GPS kapal (atau proksi perangkat Admin);
+   haluan tetap "—" tanpa gyro. */
 
-type Watch = { code: string; div: "A" | "B" | "C"; ranges: Array<[number, number]> };
+type Watch = { code: string; key: "a" | "b" | "c"; ranges: Array<[number, number]> };
 const WATCHES: Watch[] = [
-  { code: "PH-MH", div: "A", ranges: [[8, 12], [20, 24]] },
-  { code: "PT-DH", div: "B", ranges: [[12, 16], [0, 4]] },
-  { code: "SH-DH", div: "C", ranges: [[16, 20], [4, 8]] },
+  { code: "PH-MH", key: "a", ranges: [[8, 12], [20, 24]] },
+  { code: "PT-DH", key: "b", ranges: [[12, 16], [0, 4]] },
+  { code: "SH-DH", key: "c", ranges: [[16, 20], [4, 8]] },
 ];
 const BLOCKS = [0, 4, 8, 12, 16, 20].map(h => ({ start: h, end: h + 4, watch: WATCHES.find(w => w.ranges.some(([s]) => s === h))! }));
 const hh = (h: number) => String(h % 24).padStart(2, "0") + ".00";
@@ -32,22 +33,22 @@ export default function JagaLaut({ replay }: { replay?: React.ReactNode }) {
     <section className="dg-glass dg-card dg-laut-now">
       <div className="dg-eyebrow">Jaga Laut · sekarang</div>
       <div className="dg-laut-current">
-        <div className="dg-laut-div"><span>Divisi</span><b className="dg-h">{cur.watch.div}</b></div>
+        <div className="dg-laut-div" title="Divisi bergilir; belum ada pembagian divisi tercatat"><span>Divisi</span><b className="dg-h">—</b></div>
         <div>
           <h2 className="dg-h dg-card-title">{cur.watch.code}</h2>
           <div className="dg-sub">{hh(cur.start)}–{hh(cur.end)} WIB · sisa {Math.floor(left / 60)} j {left % 60} m</div>
           <i className="dg-laut-bar"><em style={{ width: pct + "%" }} /></i>
-          <small className="dg-note">Berikutnya: Divisi {next.watch.div} · {next.watch.code} · {hh(next.start)}–{hh(next.end)} WIB</small>
+          <small className="dg-note">Berikutnya: {next.watch.code} · {hh(next.start)}–{hh(next.end)} WIB · divisi bergilir</small>
         </div>
       </div>
     </section>
 
     <section className="dg-glass dg-card dg-laut-board">
-      <div className="dg-eyebrow">Pembagian jaga 24 jam</div>
-      <ol className="dg-laut-blocks">{BLOCKS.map((b, i) => <li key={b.start} className={"dg-laut-block is-" + b.watch.div.toLowerCase() + (i === idx ? " is-now" : "")} aria-current={i === idx ? "true" : undefined}>
-        <time>{hh(b.start)}–{hh(b.end)}</time><b>Divisi {b.watch.div}</b><span>{b.watch.code}</span>
+      <div className="dg-eyebrow">Pembagian jaga 24 jam · divisi A/B/C bergilir</div>
+      <ol className="dg-laut-blocks">{BLOCKS.map((b, i) => <li key={b.start} className={"dg-laut-block is-" + b.watch.key + (i === idx ? " is-now" : "")} aria-current={i === idx ? "true" : undefined}>
+        <time>{hh(b.start)}–{hh(b.end)}</time><b>{b.watch.code}</b>
       </li>)}</ol>
-      <ul className="dg-laut-legend">{WATCHES.map(w => <li key={w.code}><b>Divisi {w.div} · {w.code}</b><span>{w.ranges.map(([s, e]) => hh(s) + "–" + hh(e)).join(" dan ")} WIB</span></li>)}</ul>
+      <ul className="dg-laut-legend">{WATCHES.map(w => <li key={w.code}><b>{w.code}</b><span>{w.ranges.map(([s, e]) => hh(s) + "–" + hh(e)).join(" dan ")} WIB</span></li>)}</ul>
     </section>
 
     <section className="dg-glass dg-card dg-laut-pos">
